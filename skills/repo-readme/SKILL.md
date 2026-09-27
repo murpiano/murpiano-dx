@@ -1,12 +1,12 @@
 ---
 name: repo-readme
-description: Use when writing, rewriting or reviewing a repository README, its GitHub description or topics, or when a repository needs the tests, CI or release that its README badges show.
+description: Use when writing, rewriting or reviewing a repository README, its GitHub description or topics, or when a repository needs the tests or CI that its README badges show.
 ---
 
 # Витринный README
 
-README в одном стиле для всех репозиториев murpiano: картинка первой строкой, бейджи CI и
-Release с реальным статусом, фиксированные секции, живой авторский текст без признаков
+README в одном стиле для всех репозиториев murpiano: картинка первой строкой, бейджи с реальным
+статусом, фиксированные секции, живой авторский текст без признаков
 генерации.
 
 Правила: [rules.md](rules.md). Заготовка: [template.md](template.md).
@@ -27,15 +27,15 @@ Release с реальным статусом, фиксированные сек�
 9. Закоммитить README по конвенции репозитория.
 10. Перед push выполнить скилл `repo-cleanup`.
 11. После подтверждения автора: push, дождаться зелёного CI, выставить description,
-    website и topics, выпустить релиз.
-12. Проверить, что бейджи показывают `CI passing` и текущую версию.
+    website и topics. Релизы включаются командой «начни релизы» (скилл `repo-release`).
+12. Проверить, что бейдж CI показывает `passing`, а бейдж Release, если он есть, текущую
+    версию.
 
 ## Спросить автора
 
 - Нет картинки для шапки. Не генерировать и не скачивать самому.
 - Нет файла `LICENSE`.
-- Версия первого релиза.
-- Любой push, правка метаданных на GitHub, тег или релиз.
+- Любой push и правка метаданных на GitHub.
 
 ## Готово, когда
 

@@ -76,9 +76,10 @@ projects/murpiano/new-app/
 | --- | --- |
 | [`repo-readme`](skills/repo-readme/SKILL.md) | README, description и topics репозитория, тесты, CI и релиз для бейджей |
 | [`repo-cleanup`](skills/repo-cleanup/SKILL.md) | перед push или публикацией: следы агентов в файлах, истории, PR и релизах |
+| [`repo-release`](skills/repo-release/SKILL.md) | автоматические релизы: «начни», «приостанови», «возобнови», «убери релизы», заметки |
 
 Агент выбирает скилл сам по полю `description` в `SKILL.md`. Вручную: `/repo-readme`,
-`/repo-cleanup`.
+`/repo-cleanup`, `/repo-release`.
 
 Одна папка на скилл: `SKILL.md` с шагами, рядом правила, шаблоны и скрипты этого скилла.
 Ссылок между папками нет, поэтому скилл работает и через симлинк.
