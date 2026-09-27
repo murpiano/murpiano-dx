@@ -1,0 +1,2 @@
+- [No agent traces](no-agent-traces.md) — voyager-dashboard: no AI attribution in commits/PRs/docs
+- [Env config](voyager-env-config.md) — API token lives in .env, never committed
