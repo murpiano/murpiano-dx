@@ -89,4 +89,4 @@ Base URL: `<url>`
 
 ---
 
-<sub>Bogdan Trotsenko · [@murpiano](https://github.com/murpiano) · [Telegram](https://t.me/murpiano) · <License></sub>
+<sub>[murpiano](https://github.com/murpiano) · [Telegram](https://t.me/murpiano) · [<License>](LICENSE)</sub>
