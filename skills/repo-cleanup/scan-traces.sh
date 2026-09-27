@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Read-only scan of a git repository and its GitHub remote for traces of AI-agent tooling.
+# Read-only scan of a git repository and its GitHub remote for traces of AI-agent tooling
+# and for committed secrets.
 # Patterns follow policy.md next to this script.
 #
 # Usage: bash scan-traces.sh [repo-dir] [--no-github] [--published]
@@ -16,7 +17,7 @@ for arg in "$@"; do
   case "$arg" in
     --no-github) github=0 ;;
     --published) refs='--remotes --tags' ;;
-    -h | --help) sed -n 2,8p "$0"; exit 0 ;;
+    -h | --help) sed -n 2,9p "$0"; exit 0 ;;
     *) repo=$arg ;;
   esac
 done
@@ -29,6 +30,9 @@ TEXT='claude|anthropic|copilot|chatgpt|openai|gpt-[0-9]|gemini|codex|cursor ?ai|
 EMOJI='[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]'
 IDENTITY='anthropic|openai|copilot|cursor|codex|\[bot\]'
 BRANCH='^(origin/)?(claude|copilot|codex|cursor|devin|jules|gemini|ai|agent)[/-]'
+SECRET_FILES='(^|/)(\.env(\.[^/]*)?|[^/]*\.(pem|key|p12|pfx|keystore)|id_(rsa|dsa|ecdsa|ed25519)|\.npmrc|\.netrc|credentials\.json|service-account[^/]*\.json)$'
+SECRET_FILES_OK='(^|/)\.env\.(example|sample|template)$'
+SECRET_TEXT='-----BEGIN [A-Z ]*PRIVATE KEY-----|gh[pousr]_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|sk-(ant-|proj-)?[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|xox[abprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35}|(api_?key|secret|token|passw(or)?d)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_/+.=-]{16,}'
 LOCKS=(':!package-lock.json' ':!yarn.lock' ':!pnpm-lock.yaml' ':!bun.lockb')
 
 findings=0
@@ -57,6 +61,14 @@ identities=$(git log $refs --format='%an <%ae>%n%cn <%ce>' | sort -u)
 printf '== Author and committer identities (review: should be one)\n%s\n\n' "$identities"
 [ "$(printf '%s\n' "$identities" | wc -l)" -gt 1 ] && findings=$((findings + 1))
 
+# Secrets. Output names the place only, never the matched value.
+section 'Secret files tracked or in history' \
+  "$(git log $refs --format= --name-only | sort -u | grep -E "$SECRET_FILES" | grep -vE "$SECRET_FILES_OK")"
+section 'Secrets in tracked text files (path:line)' \
+  "$(git grep -nIiE -e "$SECRET_TEXT" -- . "${LOCKS[@]}" | cut -d: -f1,2 | head -100)"
+section 'Secrets anywhere in history (commits adding or removing them)' \
+  "$(git log $refs -i -G "$SECRET_TEXT" --format='%h %s' -- . "${LOCKS[@]}" | cut -c1-200)"
+
 remote=$(git remote get-url origin 2>/dev/null || true)
 if [ "$github" = 1 ] && [[ "$remote" == *github.com* ]] && command -v gh >/dev/null; then
   slug=$(printf '%s' "$remote" | sed -E 's#(\.git)?$##; s#.*github\.com[:/]##')
@@ -76,7 +88,7 @@ if [ "$github" = 1 ] && [[ "$remote" == *github.com* ]] && command -v gh >/dev/n
 fi
 
 if [ "$findings" -eq 0 ]; then
-  echo 'No agent traces found.'
+  echo 'No agent traces or secrets found.'
   exit 0
 fi
 echo "Findings to review: $findings"

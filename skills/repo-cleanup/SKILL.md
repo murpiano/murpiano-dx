@@ -1,6 +1,6 @@
 ---
 name: repo-cleanup
-description: Use when a repository is about to be pushed or published, or when its files, commit history, authors, branches, pull requests or releases may show that AI agents or assistants were used (CLAUDE.md, AGENTS.md, Co-Authored-By trailers, emoji commits, bot identities).
+description: Use when a repository is about to be pushed or published, or when its files, commit history, authors, branches, pull requests or releases may show that AI agents or assistants were used (CLAUDE.md, AGENTS.md, Co-Authored-By trailers, emoji commits, bot identities), or when it may contain committed secrets (.env files, keys, tokens).
 ---
 
 # Очистка от следов агентов
@@ -8,8 +8,10 @@ description: Use when a repository is about to be pushed or published, or when i
 Найти и убрать следы агентной разработки из всего, что видит посетитель репозитория.
 Даты коммитов, содержимое файлов и структура merge-коммитов сохраняются.
 
-Что считается следом: [policy.md](policy.md). Сканер: [scan-traces.sh](scan-traces.sh),
-только читает, ничего не меняет.
+Заодно найти секреты, попавшие в репозиторий.
+
+Что считается следом и секретом: [policy.md](policy.md). Сканер:
+[scan-traces.sh](scan-traces.sh), только читает, ничего не меняет.
 
 ## Шаги
 
@@ -21,7 +23,8 @@ description: Use when a repository is about to be pushed or published, or when i
    ```
 
 2. Разобрать каждую находку: след или ложное срабатывание (например, CSS `cursor`). Если
-   неясно, спросить автора.
+   неясно, спросить автора. Найденный секрет сразу показать автору по разделу 8
+   `policy.md`, значение не выводить.
 3. Рабочее дерево: убрать файлы агентов из индекса (`git rm --cached -r <path>`), убрать
    упоминания из текста, закоммитить.
 4. История, только после подтверждения:
@@ -56,6 +59,7 @@ description: Use when a repository is about to be pushed or published, or when i
 - Любое переписывание истории и любой push, особенно force.
 - Удаление веток, тегов, комментариев на GitHub. Правка PR и релизов.
 - Упоминание, которое может быть частью продукта.
+- Найденный секрет: отозван ли он и надо ли чистить историю.
 - Переписывать ли старые сообщения, в которых нет следов, но есть нарушения конвенции.
 
 ## Нельзя
@@ -63,6 +67,7 @@ description: Use when a repository is about to be pushed or published, or when i
 - `--force` без lease.
 - Переписывать историю без ветки-копии.
 - Менять что-то за пределами зоны из `policy.md`.
+- Выводить значение найденного секрета.
 
 ## Готово, когда
 
