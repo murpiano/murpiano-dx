@@ -129,7 +129,7 @@ commit() {
   git -C "$dx" diff --cached --quiet && return 0
   local keys
   keys=$(git -C "$dx" diff --cached --name-only | awk -F/ 'NF > 3 {print $2 "/" $3}' | sort -u | paste -sd, - | sed 's/,/, /g')
-  git -C "$dx" commit --quiet -m "chore(sync): Update ${keys:-project store} from $(hostname)" || say "commit failed"
+  git -C "$dx" commit --quiet -m "chore(sync): update ${keys:-project store} from $(hostname)" || say "commit failed"
 }
 
 push() {

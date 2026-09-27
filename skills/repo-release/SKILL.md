@@ -24,7 +24,7 @@ description: Use when the user asks to start, pause, resume or remove automatic 
    `.github/scripts/release.sh`.
 4. Если бейджа Release нет и репозиторий публичный, добавить его в README
    (раздел 6 `rules.md`).
-5. Закоммитить: `ci: Release on every push to main`. Push.
+5. Закоммитить: `ci: release on every push to main`. Push.
 6. `gh secret set RELEASE_TOKEN -R OWNER/REPO < ~/.config/murpiano-dx/release-token`.
 7. Если тегов `v*` ещё нет, выпустить первый релиз вручную: версия `v1.0.0` (или версия
    из `package.json`, если она не ниже и ещё не выпущена), заметки по разделу 5,
@@ -47,7 +47,7 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 1. `gh variable set RELEASES --body off -R OWNER/REPO`.
 2. Для каждого релиза: `gh release delete <tag> --cleanup-tag --yes -R OWNER/REPO`.
 3. Удалить `.github/workflows/release.yml`, `.github/scripts/release.sh`, бейдж Release.
-4. Закоммитить: `ci: Stop publishing releases`. Push.
+4. Закоммитить: `ci: stop publishing releases`. Push.
 5. `gh secret delete RELEASE_TOKEN -R OWNER/REPO`.
 
 ### «Покажи следующий релиз»
