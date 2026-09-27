@@ -59,9 +59,21 @@ if [ -t 0 ]; then
   else
     prompt="Release token [none, Enter skips]: "
   fi
+  echo "Input is hidden: paste the token and press Enter."
   read -rs -p "$prompt" token
   echo
+  token=$(printf '%s' "$token" | tr -d '[:space:]')
   if [ -n "$token" ]; then
+    echo "received ${#token} characters"
+    login=$(GH_TOKEN=$token gh api user -q .login 2>/dev/null) || login=""
+    if ! [[ "$login" =~ ^[A-Za-z0-9-]+$ ]]; then
+      echo "GitHub rejected this token; nothing saved. Run install.sh again to retry."
+      unset token
+    else
+      echo "token belongs to $login"
+    fi
+  fi
+  if [ -n "${token:-}" ]; then
     mkdir -p "$(dirname "$token_file")"
     (umask 077 && printf '%s' "$token" >"$token_file")
     unset token
