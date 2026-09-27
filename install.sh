@@ -3,10 +3,11 @@
 #
 #   1. Links every skill from skills/ into the global skill folders of the agents.
 #   2. Sets the global git author. Asks in a terminal, config.env holds the defaults.
-#   3. Adds agent tooling files to the global git ignore file.
-#   4. Turns off commit and pull request attribution in Claude Code.
-#   5. Adds Claude Code session hooks that run sync.sh (see sync.sh).
-#   6. Links agent files stored in projects/ into the local project checkouts.
+#   3. Saves the release token for automatic releases. Asks in a terminal.
+#   4. Adds agent tooling files to the global git ignore file.
+#   5. Turns off commit and pull request attribution in Claude Code.
+#   6. Adds Claude Code session hooks that run sync.sh (see sync.sh).
+#   7. Links agent files stored in projects/ into the local project checkouts.
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")" && pwd)
@@ -47,6 +48,34 @@ fi
 git config --global user.name "$GIT_NAME"
 git config --global user.email "$GIT_EMAIL"
 echo "$(git config --global user.name) <$(git config --global user.email)>"
+
+echo "== Release token"
+# Personal GitHub token for automatic releases (skills/repo-release/rules.md, section 4).
+# Stored only in this file and in the RELEASE_TOKEN secret of repositories with releases.
+token_file="$HOME/.config/murpiano-dx/release-token"
+if [ -t 0 ]; then
+  if [ -s "$token_file" ]; then
+    prompt="Release token [saved, Enter keeps it]: "
+  else
+    prompt="Release token [none, Enter skips]: "
+  fi
+  read -rs -p "$prompt" token
+  echo
+  if [ -n "$token" ]; then
+    mkdir -p "$(dirname "$token_file")"
+    (umask 077 && printf '%s' "$token" >"$token_file")
+    unset token
+    echo "saved $token_file"
+    echo "updating RELEASE_TOKEN in repositories with releases"
+    for repo in $(gh repo list "$GIT_NAME" --limit 500 --json nameWithOwner -q '.[].nameWithOwner' 2>/dev/null); do
+      state=$(gh variable get RELEASES -R "$repo" 2>/dev/null) || continue
+      if [ "$state" = on ] || [ "$state" = paused ]; then
+        gh secret set RELEASE_TOKEN -R "$repo" <"$token_file" && echo "  $repo"
+      fi
+    done
+  fi
+fi
+[ -s "$token_file" ] && echo "token present" || echo "no token: automatic releases cannot start"
 
 echo "== Global git ignore"
 ignore=$(git config --global core.excludesfile || true)
