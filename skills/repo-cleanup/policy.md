@@ -16,13 +16,7 @@
 
 ## 2. Файлы
 
-Не отслеживаются и не встречаются в опубликованной истории:
-
-`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md`, `.claude/`, `.agents/`,
-`.codex/`, `.cursor/`, `.cursorrules`, `.cursorignore`, `.windsurf/`, `.windsurfrules`,
-`.clinerules`, `.roo/`, `.roomodes`, `.continue/`, `.aider*`, `.kiro/`, `.junie/`,
-`.specstory/`, `.serena/`, `.superpowers/`, `.mcp.json`, `.github/copilot-instructions.md`,
-`.github/instructions/`, `.github/prompts/`, `memory-bank/`, `docs/superpowers/`.
+Не отслеживаются и не встречаются в опубликованной истории. Список: [gitignore-agents](gitignore-agents).
 
 ## 3. Текст
 
@@ -48,9 +42,11 @@
 
 ## 6. Профилактика
 
-- Файлы из раздела 2 перечислены в глобальном git ignore
-  (`git config --global core.excludesfile`, по умолчанию `~/.config/git/ignore`).
-- Автоматическая подпись коммитов и PR выключена во всех агентах, где она есть.
+`install.sh` из `murpiano-dx` настраивает компьютер так, что следы не появляются:
+
+- список из `gitignore-agents` добавлен в глобальный git ignore;
+- глобальный автор git — владелец из раздела 4;
+- автоматическая подпись коммитов и PR в Claude Code выключена.
 
 ## 7. Что нельзя убрать
 
