@@ -1,0 +1,2 @@
+- [kysaro release](kysaro-release.md) — GitHub murpiano/kysaro (ex bvtrots), npm publish on v* tag via NPM_TOKEN secret
+- [Commit history style](commit-history-style.md) — small commits pushed one by one; user wanted burst commits spread by date
