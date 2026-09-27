@@ -23,15 +23,19 @@ notes=()
 
 say() { echo "murpiano-dx: $*" >&2; }
 
-# Project key: repository name from origin, or the folder name.
+# Project key: owner/repo from the origin remote. A project without origin is not synced,
+# so an unrelated folder with the same name never picks up another project's files.
 project_key() {
   local url
-  url=$(git -C "$1" remote get-url origin 2>/dev/null) || true
-  if [ -n "$url" ]; then
-    basename "${url%.git}"
-  else
-    basename "$1"
-  fi
+  url=$(git -C "$1" remote get-url origin 2>/dev/null) || return 1
+  url=${url%/}
+  url=${url%.git}
+  url=${url/#*@*:/x/} # git@host:owner/repo -> x/owner/repo
+  local repo owner
+  repo=$(basename "$url")
+  owner=$(basename "$(dirname "$url")")
+  [ -n "$repo" ] && [ -n "$owner" ] || return 1
+  printf '%s/%s' "$owner" "$repo"
 }
 
 # Claude Code keeps memory in ~/.claude/projects/<path with every non-alphanumeric as ->/memory.
@@ -124,7 +128,7 @@ commit() {
   git -C "$dx" add -A projects
   git -C "$dx" diff --cached --quiet && return 0
   local keys
-  keys=$(git -C "$dx" diff --cached --name-only | awk -F/ 'NF > 2 {print $2}' | sort -u | paste -sd, - | sed 's/,/, /g')
+  keys=$(git -C "$dx" diff --cached --name-only | awk -F/ 'NF > 3 {print $2 "/" $3}' | sort -u | paste -sd, - | sed 's/,/, /g')
   git -C "$dx" commit --quiet -m "chore(sync): Update ${keys:-project store} from $(hostname)" || say "commit failed"
 }
 
@@ -155,16 +159,14 @@ flock -w 30 9 || { say "another sync is running"; exit 0; }
 case "$mode" in
   start)
     pull
-    if root=$(session_root); then
-      key=$(project_key "$root")
+    if root=$(session_root) && key=$(project_key "$root"); then
       link "$root" "$key"
       adopt "$root" "$key"
     fi
     push
     ;;
   end)
-    if root=$(session_root); then
-      key=$(project_key "$root")
+    if root=$(session_root) && key=$(project_key "$root"); then
       adopt "$root" "$key"
     fi
     push
@@ -172,13 +174,12 @@ case "$mode" in
   link)
     for root in "$projects_dir"/*/; do
       root=${root%/}
-      [ -d "$root/.git" ] && [ "$root" != "$dx" ] && link "$root" "$(project_key "$root")"
+      [ -d "$root/.git" ] && [ "$root" != "$dx" ] && key=$(project_key "$root") && link "$root" "$key"
     done
     ;;
   *)
     pull
-    if root=$(session_root); then
-      key=$(project_key "$root")
+    if root=$(session_root) && key=$(project_key "$root"); then
       adopt "$root" "$key"
       link "$root" "$key"
     fi

@@ -2,7 +2,7 @@
 # Sets up this computer for development with agents. Safe to run again.
 #
 #   1. Links every skill from skills/ into the global skill folders of the agents.
-#   2. Sets the global git author from config.env.
+#   2. Sets the global git author. Asks in a terminal, config.env holds the defaults.
 #   3. Adds agent tooling files to the global git ignore file.
 #   4. Turns off commit and pull request attribution in Claude Code.
 #   5. Adds Claude Code session hooks that run sync.sh (see sync.sh).
@@ -37,6 +37,13 @@ mkdir -p "$root/projects"
 echo "updated $root/projects/.gitignore"
 
 echo "== Git author"
+# Asks when run in a terminal; Enter keeps the value from config.env.
+if [ -t 0 ]; then
+  read -r -p "Author name [$GIT_NAME]: " answer
+  GIT_NAME=${answer:-$GIT_NAME}
+  read -r -p "Author email [$GIT_EMAIL]: " answer
+  GIT_EMAIL=${answer:-$GIT_EMAIL}
+fi
 git config --global user.name "$GIT_NAME"
 git config --global user.email "$GIT_EMAIL"
 echo "$(git config --global user.name) <$(git config --global user.email)>"
