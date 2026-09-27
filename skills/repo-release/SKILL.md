@@ -17,14 +17,9 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 
 1. Проверить: репозиторий на GitHub, в `main` есть workflow с `name: CI` и он зелёный.
    Если CI нет, сначала настроить его по скиллу `repo-readme`.
-2. Проверить, что есть `~/.config/murpiano-dx/release-token`. Если нет, попросить
-   пользователя создать токен (раздел 4 `rules.md`) и сохранить его командой ниже.
-   Токен не читать и не выводить.
-
-   ```bash
-   mkdir -p ~/.config/murpiano-dx && read -rs -p 'Token: ' t && printf '%s' "$t" > ~/.config/murpiano-dx/release-token && chmod 600 ~/.config/murpiano-dx/release-token; unset t
-   ```
-
+2. Проверить, что файл `~/.config/murpiano-dx/release-token` есть и не пустой. Если нет,
+   попросить пользователя запустить `bash install.sh` из `murpiano-dx` и ввести токен
+   (раздел 4 `rules.md`). Токен не читать и не выводить.
 3. Скопировать `release.yml` в `.github/workflows/release.yml` и `release.sh` в
    `.github/scripts/release.sh`.
 4. Если бейджа Release нет и репозиторий публичный, добавить его в README

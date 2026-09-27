@@ -47,15 +47,16 @@ Workflow запускается после workflow с `name: CI`, только 
 - Токен один на все репозитории: fine-grained, Repository access: All repositories,
   Permissions: Contents — Read and write.
 - На компьютере он хранится в `~/.config/murpiano-dx/release-token` с правами `600`.
+  Туда его кладёт `install.sh` из `murpiano-dx`: спрашивает при установке, Enter оставляет
+  сохранённый.
 - Агент никогда не выводит токен. В секрет он попадает только так:
 
   ```bash
   gh secret set RELEASE_TOKEN -R OWNER/REPO < ~/.config/murpiano-dx/release-token
   ```
 
-- У токена есть срок действия. Когда он истечёт, workflow упадёт на шаге `Check token`.
-  Новый токен кладётся в тот же файл, затем секрет обновляется той же командой в каждом
-  репозитории с `RELEASES=on`.
+- Новый токен вводится повторным запуском `install.sh`. Он сам обновляет секрет во всех
+  репозиториях, где `RELEASES` равно `on` или `paused`.
 
 ## 5. Заметки
 
