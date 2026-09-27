@@ -52,6 +52,9 @@ while IFS= read -r -d $'\x1e' record; do
   type=${BASH_REMATCH[1]}
   bang=${BASH_REMATCH[3]}
   text=${BASH_REMATCH[4]}
+  # Subjects start in lower case; notes start with a capital unless the word is a name (iOS).
+  first=${text%% *}
+  [[ ${first:1} =~ [[:upper:]] ]] || text=${text^}
   item=$(entry "$text" "$body")
   if [ -n "$bang" ] || grep -q '^BREAKING CHANGE' <<<"$body"; then
     breaking+=("$item")
