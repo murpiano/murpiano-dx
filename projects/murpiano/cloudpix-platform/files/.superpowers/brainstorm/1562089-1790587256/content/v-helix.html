@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CloudPix — A · Film Helix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #ece6da;
+    --paper-2: #e3dccd;
+    --ink: #1c1a16;
+    --ink-soft: #6d665a;
+    --film: #221b15;
+    --edge: #e7a13a;
+    --signal: #e4531c;
+    --R: 430px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .02em;
+    user-select: none;
+    cursor: grab;
+  }
+  body.dragging { cursor: grabbing; }
+  /* paper grain */
+  body::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: .35; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .4 0 0 0 0 .32 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- chrome ---------- */
+  .top {
+    position: fixed; inset: 0 0 auto 0; z-index: 20;
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 26px 34px;
+  }
+  .mark { font-family: 'Archivo'; font-stretch: 62%; font-weight: 800; font-size: 30px; letter-spacing: .01em; line-height: 1; }
+  .mark small { font-family: 'IBM Plex Mono'; font-weight: 400; font-size: 11px; color: var(--ink-soft); margin-left: 10px; letter-spacing: .08em; }
+  nav { display: flex; gap: 28px; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; }
+  nav a { color: inherit; text-decoration: none; position: relative; }
+  nav a:hover { color: var(--signal); }
+  nav .rec::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); margin-right: 8px; transform: translateY(-1px); animation: blink 1.6s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .15; } }
+
+  .hero {
+    position: fixed; left: 34px; top: 50%; transform: translateY(-46%); z-index: 1; pointer-events: none;
+    font-family: 'Archivo'; font-stretch: 62%; font-weight: 900; text-transform: uppercase;
+    font-size: clamp(64px, 11.5vw, 210px); line-height: .84; letter-spacing: -.01em;
+  }
+  .hero span { display: block; }
+  .hero .o { color: transparent; -webkit-text-stroke: 1.5px var(--ink); }
+  .hero .s { color: var(--signal); }
+
+  .foot {
+    position: fixed; left: 34px; right: 34px; bottom: 26px; z-index: 20;
+    display: flex; justify-content: space-between; align-items: flex-end; text-transform: uppercase; letter-spacing: .1em; font-size: 11px; color: var(--ink-soft);
+  }
+  .foot b { color: var(--ink); font-weight: 500; }
+  .counter { font-family: 'Archivo'; font-stretch: 62%; font-weight: 700; font-size: 44px; line-height: .9; color: var(--ink); letter-spacing: 0; text-align: right; }
+  .counter small { display: block; font-family: 'IBM Plex Mono'; font-size: 11px; font-weight: 400; color: var(--ink-soft); letter-spacing: .1em; margin-bottom: 6px; }
+
+  /* timeline rail */
+  .rail { position: fixed; right: 34px; top: 120px; bottom: 130px; width: 60px; z-index: 20; pointer-events: none; }
+  .rail::before { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: var(--ink); opacity: .35; }
+  .tick { position: absolute; right: 0; display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--ink-soft); letter-spacing: .1em; transform: translateY(-50%); }
+  .tick::after { content: ''; width: 8px; height: 1px; background: var(--ink); opacity: .5; }
+  .cursor { position: absolute; right: -4px; width: 9px; height: 9px; background: var(--signal); transform: translateY(-50%) rotate(45deg); }
+
+  /* ---------- helix ---------- */
+  .stage { position: fixed; inset: 0; perspective: 1600px; perspective-origin: 66% 42%; z-index: 5; }
+  .world { position: absolute; left: 66%; top: 47%; transform-style: preserve-3d; }
+  .cell {
+    position: absolute; left: 0; top: 0; width: var(--cw); height: calc(var(--cw) * .74); margin: calc(var(--cw) * -.37) 0 0 calc(var(--cw) * -.5);
+    transform-style: preserve-3d; backface-visibility: hidden; cursor: pointer;
+    will-change: transform, opacity;
+  }
+  .film {
+    position: absolute; inset: 0; background: var(--film);
+    padding: 22px 0; display: flex;
+  }
+  /* sprocket holes, top and bottom */
+  .film::before, .film::after {
+    content: ''; position: absolute; left: 0; right: 0; height: 8px;
+    background: repeating-linear-gradient(90deg, transparent 0 7px, var(--paper) 7px 15px, transparent 15px 22px);
+    border-radius: 2px;
+  }
+  .film::before { top: 7px; }
+  .film::after { bottom: 7px; }
+  .film img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .edge { position: absolute; left: 8px; font-size: 7px; color: var(--edge); letter-spacing: .14em; white-space: nowrap; }
+  .edge.t { top: 0; line-height: 7px; }
+  .edge.b { bottom: 0; line-height: 7px; }
+  .cell:hover .film { outline: 2px solid var(--signal); outline-offset: -2px; }
+  .leader .film { background: #d9621f; }
+  .leader .film::before, .leader .film::after { background: repeating-linear-gradient(90deg, transparent 0 9px, var(--paper) 9px 21px, transparent 21px 30px); }
+  .leader .label { margin: auto; color: #fff3e4; font-family: 'Archivo'; font-stretch: 62%; font-weight: 800; font-size: 26px; text-transform: uppercase; text-align: center; line-height: .95; }
+  .leader .label small { display: block; font-family: 'IBM Plex Mono'; font-size: 10px; font-weight: 400; letter-spacing: .14em; margin-top: 8px; }
+
+  /* ---------- lightbox ---------- */
+  .box { position: fixed; inset: 0; z-index: 40; background: rgba(236, 230, 218, .96); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .35s; cursor: default; }
+  .box.open { opacity: 1; pointer-events: auto; }
+  .box figure { background: var(--film); padding: 38px 0; position: relative; transform: scale(.94); transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+  .box.open figure { transform: none; }
+  .box figure::before, .box figure::after { content: ''; position: absolute; left: 0; right: 0; height: 14px; background: repeating-linear-gradient(90deg, transparent 0 12px, rgba(236,230,218,.96) 12px 28px, transparent 28px 40px); }
+  .box figure::before { top: 12px; } .box figure::after { bottom: 12px; }
+  .box img { display: block; max-width: min(78vw, 1100px); max-height: 68vh; }
+  .box figcaption { position: absolute; left: 0; right: 0; top: calc(100% + 18px); display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; }
+  .box .x { position: fixed; top: 26px; right: 34px; font: inherit; text-transform: uppercase; letter-spacing: .12em; background: none; border: 0; cursor: pointer; }
+
+  .hint { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 20; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+
+  @media (max-width: 760px) {
+    .hero { top: 110px; transform: none; font-size: 17vw; }
+    .stage { perspective-origin: 50% 64%; }
+    .world { left: 50%; top: 64%; }
+    .rail, nav a:not(.rec) { display: none; }
+    :root { --R: 250px; }
+  }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="mark">CLOUDPIX<small>ROLL 01 · OPEN ARCHIVE</small></div>
+    <nav>
+      <a href="#">Index</a>
+      <a href="#">Upload</a>
+      <a href="#">About</a>
+      <a class="rec" href="#">19 frames</a>
+    </nav>
+  </header>
+
+  <h1 class="hero"><span>One roll.</span><span class="o">Everyone's</span><span class="s">frames.</span></h1>
+
+  <div class="stage" id="stage"><div class="world" id="world"></div></div>
+
+  <div class="rail" id="rail"></div>
+
+  <footer class="foot">
+    <div><b>Drag</b> to wind the roll<br /><b>Scroll</b> to travel back in time</div>
+    <div class="counter" id="counter"><small id="date">28 SEP 2026</small>014/057</div>
+  </footer>
+
+  <div class="box" id="box">
+    <button class="x" id="close">Close ✕</button>
+    <figure><img id="boxImg" alt="" /><figcaption><span id="capL"></span><span id="capR"></span></figcaption></figure>
+  </div>
+
+<script>
+  const PHOTOS = 19, N = 57;
+  const STEP = 30;          // degrees per frame, 12 frames per turn
+  const DY = 21;            // vertical drop per frame
+  const root = getComputedStyle(document.documentElement);
+  const R = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--R'));
+  const world = document.getElementById('world');
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const start = new Date(2026, 8, 28);
+  const dateOf = (i) => { const d = new Date(start); d.setDate(d.getDate() - Math.round(i * 4.3)); return d; };
+  const fmt = (d) => `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+  const cells = [];
+  const make = (i, html, cls = '') => {
+    const el = document.createElement('div');
+    el.className = 'cell ' + cls;
+    el.innerHTML = `<div class="film">${html}</div>`;
+    world.appendChild(el);
+    cells.push({ el, i });
+    return el;
+  };
+  make(-1, `<div class="label">CloudPix<small>▸ Start of roll · CPX 400</small></div>`, 'leader');
+  for (let i = 0; i < N; i++) {
+    const p = (i % PHOTOS) + 1;
+    const n = String(i + 1).padStart(2, '0');
+    const el = make(i, `<span class="edge t">CPX 400&nbsp;&nbsp;▸ ${n}A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fmt(dateOf(i))}</span><img src="/files/p${p}.jpg" alt="" draggable="false" /><span class="edge b">${n}&nbsp;&nbsp;&nbsp;&nbsp;▸&nbsp;&nbsp;&nbsp;&nbsp;${n}A</span>`);
+    el.addEventListener('click', () => { if (!moved) open(i); });
+  }
+  make(N, `<div class="label">End of roll<small>Upload a frame to extend it ▸</small></div>`, 'leader');
+
+  // timeline ticks
+  const rail = document.getElementById('rail');
+  for (let k = 0; k <= 6; k++) {
+    const i = Math.round((N - 1) * k / 6);
+    const d = dateOf(i);
+    const t = document.createElement('div');
+    t.className = 'tick'; t.style.top = (k / 6 * 100) + '%';
+    t.textContent = `${months[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+    rail.appendChild(t);
+  }
+  const cur = document.createElement('div'); cur.className = 'cursor'; rail.appendChild(cur);
+
+  // motion: s is a continuous frame index; the helix moves like a screw
+  let s = 13, target = 13, vel = 0, moved = false;
+  const clamp = (v) => Math.max(-1, Math.min(N, v));
+  let slope = 0;
+
+  function place() {
+    const r = R();
+    const cw = 2 * r * Math.sin(STEP * Math.PI / 360) + 1;
+    document.documentElement.style.setProperty('--cw', cw + 'px');
+    slope = Math.atan2(DY, cw) * 180 / Math.PI;
+    for (const c of cells) {
+      const rel = (c.i - s) * STEP;
+      const y = (c.i - s) * DY;
+      c.el.style.transform = `rotateY(${rel}deg) translateZ(${r}px) translateY(${y}px) rotateZ(${slope}deg)`;
+      const face = Math.cos(rel * Math.PI / 180);
+      const far = Math.min(1, Math.abs(y) / 330);
+      const o = face > 0 ? 1 - far * .9 : Math.max(0, .22 - far * .3);
+      c.el.style.opacity = o.toFixed(3);
+      c.el.style.visibility = o < .02 ? 'hidden' : 'visible';
+      c.el.style.filter = face > 0 ? '' : 'brightness(.55) sepia(.4)';
+      c.el.style.zIndex = Math.round(face * 100);
+    }
+    world.style.transform = `translateZ(${-r * 1.15}px) rotateX(-9deg)`;
+    const k = Math.max(0, Math.min(N - 1, Math.round(s)));
+    document.getElementById('counter').lastChild.nodeValue = `${String(k + 1).padStart(3, '0')}/${String(N).padStart(3, '0')}`;
+    document.getElementById('date').textContent = fmt(dateOf(k));
+    cur.style.top = (Math.max(0, Math.min(1, s / (N - 1))) * 100) + '%';
+  }
+
+  function tick() {
+    if (!dragging) { target = clamp(target + vel); vel *= .92; if (Math.abs(vel) < .0005) vel = 0; }
+    s += (target - s) * .12;
+    place();
+    requestAnimationFrame(tick);
+  }
+
+  addEventListener('wheel', (e) => { if (box.classList.contains('open')) return; target = clamp(target + e.deltaY * .006); }, { passive: true });
+  let dragging = false, lastX = 0, downX = 0;
+  addEventListener('pointerdown', (e) => { if (box.classList.contains('open')) return; dragging = true; moved = false; lastX = downX = e.clientX; vel = 0; document.body.classList.add('dragging'); });
+  addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX; lastX = e.clientX;
+    if (Math.abs(e.clientX - downX) > 4) moved = true;
+    const d = -dx * .011; target = clamp(target + d); vel = d;
+  });
+  addEventListener('pointerup', () => { dragging = false; document.body.classList.remove('dragging'); });
+
+  // lightbox
+  const box = document.getElementById('box');
+  let openIdx = 0;
+  function open(i) {
+    openIdx = i;
+    const p = (i % PHOTOS) + 1, n = String(i + 1).padStart(2, '0');
+    document.getElementById('boxImg').src = `/files/p${p}.jpg`;
+    document.getElementById('capL').textContent = `Frame ${n}A — ${fmt(dateOf(i))}`;
+    document.getElementById('capR').textContent = `♥ ${(i * 37) % 90 + 4}   ·   ${(i * 13) % 9} comments   ·   ← →`;
+    box.classList.add('open');
+  }
+  document.getElementById('close').onclick = () => box.classList.remove('open');
+  box.addEventListener('click', (e) => { if (e.target === box) box.classList.remove('open'); });
+  addEventListener('keydown', (e) => {
+    if (box.classList.contains('open')) {
+      if (e.key === 'Escape') box.classList.remove('open');
+      if (e.key === 'ArrowRight') open(Math.min(N - 1, openIdx + 1));
+      if (e.key === 'ArrowLeft') open(Math.max(0, openIdx - 1));
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') target = clamp(Math.round(target) + 1);
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') target = clamp(Math.round(target) - 1);
+  });
+
+  tick();
+</script>
+</body>
+</html>

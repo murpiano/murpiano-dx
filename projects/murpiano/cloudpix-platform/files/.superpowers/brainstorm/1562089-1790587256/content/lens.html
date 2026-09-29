@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>CloudPix — C · Personal Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Caveat:wght@600&display=swap" rel="stylesheet" />
+<style>
+  :root { --paper: #efe4c8; --ink: #3b2f1e; --red: #a2322a; --brass: #b8913f; --muted: #7d6d52; --green: #20352c; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body { background: #2a241b; color: var(--ink); font-family: 'Cormorant Garamond'; font-size: 16px; user-select: none; -webkit-user-select: none; touch-action: none; }
+  canvas#map { position: fixed; inset: 0; display: block; cursor: grab; }
+  canvas#map.drag { cursor: grabbing; }
+
+  .top { position: fixed; left: 0; right: 0; top: 0; z-index: 5; padding: max(16px, env(safe-area-inset-top)) 22px 0; display: flex; justify-content: space-between; align-items: baseline; pointer-events: none; }
+  .brand { font-family: 'Cormorant SC'; font-weight: 700; font-size: 24px; letter-spacing: .08em; }
+  .brand small { font-family: 'Cormorant Garamond'; font-style: italic; font-weight: 500; font-size: 15px; letter-spacing: 0; color: var(--muted); margin-left: 8px; }
+  .totals { font-style: italic; color: var(--muted); }
+
+  /* the loupe stays put; the map moves under it */
+  .lens { position: fixed; z-index: 4; width: var(--d); height: var(--d); left: calc(var(--cx) - var(--d) / 2); top: calc(var(--cy) - var(--d) / 2); border-radius: 50%; pointer-events: none; }
+  .lens canvas { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; }
+  .lens::before { content: ''; position: absolute; inset: -14px; border-radius: 50%; background: conic-gradient(from 200deg, #7a5a22, #f0d68e, #9a7430, #e6c677, #6d4f1c, #d8b465, #7a5a22); -webkit-mask: radial-gradient(circle, transparent calc(var(--d) / 2), #000 calc(var(--d) / 2 + 1px)); mask: radial-gradient(circle, transparent calc(var(--d) / 2), #000 calc(var(--d) / 2 + 1px)); box-shadow: 0 20px 40px rgba(0,0,0,.45); }
+  .lens::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.38), transparent 34%), radial-gradient(circle, transparent 62%, rgba(40,25,5,.25)); box-shadow: inset 0 0 0 2px rgba(60,40,10,.4); }
+  .handle { position: fixed; z-index: 3; width: 26px; height: 120px; left: calc(var(--cx) + var(--d) * .35 - 13px); top: calc(var(--cy) + var(--d) * .35 - 4px); transform: rotate(-45deg); transform-origin: 50% 0; border-radius: 6px 6px 13px 13px; background: linear-gradient(90deg, #3a2412, #7a4a24 40%, #4a2c14); box-shadow: 0 16px 30px rgba(0,0,0,.4); pointer-events: none; }
+  .reticle { position: fixed; z-index: 5; left: var(--cx); top: var(--cy); width: 14px; height: 14px; margin: -7px 0 0 -7px; border: 1.5px solid var(--red); border-radius: 50%; pointer-events: none; opacity: .75; }
+
+  /* what is under the lens, as a stamp */
+  .label { position: fixed; z-index: 6; left: calc(var(--cx) + var(--d) / 2 + 40px); top: calc(var(--cy) - 120px); width: 250px; transition: opacity .25s, transform .25s; }
+  .label.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+  .stamp { position: relative; width: 190px; padding: 12px; background: #fbf6e8; cursor: pointer; filter: drop-shadow(0 10px 14px rgba(0,0,0,.35));
+    --perf: radial-gradient(circle at 6px 6px, transparent 4.5px, #000 5px) -6px -6px / 12px 12px, linear-gradient(#000 0 0) 7px 7px / calc(100% - 14px) calc(100% - 14px) no-repeat;
+    -webkit-mask: var(--perf); mask: var(--perf); transform: rotate(-3deg); transition: transform .3s; }
+  .stamp:hover { transform: rotate(0) scale(1.04); }
+  .stamp img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+  .stamp .den { position: absolute; right: 18px; top: 16px; font-family: 'Cormorant SC'; font-weight: 700; font-size: 20px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+  .stamp .cty { font-family: 'Cormorant SC'; font-weight: 700; font-size: 14px; letter-spacing: .1em; text-align: center; margin-top: 6px; }
+  .postmark { position: absolute; left: -38px; bottom: 30px; width: 96px; height: 96px; border-radius: 50%; border: 2px solid rgba(162,50,42,.8); color: rgba(162,50,42,.9); display: grid; place-items: center; text-align: center; font-family: 'Cormorant SC'; font-weight: 700; font-size: 12px; line-height: 1.1; transform: rotate(-14deg); pointer-events: none; background: repeating-linear-gradient(0deg, transparent 0 9px, rgba(162,50,42,.5) 9px 10px) 100% 50% / 60px 40px no-repeat; }
+  .postmark::before { content: ''; position: absolute; inset: 5px; border-radius: 50%; border: 1px solid rgba(162,50,42,.6); }
+  .meta { margin-top: 16px; font-size: 15px; line-height: 1.35; background: rgba(251,246,232,.92); padding: 12px 14px; box-shadow: 0 8px 20px rgba(60,40,10,.2); }
+  .meta h3 { font-family: 'Cormorant SC'; font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: .02em; }
+  .meta p { color: var(--muted); font-style: italic; margin-top: 4px; }
+  .meta .go { margin-top: 10px; display: inline-block; color: var(--red); font-style: italic; }
+  .empty { font-style: italic; color: var(--muted); font-size: 18px; background: rgba(239,228,200,.85); padding: 10px 14px; border-radius: 4px; }
+
+  .hint { position: fixed; left: 22px; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 5; font-style: italic; color: var(--muted); pointer-events: none; }
+
+  /* stamp album */
+  .album { position: fixed; inset: 0; z-index: 20; background: var(--green) radial-gradient(ellipse at 50% 30%, #2d4a3e, #172720); overflow-y: auto; padding: max(24px, env(safe-area-inset-top)) 20px 60px; opacity: 0; pointer-events: none; transform: translateY(30px); transition: opacity .45s, transform .5s cubic-bezier(.2,.8,.2,1); color: #e9dfc6; touch-action: pan-y; }
+  .album.on { opacity: 1; pointer-events: auto; transform: none; }
+  .album .x { position: fixed; right: 18px; top: max(18px, env(safe-area-inset-top)); width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(233,223,198,.4); background: rgba(0,0,0,.25); color: #e9dfc6; font-size: 18px; cursor: pointer; }
+  .album h2 { font-family: 'Cormorant SC'; font-weight: 700; font-size: clamp(38px, 7vw, 72px); letter-spacing: .04em; text-align: center; line-height: 1; }
+  .album .sub { text-align: center; font-style: italic; color: #b9ae92; margin-top: 6px; }
+  .strip { position: relative; margin: 30px auto 0; max-width: 980px; padding: 18px 16px 14px; }
+  .strip::before { content: ''; position: absolute; left: 0; right: 0; top: 34%; bottom: 0; background: linear-gradient(rgba(255,255,255,.14), rgba(255,255,255,.05)); border-top: 1px solid rgba(255,255,255,.25); pointer-events: none; }
+  .strip h4 { font-family: 'Caveat'; font-size: 26px; color: #e9dfc6; margin-bottom: 8px; }
+  .row { display: flex; gap: 18px; overflow-x: auto; padding: 6px 4px 12px; scroll-snap-type: x mandatory; }
+  .row .stamp { flex: none; width: 150px; scroll-snap-align: start; }
+  .row .stamp:nth-child(2n) { transform: rotate(2deg); }
+  .full { position: fixed; inset: 0; z-index: 30; background: rgba(10,16,13,.94); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .3s; }
+  .full.on { opacity: 1; pointer-events: auto; }
+  .full img { max-width: 92vw; max-height: 74vh; box-shadow: 0 30px 60px rgba(0,0,0,.5); }
+  .full p { position: absolute; left: 0; right: 0; bottom: max(24px, env(safe-area-inset-bottom)); text-align: center; color: #cfc3a4; font-style: italic; padding: 0 20px; }
+
+  @media (max-width: 640px) {
+    .label { left: 16px; right: 16px; width: auto; top: auto; bottom: max(56px, env(safe-area-inset-bottom)); display: flex; gap: 16px; align-items: flex-end; }
+    .label .stamp { width: 118px; flex: none; }
+    .label .meta { margin: 0 0 6px; }
+    .postmark { width: 70px; height: 70px; left: -22px; font-size: 10px; }
+    .totals { display: none; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="map"></canvas>
+  <div class="handle"></div>
+  <div class="lens"><canvas id="lensCanvas"></canvas></div>
+  <div class="reticle"></div>
+  <header class="top"><div class="brand">CloudPix<small>a personal atlas</small></div><div class="totals" id="totals"></div></header>
+  <div class="label hide" id="label"></div>
+  <div class="hint">Move the map under the loupe · scroll or pinch to zoom · tap the stamp to open the album</div>
+
+  <div class="album" id="album"><button class="x" id="closeAlbum">✕</button><div id="albumBody"></div></div>
+  <div class="full" id="full"><img id="fullImg" alt="" /><p id="fullCap"></p></div>
+
+<script src="/files/d3.min.js"></script>
+<script src="/files/topojson.min.js"></script>
+<script src="/files/atlas-data.js"></script>
+<script>
+const A = window.ATLAS;
+// the atlas is drawn once, big; the screen and the lens only copy from it
+const AW = 4000, AH = 2080;
+const atlas = document.createElement('canvas'); atlas.width = AW; atlas.height = AH;
+const a = atlas.getContext('2d');
+const map = document.getElementById('map'), mctx = map.getContext('2d');
+const lensC = document.getElementById('lensCanvas'), lctx = lensC.getContext('2d');
+let projection, path, features, dpr = 1, VW, VH, lens = { cx: 0, cy: 0, d: 240 };
+const WASH = ['#c9786a', '#d6a95a', '#8fae7c', '#6f9fb0', '#b98bb0', '#c98f5a', '#7fa08e', '#d08a7a'];
+
+function drawAtlas() {
+  let seed = 5; const r = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+  a.fillStyle = '#efe4c8'; a.fillRect(0, 0, AW, AH);
+  // paper speckle and vignette
+  for (let i = 0; i < 26000; i++) { a.fillStyle = r() > .5 ? 'rgba(120,95,55,.08)' : 'rgba(255,255,255,.12)'; a.fillRect(r() * AW, r() * AH, 1 + r() * 2, 1 + r() * 2); }
+  const v = a.createRadialGradient(AW / 2, AH / 2, AH * .4, AW / 2, AH / 2, AW * .7); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(90,60,20,.28)'); a.fillStyle = v; a.fillRect(0, 0, AW, AH);
+  // ocean: engraved horizontal hatching inside the sphere
+  a.save(); a.beginPath(); path({ type: 'Sphere' }); a.clip();
+  a.strokeStyle = 'rgba(95,120,130,.28)'; a.lineWidth = 1.2;
+  for (let y = 0; y < AH; y += 7) { a.beginPath(); a.moveTo(0, y); a.lineTo(AW, y); a.stroke(); }
+  a.beginPath(); path(d3.geoGraticule10()); a.strokeStyle = 'rgba(120,90,50,.3)'; a.lineWidth = 1.4; a.stroke();
+  a.restore();
+  a.beginPath(); path({ type: 'Sphere' }); a.strokeStyle = '#5a4428'; a.lineWidth = 5; a.stroke();
+  a.beginPath(); path({ type: 'Sphere' }); a.strokeStyle = '#5a4428'; a.lineWidth = 1.5; a.save(); a.translate(0, 0); a.restore();
+  // land
+  a.beginPath(); for (const f of features) path(f); a.fillStyle = '#ece0bf'; a.fill();
+  // watercolour wash on visited countries: a few offset, blurred layers
+  A.DATA.forEach((c, i) => {
+    const f = features.find((x) => x.id === c.id); if (!f) return;
+    a.save(); a.beginPath(); path(f); a.clip();
+    a.filter = 'blur(6px)';
+    for (let k = 0; k < 3; k++) { a.globalAlpha = .35; a.fillStyle = WASH[i % WASH.length]; a.save(); a.translate((r() - .5) * 10, (r() - .5) * 10); a.beginPath(); path(f); a.fill(); a.restore(); }
+    a.filter = 'none'; a.globalAlpha = 1; a.restore();
+  });
+  a.beginPath(); for (const f of features) path(f); a.strokeStyle = 'rgba(70,52,30,.8)'; a.lineWidth = 1.3; a.stroke();
+  // country names, engraved small caps (readable in the loupe)
+  a.textAlign = 'center'; a.textBaseline = 'middle';
+  for (const f of features) {
+    if (path.area(f) < 900) continue;
+    const [x, y] = path.centroid(f); const been = A.byId.has(f.id);
+    a.font = `${been ? 700 : 500} ${been ? 22 : 16}px "Cormorant SC"`; a.fillStyle = been ? 'rgba(59,47,30,.95)' : 'rgba(90,72,45,.55)';
+    a.fillText(f.properties.name.toUpperCase().split('').join(' '), x, y - (been ? 30 : 0));
+  }
+  // ocean names in italics
+  a.font = 'italic 500 44px "Cormorant Garamond"'; a.fillStyle = 'rgba(70,90,100,.5)';
+  for (const [t, lon, lat] of [['Atlantic Ocean', -38, 22], ['Pacific Ocean', -145, 5], ['Indian Ocean', 78, -24], ['Southern Ocean', 20, -58]]) { const [x, y] = projection([lon, lat]); a.fillText(t, x, y); }
+  // my route: every trip in order, a red dashed great circle
+  const trips = A.trips();
+  a.setLineDash([10, 9]); a.strokeStyle = 'rgba(162,50,42,.75)'; a.lineWidth = 2.4;
+  for (let i = 1; i < trips.length; i++) { a.beginPath(); path({ type: 'LineString', coordinates: [[trips[i - 1].city.lon, trips[i - 1].city.lat], [trips[i].city.lon, trips[i].city.lat]] }); a.stroke(); }
+  a.setLineDash([]);
+  // cities: ink circles and handwritten names
+  for (const city of A.cities()) {
+    const [x, y] = projection([city.lon, city.lat]);
+    a.beginPath(); a.arc(x, y, 9, 0, 7); a.fillStyle = '#fbf6e8'; a.fill(); a.lineWidth = 3; a.strokeStyle = '#a2322a'; a.stroke();
+    a.beginPath(); a.arc(x, y, 3, 0, 7); a.fillStyle = '#a2322a'; a.fill();
+    a.font = '600 30px "Caveat"'; a.fillStyle = '#7a2019'; a.textAlign = 'left'; a.fillText(city.name, x + 14, y + 2); a.textAlign = 'center';
+  }
+  // cartouche
+  const bx = AW * .06, by = AH * .76;
+  a.fillStyle = 'rgba(251,246,232,.9)'; a.fillRect(bx, by, 560, 300); a.strokeStyle = '#5a4428'; a.lineWidth = 4; a.strokeRect(bx, by, 560, 300); a.lineWidth = 1.5; a.strokeRect(bx + 12, by + 12, 536, 276);
+  a.fillStyle = '#3b2f1e'; a.font = '700 64px "Cormorant SC"'; a.fillText('CloudPix', bx + 280, by + 90);
+  a.font = 'italic 500 34px "Cormorant Garamond"'; a.fillText('A Personal Atlas of the World', bx + 280, by + 150);
+  const t = A.totals(); a.font = '500 26px "Cormorant SC"'; a.fillStyle = '#7d6d52'; a.fillText(`${t.countries} countries · ${t.cities} cities · ${t.photos.toLocaleString('en')} photographs`, bx + 280, by + 205);
+  a.fillText(`${t.since} – 2026`, bx + 280, by + 245);
+  // compass rose
+  const [rx, ry] = [AW * .9, AH * .78];
+  a.save(); a.translate(rx, ry); a.strokeStyle = '#5a4428'; a.fillStyle = '#5a4428'; a.lineWidth = 2;
+  a.beginPath(); a.arc(0, 0, 90, 0, 7); a.stroke(); a.beginPath(); a.arc(0, 0, 70, 0, 7); a.stroke();
+  for (let i = 0; i < 4; i++) { a.rotate(Math.PI / 2); a.beginPath(); a.moveTo(0, -120); a.lineTo(14, 0); a.lineTo(-14, 0); a.closePath(); i % 2 ? a.fill() : a.stroke(); }
+  a.rotate(Math.PI / 4); for (let i = 0; i < 4; i++) { a.rotate(Math.PI / 2); a.beginPath(); a.moveTo(0, -70); a.lineTo(8, 0); a.lineTo(-8, 0); a.closePath(); a.stroke(); }
+  a.restore(); a.font = '700 30px "Cormorant SC"'; a.fillText('N', rx, ry - 140);
+}
+
+// ---------- view ----------
+let view = { x: AW / 2, y: AH / 2, k: .4 }, target = null, minK = .2, maxK = 1.2, vel = [0, 0];
+function size() {
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  VW = innerWidth; VH = innerHeight;
+  map.width = VW * dpr; map.height = VH * dpr; map.style.width = VW + 'px'; map.style.height = VH + 'px';
+  const mobile = VW < 640;
+  lens = { cx: VW / 2, cy: mobile ? VH * .38 : VH / 2, d: mobile ? Math.min(210, VW * .56) : 250 };
+  if (!mobile) lens.cx = VW * .42;
+  const root = document.documentElement.style;
+  root.setProperty('--cx', lens.cx + 'px'); root.setProperty('--cy', lens.cy + 'px'); root.setProperty('--d', lens.d + 'px');
+  lensC.width = lens.d * dpr; lensC.height = lens.d * dpr;
+  minK = Math.min(VW / AW, VH / AH);
+  view.k = Math.max(minK, mobile ? minK * 1.6 : .62);
+}
+// view.x, view.y: the atlas point under the lens centre
+function render() {
+  mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  mctx.fillStyle = '#e3d6b4'; mctx.fillRect(0, 0, VW, VH);
+  const sx = view.x - lens.cx / view.k, sy = view.y - lens.cy / view.k;
+  mctx.drawImage(atlas, sx, sy, VW / view.k, VH / view.k, 0, 0, VW, VH);
+  // the loupe: same atlas, 2.6× closer
+  const m = Math.min(view.k * 2.6, 1.6), half = lens.d / 2 / m;
+  lctx.setTransform(1, 0, 0, 1, 0, 0);
+  lctx.fillStyle = '#efe4c8'; lctx.fillRect(0, 0, lensC.width, lensC.height);
+  lctx.drawImage(atlas, view.x - half, view.y - half, half * 2, half * 2, 0, 0, lensC.width, lensC.height);
+}
+// the lens may reach any point of the atlas; past the edge the paper just continues
+function clampView() { view.x = Math.max(0, Math.min(AW, view.x)); view.y = Math.max(0, Math.min(AH, view.y)); }
+
+function loop() {
+  if (!dragging) {
+    if (Math.abs(vel[0]) + Math.abs(vel[1]) > .05) { view.x -= vel[0] / view.k; view.y -= vel[1] / view.k; vel = [vel[0] * .92, vel[1] * .92]; }
+    else if (!target) snap();
+    if (target) { view.x += (target[0] - view.x) * .15; view.y += (target[1] - view.y) * .15; if (Math.hypot(target[0] - view.x, target[1] - view.y) < .5) target = null; }
+  }
+  clampView();
+  render();
+  identify();
+  requestAnimationFrame(loop);
+}
+// cities pull the lens toward them when close
+function snap() {
+  let best = null, bd = 34 / view.k;
+  for (const city of A.cities()) { const [x, y] = projection([city.lon, city.lat]); const d = Math.hypot(x - view.x, y - view.y); if (d < bd) { bd = d; best = [x, y]; } }
+  if (best && bd > .5) target = best;
+}
+
+// ---------- input ----------
+const pointers = new Map();
+let dragging = false, pinch = null, moved = false;
+map.addEventListener('pointerdown', (e) => { map.setPointerCapture(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]); dragging = true; moved = false; target = null; vel = [0, 0]; map.classList.add('drag');
+  if (pointers.size === 2) { const [p, q] = [...pointers.values()]; pinch = { d: Math.hypot(p[0] - q[0], p[1] - q[1]), k: view.k }; } });
+map.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pinch && pointers.size === 2) { const [p, q] = [...pointers.values()]; view.k = Math.max(minK, Math.min(maxK, pinch.k * Math.hypot(p[0] - q[0], p[1] - q[1]) / pinch.d)); return; }
+  const dx = e.clientX - prev[0], dy = e.clientY - prev[1];
+  if (Math.abs(dx) + Math.abs(dy) > 1) moved = true;
+  view.x -= dx / view.k; view.y -= dy / view.k; vel = [dx, dy];
+});
+const up = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; if (!pointers.size) { dragging = false; map.classList.remove('drag'); if (!moved) tapMap(e.clientX, e.clientY); } };
+map.addEventListener('pointerup', up); map.addEventListener('pointercancel', up);
+map.addEventListener('wheel', (e) => { e.preventDefault(); view.k = Math.max(minK, Math.min(maxK, view.k * Math.exp(-e.deltaY * .0015))); }, { passive: false });
+addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (full.classList.contains('on')) full.classList.remove('on'); else closeAlbum(); } });
+// tapping the map slides that point under the lens
+function tapMap(x, y) { target = [view.x + (x - lens.cx) / view.k, view.y + (y - lens.cy) / view.k]; }
+
+// ---------- what is under the lens ----------
+const label = document.getElementById('label');
+let current = null;
+let lastId = [0, 0];
+function identify() {
+  if (Math.abs(lastId[0] - view.x) + Math.abs(lastId[1] - view.y) < .3) return;
+  lastId = [view.x, view.y];
+  let hit = null;
+  for (const city of A.cities()) { const [x, y] = projection([city.lon, city.lat]); if (Math.hypot(x - view.x, y - view.y) < 14 / view.k + 6) { hit = { city }; break; } }
+  if (!hit) { const ll = projection.invert([view.x, view.y]); const f = ll && features.find((f) => d3.geoContains(f, ll)); if (f) hit = { f, c: A.byId.get(f.id) }; }
+  const key = hit ? (hit.city ? 'city:' + hit.city.name : 'country:' + hit.f.id) : '';
+  if (key === current) return;
+  current = key;
+  if (!hit) { label.innerHTML = `<div class="empty">Open sea. Move the map to a red circle.</div>`; label.classList.remove('hide'); return; }
+  if (hit.city) {
+    const city = hit.city, ph = A.photosOf(city)[0], photos = A.sum(city.albums, (x) => x.photos), al = city.albums[0];
+    label.innerHTML = `<div class="stamp" id="stampBtn"><img src="${ph ? A.src(ph) : ''}" alt=""><span class="den">${photos}</span><div class="cty">${city.country.name}</div><div class="postmark">${city.name.toUpperCase()}<br>${A.MONTHS[al.month - 1].toUpperCase()} ${al.year}</div></div>
+      <div class="meta"><h3>${city.name}</h3><p>${city.albums.map((x) => `${x.title}, ${x.year}`).join(' · ')}</p><span class="go">Tap the stamp to open the album →</span></div>`;
+    document.getElementById('stampBtn').onclick = () => openAlbum(city.country, city);
+  } else if (hit.c) {
+    const s = A.stats(hit.c);
+    label.innerHTML = `<div class="meta"><h3>${hit.c.name}</h3><p>${A.plural(s.cities, 'city')} · ${A.plural(s.albums, 'album')} · ${A.plural(s.photos, 'photo')}<br>${s.from === s.to ? s.from : s.from + '–' + s.to}</p><span class="go" id="goCountry" style="pointer-events:auto;cursor:pointer">Open all of ${hit.c.name} →</span></div>`;
+    document.getElementById('goCountry').onclick = () => openAlbum(hit.c);
+  } else label.innerHTML = `<div class="empty">${hit.f.properties.name} — not yet.</div>`;
+  label.classList.remove('hide');
+}
+
+// ---------- the stamp album ----------
+const album = document.getElementById('album'), full = document.getElementById('full');
+function openAlbum(c, onlyCity) {
+  const s = A.stats(onlyCity ? { cities: [onlyCity] } : c);
+  const cities = onlyCity ? [onlyCity] : c.cities;
+  document.getElementById('albumBody').innerHTML = `<h2>${onlyCity ? onlyCity.name : c.name}</h2><div class="sub">${onlyCity ? c.name + ' · ' : ''}${A.plural(s.albums, 'album')} · ${A.plural(s.photos, 'photo')} · ${s.from === s.to ? s.from : s.from + '–' + s.to}</div>` +
+    cities.flatMap((city) => city.albums.map((al) => `<div class="strip"><h4>${al.title} — ${city.name}, ${A.MONTHS[al.month - 1]} ${al.year}</h4><div class="row">${A.photosOf(city).map((p, i) => `<div class="stamp" data-src="${A.src(p)}" data-cap="${al.title} · ${city.name}, ${al.year} · photo: ${(p.author || 'unknown').replace(/"/g, '')} (${p.lic}), Wikimedia Commons"><img src="${A.src(p)}" alt=""><span class="den">${i + 1}</span><div class="cty">${city.name}</div></div>`).join('')}</div></div>`)).join('');
+  album.querySelectorAll('.row .stamp').forEach((el) => el.onclick = () => { document.getElementById('fullImg').src = el.dataset.src; document.getElementById('fullCap').textContent = el.dataset.cap; full.classList.add('on'); });
+  album.scrollTop = 0; album.classList.add('on');
+}
+function closeAlbum() { album.classList.remove('on'); }
+document.getElementById('closeAlbum').onclick = closeAlbum;
+full.onclick = () => full.classList.remove('on');
+
+// ---------- boot ----------
+(async () => {
+  await A.load();
+  await document.fonts.load('600 30px Caveat'); await document.fonts.load('700 30px "Cormorant SC"'); await document.fonts.load('italic 500 30px "Cormorant Garamond"');
+  const topo = await d3.json('/files/countries-110m.json');
+  features = topojson.feature(topo, topo.objects.countries).features.filter((f) => f.id !== '010' && f.id);
+  projection = d3.geoNaturalEarth1().fitExtent([[60, 60], [AW - 60, AH - 60]], { type: 'Sphere' });
+  path = d3.geoPath(projection, a);
+  drawAtlas();
+  size();
+  const [bx, by] = projection([2.17, 41.39]); view.x = bx + 40; view.y = by + 30;
+  const t = A.totals(); document.getElementById('totals').textContent = `${t.countries} countries · ${t.cities} cities · ${t.photos.toLocaleString('en')} photos`;
+  loop();
+  window.__ready = true;
+})();
+addEventListener('resize', size);
+</script>
+</body>
+</html>

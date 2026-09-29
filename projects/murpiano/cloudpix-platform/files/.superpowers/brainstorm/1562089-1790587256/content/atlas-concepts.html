@@ -1,0 +1,36 @@
+<h2>CloudPix · карта воспоминаний — три концепта</h2>
+<p class="subtitle">Каждый открывается в новой вкладке. Всё на canvas, в headless-браузере A и C держат 60 fps. Фото — реальные снимки городов из Wikimedia Commons. На телефоне открывайте по той же ссылке или сузьте окно.</p>
+
+<div class="cards">
+  <div class="card" data-choice="scratch" onclick="toggleSelect(this)">
+    <div class="card-image" style="display:flex;gap:6px;background:#0f1012"><img src="/files/t2-scratch.png" alt="" style="width:72%;object-fit:cover" /><img src="/files/t2-scratch-m.png" alt="" style="width:26%;object-fit:cover" /></div>
+    <div class="card-body">
+      <h3>A · Scratch Map</h3>
+      <p>Золотая фольга. Посещённые страны стёрты, под ними коллаж твоих фото по форме страны. «Scratch a new place» — стираешь страну монеткой: летит фольга, под ней цвет, форма спрашивает город. Тап по стране — камера наезжает, отпечатки вылетают из страны в колоду. Листаешь свайпом, тап переворачивает карточку (на обороте подпись и автор фото).</p>
+      <p><a href="/files/scratch.html" target="_blank" onclick="event.stopPropagation()">Открыть демо →</a></p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="night" onclick="toggleSelect(this)">
+    <div class="card-image" style="display:flex;gap:6px;background:#04060d"><img src="/files/t2-night.png" alt="" style="width:72%;object-fit:cover" /><img src="/files/t2-night-m.png" alt="" style="width:26%;object-fit:cover" /></div>
+    <div class="card-body">
+      <h3>B · Night Flight</h3>
+      <p>Ночная Земля с горизонтом, огни городов, где ты был. Внизу шкала годов: ▶ проигрывает все поездки по порядку, глобус поворачивается, дуга перелёта прочерчивается, считаются страны, фото и километры. Стрелки ← → — по одной поездке. «Look out of the window» — иллюминатор со шторкой, фото за облаками, свайп листает.</p>
+      <p><a href="/files/night.html" target="_blank" onclick="event.stopPropagation()">Открыть демо →</a></p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="lens" onclick="toggleSelect(this)">
+    <div class="card-image" style="display:flex;gap:6px;background:#e3d6b4"><img src="/files/t2-lens.png" alt="" style="width:72%;object-fit:cover" /><img src="/files/t2-lens-m.png" alt="" style="width:26%;object-fit:cover" /></div>
+    <div class="card-body">
+      <h3>C · Personal Atlas</h3>
+      <p>Старинный атлас: сепия, штриховка океанов, акварель на посещённых странах, красный пунктир всего маршрута. Латунная лупа стоит на месте, карта едет под ней и примагничивается к городам; названия читаются только в лупе. Город под лупой — почтовая марка со штемпелем; тап — кляссер, альбомы полосками марок.</p>
+      <p><a href="/files/lens.html" target="_blank" onclick="event.stopPropagation()">Открыть демо →</a></p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <p class="label">Управление</p>
+  <p>Мышь: перетаскивание, колесо, клик. Телефон: палец, два пальца для зума (в A два пальца двигают карту и в режиме стирания). Можно смешивать: например, фольга из A и шкала поездок из B.</p>
+</div>

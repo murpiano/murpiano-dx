@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CloudPix — Memory Atlas prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wdth,wght@0,75..100,400..700;1,75..100,400..700&family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --room: #232529;
+    --glow: #f3f6f8;
+    --grid: rgba(120, 150, 170, .16);
+    --paper: #f6f1e6;
+    --land: #ece4d2;
+    --ink: #1d2126;
+    --line: #6f6857;
+    --muted: #8a8472;
+    --mark: #ffcf33;
+    --pen: #2a44c9;
+    --dot: #e2493a;
+    --mount: #fbfaf5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--room); color: var(--ink); font-family: 'Instrument Sans'; font-size: 13px; user-select: none; cursor: none; }
+  body.placing { cursor: crosshair; }
+
+  /* ---------- chrome ---------- */
+  .top { position: fixed; inset: 0 0 auto 0; z-index: 20; padding: 20px 28px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  .top > * { pointer-events: auto; }
+  .mark { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; letter-spacing: -.01em; }
+  .mark .ico { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ink); position: relative; }
+  .mark .ico::after { content: ''; position: absolute; left: 5px; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); }
+  .stats { font-stretch: 85%; font-weight: 500; color: #4a4f57; display: flex; gap: 18px; }
+  .stats b { color: var(--ink); font-weight: 700; }
+  .add { background: var(--ink); color: var(--glow); border: 0; border-radius: 99px; padding: 10px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+  body.placing .add { background: var(--dot); }
+
+  .hintbar { position: fixed; left: 28px; bottom: 24px; z-index: 20; color: #4a4f57; font-stretch: 85%; line-height: 1.6; pointer-events: none; }
+  .hintbar b { color: var(--ink); }
+  .toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 20px); z-index: 60; background: var(--ink); color: var(--glow); padding: 11px 18px; border-radius: 99px; font-weight: 500; opacity: 0; transition: .35s; pointer-events: none; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- table ---------- */
+  .stage { position: fixed; inset: 0; perspective: 1400px; perspective-origin: 50% 24%; }
+  .table {
+    position: absolute; left: 50%; top: 50%; width: 2600px; height: 1700px; margin: -850px 0 0 -1300px;
+    transform-style: preserve-3d; border-radius: 26px;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 44px 44px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 44px 44px,
+      radial-gradient(ellipse at 50% 45%, #fff 0%, var(--glow) 50%, #dce5ea 100%);
+    box-shadow: 0 0 0 16px #37393e, 0 0 180px 50px rgba(210, 230, 245, .2);
+  }
+  .sheet {
+    position: absolute; left: 300px; top: 280px; width: 2000px; height: 1080px;
+    background: var(--paper); opacity: .97;
+    box-shadow: 0 2px 3px rgba(40, 40, 30, .12), 0 16px 40px rgba(40, 40, 30, .14);
+  }
+  /* fold creases: the map was folded in 4 × 2 */
+  .sheet::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(90deg, transparent calc(25% - 1px), rgba(0,0,0,.05) 25%, rgba(255,255,255,.5) calc(25% + 1px), transparent calc(25% + 2px)),
+      linear-gradient(90deg, transparent calc(50% - 1px), rgba(0,0,0,.06) 50%, rgba(255,255,255,.5) calc(50% + 1px), transparent calc(50% + 2px)),
+      linear-gradient(90deg, transparent calc(75% - 1px), rgba(0,0,0,.05) 75%, rgba(255,255,255,.5) calc(75% + 1px), transparent calc(75% + 2px)),
+      linear-gradient(0deg, transparent calc(50% - 1px), rgba(0,0,0,.06) 50%, rgba(255,255,255,.5) calc(50% + 1px), transparent calc(50% + 2px));
+  }
+  svg.map { position: absolute; inset: 0; overflow: visible; }
+  .grat { fill: none; stroke: #cfc4ab; stroke-width: .6; stroke-dasharray: 2 3; }
+  .sphere { fill: none; stroke: var(--line); stroke-width: 1.2; }
+  .country { fill: var(--land); stroke: var(--line); stroke-width: .5; transition: fill .3s; }
+  .country.been { fill: var(--mark); fill-opacity: .6; mix-blend-mode: multiply; }
+  .country.hot { stroke: var(--pen); stroke-width: 1.4; }
+  .clabel { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; fill: #5b5443; pointer-events: none; text-anchor: middle; }
+  .ocean { font-size: 15px; font-style: italic; letter-spacing: .5em; text-transform: uppercase; fill: #a79d86; pointer-events: none; text-anchor: middle; }
+  .sticker { fill: var(--dot); stroke: #fff; stroke-width: 2.4; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); cursor: pointer; }
+  .sticker.hot { fill: var(--pen); }
+  .note { font-family: 'Caveat'; font-size: 34px; fill: var(--pen); }
+
+  .legend { position: absolute; right: 36px; bottom: 30px; width: 250px; padding: 14px 16px; border: 1px solid var(--line); background: var(--paper); font-size: 11px; color: #4d4738; line-height: 1.8; }
+  .legend h4 { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 6px; color: var(--ink); }
+  .legend i { display: inline-block; vertical-align: -2px; margin-right: 8px; }
+  .legend .sw { width: 22px; height: 12px; background: var(--mark); opacity: .7; }
+  .legend .dt { width: 12px; height: 12px; border-radius: 50%; background: var(--dot); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+
+  .slide { position: absolute; width: 180px; height: 180px; border-radius: 12px; background: var(--mount); box-shadow: 0 1px 1px rgba(30,40,50,.18), 0 6px 14px rgba(30,40,50,.12); transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s; cursor: pointer; }
+  .slide:hover { box-shadow: 0 30px 40px rgba(30,40,50,.28); }
+  .slide .brand { position: absolute; top: 14px; left: 22px; right: 22px; display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+  .slide .win { position: absolute; left: 22px; right: 22px; top: 42px; height: 94px; border-radius: 3px; overflow: hidden; }
+  .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .slide .hand { position: absolute; left: 20px; right: 14px; bottom: 9px; font-family: 'Caveat'; font-size: 20px; color: var(--pen); white-space: nowrap; overflow: hidden; }
+
+  /* ---------- loupe ---------- */
+  .loupe { position: fixed; z-index: 30; width: 240px; height: 240px; margin: -120px 0 0 -120px; border-radius: 50%; pointer-events: none; overflow: hidden;
+    border: 11px solid #15171a; box-shadow: 0 0 0 1px #3a3d42, 0 28px 55px rgba(0,0,0,.4); background: var(--paper);
+    transition: width .22s, height .22s, margin .22s, border-width .22s; }
+  .loupe .inner { position: absolute; left: 0; top: 0; width: 2000px; height: 1080px; transform-origin: 0 0; }
+  .loupe .inner svg .country { stroke-width: .35; }
+  .loupe .llabel { font-size: 2.6px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; fill: #9a907a; text-anchor: middle; }
+  .loupe .llabel.been { fill: #4a4231; font-size: 3.1px; }
+  .loupe .lcity { font-size: 3.4px; font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: .8px; }
+  .loupe::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 30% 26%, rgba(255,255,255,.4), transparent 36%); box-shadow: inset 0 0 26px rgba(0,0,0,.25); }
+  .loupe.idle { width: 30px; height: 30px; margin: -15px 0 0 -15px; border-width: 3px; }
+  .loupe.idle .inner { display: none; }
+  body.placing .loupe::before { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(var(--dot), var(--dot)) center / 1px 60% no-repeat, linear-gradient(var(--dot), var(--dot)) center / 60% 1px no-repeat; }
+
+  .card { position: fixed; z-index: 31; pointer-events: none; min-width: 220px; max-width: 300px; background: #15171a; color: #eef0f2; border-radius: 14px; padding: 13px 16px 14px; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+  .card.on { opacity: 1; transform: none; }
+  .card h5 { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+  .card .row { margin-top: 6px; color: #a9afb8; font-stretch: 85%; }
+  .card .row b { color: #fff; font-weight: 600; }
+  .card ul { list-style: none; margin-top: 8px; display: grid; gap: 4px; }
+  .card li { display: flex; justify-content: space-between; gap: 16px; font-stretch: 85%; }
+  .card li span:last-child { color: #a9afb8; }
+  .card img { display: block; width: 100%; height: 110px; object-fit: cover; border-radius: 8px; margin-top: 10px; }
+  .card .dim { color: #7d838c; }
+
+  /* ---------- archive sheet ---------- */
+  .archive { position: fixed; top: 0; right: 0; bottom: 0; width: min(600px, 100vw); z-index: 50; background: var(--paper); box-shadow: -30px 0 60px rgba(0,0,0,.3); transform: translateX(105%); transition: transform .55s cubic-bezier(.2,.8,.2,1); overflow-y: auto; cursor: default; padding: 34px 36px 60px; }
+  .archive.open { transform: none; }
+  .archive .x { position: absolute; top: 26px; right: 30px; background: var(--ink); color: var(--paper); border: 0; border-radius: 99px; padding: 8px 15px; font: inherit; font-weight: 600; cursor: pointer; }
+  .archive .back { background: none; border: 0; font: inherit; color: var(--pen); cursor: pointer; margin-bottom: 14px; font-weight: 600; }
+  .archive h2 { font-stretch: 75%; font-weight: 700; font-size: 58px; line-height: .95; letter-spacing: -.02em; }
+  .archive .sub { color: #5e5847; margin-top: 8px; font-stretch: 85%; font-size: 14px; }
+  .archive h3 { margin: 30px 0 12px; display: flex; align-items: baseline; gap: 12px; font-size: 20px; }
+  .archive h3 small { font-weight: 500; color: var(--muted); font-size: 13px; }
+  .archive h3::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--dot); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); align-self: center; }
+  .albums { display: flex; flex-wrap: wrap; gap: 16px; }
+  .albums .slide { position: relative; }
+  .albums .slide:nth-child(2n) { transform: rotate(1.5deg); } .albums .slide:nth-child(3n) { transform: rotate(-2deg); }
+  .albums .slide:hover { transform: translateY(-6px) rotate(0); }
+  .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 22px; }
+  .photos img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; border-radius: 3px; }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="mark"><span class="ico"></span>cloudpix</div>
+    <div class="stats" id="stats"></div>
+    <button class="add" id="add">+ Add a memory</button>
+  </header>
+
+  <div class="stage"><div class="table" id="table">
+    <div class="sheet" id="sheet"><div class="legend">
+      <h4>Memory Atlas</h4>
+      <div><i class="sw"></i>countries I have been to</div>
+      <div><i class="dt"></i>a city with albums — size = photos</div>
+      <div style="color:#8a8472;margin-top:4px">1 : 60 000 000 · printed 2026</div>
+    </div></div>
+  </div></div>
+
+  <div class="loupe idle" id="loupe"><div class="inner" id="lensInner"></div></div>
+  <div class="card" id="card"></div>
+  <div class="hintbar"><b>Drag</b> — move the table · <b>Scroll</b> — lean in · <b>Hover</b> — look through the loupe · <b>Click</b> — open a country</div>
+  <div class="toast" id="toast"></div>
+
+  <aside class="archive" id="archive"><button class="x" id="closeArchive">Back to the table</button><div id="archiveBody"></div></aside>
+
+<script src="/files/d3.min.js"></script>
+<script src="/files/topojson.min.js"></script>
+<script>
+// ---------- data: one person's memories ----------
+const DATA = [
+  { id: '724', name: 'Spain', cities: [
+    { name: 'Barcelona', lat: 41.39, lon: 2.17, albums: [['Gaudí & the sea', 2019, 64], ['New Year on the roof', 2023, 38]] },
+    { name: 'Madrid', lat: 40.42, lon: -3.70, albums: [['Prado afternoons', 2021, 41]] },
+    { name: 'Seville', lat: 37.39, lon: -5.98, albums: [['Orange trees in March', 2024, 69]] } ] },
+  { id: '620', name: 'Portugal', cities: [
+    { name: 'Lisbon', lat: 38.72, lon: -9.14, albums: [['Tram 28', 2019, 52]] },
+    { name: 'Porto', lat: 41.15, lon: -8.61, albums: [['Rain on the Douro', 2022, 33]] } ] },
+  { id: '380', name: 'Italy', cities: [
+    { name: 'Rome', lat: 41.9, lon: 12.5, albums: [['Seven hills, one week', 2018, 88]] },
+    { name: 'Florence', lat: 43.77, lon: 11.25, albums: [['Duomo at dawn', 2018, 27]] },
+    { name: 'Venice', lat: 45.44, lon: 12.33, albums: [['Fog and gondolas', 2025, 46]] } ] },
+  { id: '250', name: 'France', cities: [ { name: 'Paris', lat: 48.86, lon: 2.35, albums: [['First trip abroad', 2016, 120], ['Paris again', 2022, 35]] } ] },
+  { id: '352', name: 'Iceland', cities: [
+    { name: 'Reykjavík', lat: 64.15, lon: -21.94, albums: [['Midnight sun', 2020, 58]] },
+    { name: 'Vík', lat: 63.42, lon: -19.0, albums: [['Black sand', 2020, 44]] } ] },
+  { id: '578', name: 'Norway', cities: [
+    { name: 'Bergen', lat: 60.39, lon: 5.32, albums: [['Fjords by ferry', 2021, 61]] },
+    { name: 'Tromsø', lat: 69.65, lon: 18.96, albums: [['Chasing the aurora', 2024, 93]] } ] },
+  { id: '392', name: 'Japan', cities: [
+    { name: 'Tokyo', lat: 35.68, lon: 139.69, albums: [['Neon and quiet', 2023, 140]] },
+    { name: 'Kyoto', lat: 35.01, lon: 135.77, albums: [['Sakura week', 2023, 97], ['Autumn temples', 2025, 54]] } ] },
+  { id: '554', name: 'New Zealand', cities: [
+    { name: 'Auckland', lat: -36.85, lon: 174.76, albums: [['Harbour city', 2024, 29]] },
+    { name: 'Queenstown', lat: -45.03, lon: 168.66, albums: [['Southern Alps road trip', 2024, 131]] } ] },
+  { id: '268', name: 'Georgia', cities: [ { name: 'Tbilisi', lat: 41.72, lon: 44.79, albums: [['Wine and balconies', 2022, 48]] } ] },
+  { id: '504', name: 'Morocco', cities: [ { name: 'Marrakesh', lat: 31.63, lon: -8.0, albums: [['Souks and saffron', 2021, 57]] } ] },
+  { id: '840', name: 'United States', cities: [
+    { name: 'New York', lat: 40.71, lon: -74.0, albums: [['Seven days in Manhattan', 2017, 102]] },
+    { name: 'San Francisco', lat: 37.77, lon: -122.42, albums: [['Fog over the bridge', 2017, 45]] } ] },
+  { id: '604', name: 'Peru', cities: [ { name: 'Cusco', lat: -13.53, lon: -71.97, albums: [['Up to Machu Picchu', 2025, 76]] } ] },
+];
+let cover = 0;
+for (const c of DATA) for (const city of c.cities) city.albums = city.albums.map(([title, year, photos]) => ({ title, year, photos, cover: (cover++ % 19) + 1 }));
+
+const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
+const countryStats = (c) => {
+  const albums = c.cities.flatMap((x) => x.albums);
+  const years = albums.map((a) => a.year);
+  return { cities: c.cities.length, albums: albums.length, photos: sum(albums, (a) => a.photos), from: Math.min(...years), to: Math.max(...years) };
+};
+const plural = (n, w) => `${n.toLocaleString('en')} ${n === 1 ? w : w === 'city' ? 'cities' : w + 's'}`;
+const byId = new Map(DATA.map((c) => [c.id, c]));
+
+// ---------- map ----------
+const SW = 2000, SH = 1080;
+const sheet = document.getElementById('sheet');
+const svg = d3.select(sheet).insert('svg', ':first-child').attr('class', 'map').attr('width', SW).attr('height', SH);
+let projection, path, features;
+
+function renderStats() {
+  const all = DATA.map(countryStats);
+  const years = all.flatMap((s) => [s.from, s.to]);
+  document.getElementById('stats').innerHTML =
+    `<span><b>${DATA.length}</b> countries</span><span><b>${sum(all, (s) => s.cities)}</b> cities</span><span><b>${sum(all, (s) => s.albums)}</b> albums</span><span><b>${sum(all, (s) => s.photos).toLocaleString('en')}</b> photos</span><span>since <b>${Math.min(...years)}</b></span>`;
+}
+
+function renderMap() {
+  svg.selectAll('*').remove();
+  svg.append('path').datum(d3.geoGraticule10()).attr('class', 'grat').attr('d', path);
+  svg.append('path').datum({ type: 'Sphere' }).attr('class', 'sphere').attr('d', path);
+  svg.append('g').selectAll('path').data(features).join('path')
+    .attr('class', (d) => 'country' + (byId.has(d.id) ? ' been' : ''))
+    .attr('data-id', (d) => d.id).attr('d', path);
+  const oceans = [['Atlantic Ocean', -38, 22], ['Pacific Ocean', -140, 5], ['Indian Ocean', 78, -22], ['Arctic Ocean', 0, 82]];
+  svg.append('g').selectAll('text').data(oceans).join('text').attr('class', 'ocean')
+    .attr('transform', (d) => `translate(${projection([d[1], d[2]])})`).text((d) => d[0]);
+  const cities = DATA.flatMap((c) => c.cities.map((city) => ({ c, city })));
+  svg.append('g').selectAll('circle').data(cities).join('circle').attr('class', 'sticker')
+    .attr('data-country', (d) => d.c.id).attr('data-city', (d) => d.city.name)
+    .attr('cx', (d) => projection([d.city.lon, d.city.lat])[0]).attr('cy', (d) => projection([d.city.lon, d.city.lat])[1])
+    .attr('r', (d) => 4 + Math.sqrt(sum(d.city.albums, (a) => a.photos)) * .5);
+  svg.append('text').attr('class', 'note').attr('x', 70).attr('y', 90).attr('transform', 'rotate(-4 70 90)').text('places I have been ✎');
+  // the loupe shows the same map, just closer
+  // the loupe shows the same map closer, plus what is too small to print: every name
+  const inner = document.getElementById('lensInner');
+  inner.innerHTML = '';
+  const lens = svg.node().cloneNode(true);
+  lens.querySelectorAll('.ocean, .note').forEach((n) => n.remove());
+  lens.querySelectorAll('.sticker').forEach((n) => n.setAttribute('r', 2.2 + (+n.getAttribute('r') - 4) * .25));
+  lens.querySelectorAll('.sticker').forEach((n) => n.style.strokeWidth = .7);
+  const ns = 'http://www.w3.org/2000/svg', g = document.createElementNS(ns, 'g');
+  for (const f of features) {
+    const area = path.area(f); if (area < 25) continue;
+    const [x, y] = path.centroid(f);
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('class', 'llabel' + (byId.has(f.id) ? ' been' : ''));
+    t.setAttribute('x', x); t.setAttribute('y', y); t.textContent = f.properties.name;
+    g.appendChild(t);
+  }
+  for (const c of DATA) for (const city of c.cities) {
+    const [x, y] = projection([city.lon, city.lat]);
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('class', 'lcity'); t.setAttribute('x', x + 3.4); t.setAttribute('y', y + 1.1); t.textContent = city.name;
+    g.appendChild(t);
+  }
+  lens.appendChild(g);
+  inner.appendChild(lens);
+}
+
+d3.json('/files/countries-50m.json').then((topo) => {
+  features = topojson.feature(topo, topo.objects.countries).features.filter((f) => f.id !== '010');
+  projection = d3.geoNaturalEarth1().fitExtent([[30, 30], [SW - 30, SH - 30]], { type: 'Sphere' });
+  path = d3.geoPath(projection);
+  renderMap(); renderStats();
+});
+
+// recent albums lie on the table around the map
+const table = document.getElementById('table');
+[[70, 420, -9], [60, 820, 7], [2360, 380, 8], [2370, 800, -6]].forEach(([x, y, r], k) => {
+  const c = DATA[[7, 6, 11, 5][k]], city = c.cities[0], a = city.albums[0];
+  const el = document.createElement('div');
+  el.className = 'slide';
+  el.style.cssText = `left:${x}px;top:${y}px;transform:rotate(${r}deg)`;
+  el.innerHTML = `<div class="brand"><span>${city.name}</span><span>${a.year}</span></div><div class="win"><img src="/files/p${a.cover}.jpg" alt=""></div><div class="hand">${a.title}</div>`;
+  el.addEventListener('pointerenter', () => { el.style.transform = `translateZ(40px) rotate(${r * .4}deg)`; });
+  el.addEventListener('pointerleave', () => { el.style.transform = `rotate(${r}deg)`; });
+  el.addEventListener('click', () => { if (!moved) openCountry(c, city.name); });
+  table.appendChild(el);
+});
+
+// ---------- camera ----------
+const P = 1400, TW = 2600, TH = 1700;
+let cx = 0, cy = 60, tx = 0, ty = 60, zoom = -700, tzoom = -700, tilt = 30, ttilt = 30, rot = 0, trot = 0;
+let dragging = false, moved = false, lx = 0, ly = 0, sx = 0, sy = 0, mx = innerWidth / 2, my = innerHeight / 2;
+const busy = () => document.getElementById('archive').classList.contains('open');
+addEventListener('wheel', (e) => { if (busy()) return; tzoom = Math.max(-1500, Math.min(420, tzoom - e.deltaY * .9)); }, { passive: true });
+addEventListener('pointerdown', (e) => { if (busy() || e.target.closest('.top')) return; dragging = true; moved = false; lx = sx = e.clientX; ly = sy = e.clientY; });
+addEventListener('pointerup', () => { dragging = false; });
+addEventListener('pointermove', (e) => {
+  mx = e.clientX; my = e.clientY;
+  trot = (e.clientX / innerWidth - .5) * 4;
+  ttilt = 30 + (e.clientY / innerHeight - .5) * -6;
+  if (!dragging) return;
+  if (Math.hypot(e.clientX - sx, e.clientY - sy) > 5) moved = true;
+  tx = Math.max(-1100, Math.min(1100, tx + (e.clientX - lx) * 1.3));
+  ty = Math.max(-700, Math.min(700, ty + (e.clientY - ly) * 1.8));
+  lx = e.clientX; ly = e.clientY;
+});
+
+// screen point -> point on the sheet, through the table's 3D transform
+function toSheet(X, Y) {
+  const tf = `translateZ(${zoom}px) rotateX(${tilt}deg) rotateZ(${rot}deg) translate(${cx}px, ${cy}px)`;
+  const ox = innerWidth / 2, oy = innerHeight * .24;
+  const persp = new DOMMatrix(); persp.m34 = -1 / P;
+  const L = innerWidth / 2 - TW / 2, T = innerHeight / 2 - TH / 2;
+  const m = new DOMMatrix().translate(ox, oy).multiply(persp).translate(-ox, -oy)
+    .translate(L + TW / 2, T + TH / 2).multiply(new DOMMatrix(tf)).translate(-TW / 2, -TH / 2);
+  const a = m.m11 - X * m.m14, c = m.m21 - X * m.m24, e = X * m.m44 - m.m41;
+  const b = m.m12 - Y * m.m14, d = m.m22 - Y * m.m24, f = Y * m.m44 - m.m42;
+  const det = a * d - b * c;
+  const u = (e * d - c * f) / det, v = (a * f - e * b) / det;
+  return [u - 300, v - 280];
+}
+
+// ---------- loupe ----------
+const loupe = document.getElementById('loupe'), inner = document.getElementById('lensInner'), card = document.getElementById('card');
+let hot = null;
+function hover() {
+  loupe.style.left = mx + 'px'; loupe.style.top = my + 'px';
+  if (!features || busy()) { loupe.classList.add('idle'); card.classList.remove('on'); return; }
+  const [u, v] = toSheet(mx, my);
+  const onSheet = u > 0 && u < SW && v > 0 && v < SH;
+  loupe.classList.toggle('idle', !onSheet || dragging);
+  const Z = 3.4, R = 109;
+  inner.style.transform = `translate(${R - u * Z}px, ${R - v * Z}px) scale(${Z})`;
+
+  const el = document.elementFromPoint(mx, my);
+  const key = el && (el.dataset.city ? 'city:' + el.dataset.city : el.dataset.id ? 'country:' + el.dataset.id : null);
+  if (key !== hot) {
+    svg.selectAll('.hot').classed('hot', false);
+    inner.querySelectorAll('.hot').forEach((n) => n.classList.remove('hot'));
+    hot = key;
+    if (key) { el.classList.add('hot'); const twin = inner.querySelector(el.dataset.city ? `[data-city="${el.dataset.city}"]` : `[data-id="${el.dataset.id}"]`); if (twin) twin.classList.add('hot'); }
+    fillCard(el);
+  }
+  const left = mx + 130, flip = left + 300 > innerWidth;
+  card.style.left = (flip ? mx - 130 - card.offsetWidth : left) + 'px';
+  card.style.top = (my - 60) + 'px';
+}
+function fillCard(el) {
+  if (!el || (!el.dataset.city && !el.dataset.id) || document.body.classList.contains('placing')) { card.classList.remove('on'); return; }
+  if (el.dataset.city) {
+    const c = byId.get(el.dataset.country), city = c.cities.find((x) => x.name === el.dataset.city);
+    card.innerHTML = `<h5>${city.name}</h5><div class="row">${c.name} · <b>${plural(city.albums.length, 'album')}</b> · <b>${plural(sum(city.albums, (a) => a.photos), 'photo')}</b></div><ul>${city.albums.map((a) => `<li><span>${a.title}</span><span>${a.year}</span></li>`).join('')}</ul><img src="/files/p${city.albums[0].cover}.jpg" alt="">`;
+  } else {
+    const c = byId.get(el.dataset.id);
+    const f = features.find((x) => x.id === el.dataset.id);
+    if (!c) card.innerHTML = `<h5>${f.properties.name}</h5><div class="row dim">Not been here yet</div>`;
+    else { const s = countryStats(c); card.innerHTML = `<h5>${c.name}</h5><div class="row"><b>${plural(s.cities, 'city')}</b> · <b>${plural(s.albums, 'album')}</b> · <b>${plural(s.photos, 'photo')}</b></div><div class="row">${s.from === s.to ? s.from : s.from + '–' + s.to} · click to open</div>`; }
+  }
+  card.classList.add('on');
+}
+
+function frame() {
+  cx += (tx - cx) * .12; cy += (ty - cy) * .12; zoom += (tzoom - zoom) * .1;
+  tilt += (ttilt - tilt) * .06; rot += (trot - rot) * .06;
+  table.style.transform = `translateZ(${zoom}px) rotateX(${tilt}deg) rotateZ(${rot}deg) translate(${cx}px, ${cy}px)`;
+  hover();
+  requestAnimationFrame(frame);
+}
+frame();
+
+// ---------- click: open a country, or drop a new place ----------
+addEventListener('click', (e) => {
+  if (moved || busy() || e.target.closest('.top') || e.target.closest('.slide')) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (document.body.classList.contains('placing')) return placeAt(e.clientX, e.clientY);
+  if (!el) return;
+  if (el.dataset.city) return openCountry(byId.get(el.dataset.country), el.dataset.city);
+  if (el.dataset.id) {
+    const c = byId.get(el.dataset.id);
+    if (c) openCountry(c);
+    else toast(`Not been to ${features.find((x) => x.id === el.dataset.id).properties.name} yet — add a memory`);
+  }
+});
+
+const add = document.getElementById('add');
+add.onclick = () => {
+  const on = document.body.classList.toggle('placing');
+  add.textContent = on ? 'Click the map to drop a pin · Esc' : '+ Add a memory';
+};
+function placeAt(X, Y) {
+  const [u, v] = toSheet(X, Y);
+  const ll = projection.invert([u, v]);
+  const f = ll && features.find((x) => d3.geoContains(x, ll));
+  if (!f) return toast('That is the ocean — pick a place on land');
+  const name = prompt(`New place in ${f.properties.name}. City name?`);
+  if (!name) return;
+  let c = byId.get(f.id);
+  if (!c) { c = { id: f.id, name: f.properties.name, cities: [] }; DATA.push(c); byId.set(f.id, c); }
+  c.cities.push({ name, lat: ll[1], lon: ll[0], albums: [{ title: 'First memories', year: 2026, photos: 1, cover: (cover++ % 19) + 1 }] });
+  add.click();
+  renderMap(); renderStats();
+  toast(`${name} added to ${c.name}`);
+}
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (document.body.classList.contains('placing')) add.click();
+  else closeArchive();
+});
+
+// ---------- archive sheet ----------
+const archive = document.getElementById('archive'), body = document.getElementById('archiveBody');
+function openCountry(c, focusCity) {
+  const s = countryStats(c);
+  const cities = focusCity ? c.cities.filter((x) => x.name === focusCity) : c.cities;
+  body.innerHTML = `
+    ${focusCity ? `<button class="back" data-all>← All of ${c.name}</button>` : ''}
+    <h2>${focusCity || c.name}</h2>
+    <div class="sub">${focusCity ? c.name + ' · ' : ''}${plural(s.cities, 'city')} · ${plural(s.albums, 'album')} · ${plural(s.photos, 'photo')} · ${s.from === s.to ? s.from : s.from + '–' + s.to}</div>
+    ${cities.map((city) => `<h3>${city.name} <small>${plural(sum(city.albums, (a) => a.photos), 'photo')}</small></h3>
+      <div class="albums">${city.albums.map((a, k) => `<div class="slide" data-city="${city.name}" data-k="${k}"><div class="brand"><span>${a.year}</span><span>${a.photos} ph</span></div><div class="win"><img src="/files/p${a.cover}.jpg" alt=""></div><div class="hand">${a.title}</div></div>`).join('')}</div>`).join('')}`;
+  body.querySelector('[data-all]')?.addEventListener('click', () => openCountry(c));
+  body.querySelectorAll('.albums .slide').forEach((el) => el.addEventListener('click', () => openAlbum(c, c.cities.find((x) => x.name === el.dataset.city), +el.dataset.k)));
+  archive.classList.add('open'); archive.scrollTop = 0; document.body.style.cursor = 'default';
+}
+function openAlbum(c, city, k) {
+  const a = city.albums[k];
+  const n = Math.min(12, a.photos);
+  body.innerHTML = `<button class="back">← ${city.name}</button><h2>${a.title}</h2><div class="sub">${city.name}, ${c.name} · ${a.year} · ${plural(a.photos, 'photo')}</div>
+    <div class="photos">${Array.from({ length: n }, (_, i) => `<img src="/files/p${((a.cover + i * 3 - 1) % 19) + 1}.jpg" alt="">`).join('')}</div>`;
+  body.querySelector('.back').addEventListener('click', () => openCountry(c, city.name));
+  archive.scrollTop = 0;
+}
+function closeArchive() { archive.classList.remove('open'); document.body.style.cursor = ''; }
+document.getElementById('closeArchive').onclick = closeArchive;
+
+let tt;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2600); }
+</script>
+</body>
+</html>

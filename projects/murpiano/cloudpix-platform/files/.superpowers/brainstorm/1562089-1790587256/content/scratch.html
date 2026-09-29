@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>CloudPix — A · Scratch Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0f1012;
+    --gold-1: #8c6b2c; --gold-2: #e9d08c; --gold-3: #b48d3e; --gold-4: #f6e7b0;
+    --foil: linear-gradient(115deg, var(--gold-1), var(--gold-2) 28%, var(--gold-3) 52%, var(--gold-4) 70%, var(--gold-1));
+    --text: #efe6cf;
+    --muted: #8f876f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body { background: var(--ink); color: var(--text); font-family: 'Bricolage Grotesque'; font-size: 14px; user-select: none; -webkit-user-select: none; touch-action: none; }
+
+  .viewport { position: fixed; inset: 0; cursor: grab; }
+  .viewport.drag { cursor: grabbing; }
+  body.scratching .viewport { cursor: none; }
+  .world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+  .world canvas { position: absolute; left: 0; top: 0; display: block; }
+
+  .foiltext { background: var(--foil); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* ---------- chrome ---------- */
+  .top { position: fixed; left: 0; right: 0; top: 0; z-index: 10; padding: max(18px, env(safe-area-inset-top)) 22px 0; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+  .brand { font-weight: 800; font-size: 22px; letter-spacing: -.02em; line-height: 1; }
+  .brand small { display: block; font-weight: 500; font-size: 12px; letter-spacing: .02em; color: var(--muted); margin-top: 6px; }
+  .score { text-align: right; line-height: 1; }
+  .score b { font-size: 40px; font-weight: 800; letter-spacing: -.03em; }
+  .score small { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
+  .bar { width: 160px; height: 4px; background: #2a2a2c; margin: 8px 0 0 auto; border-radius: 2px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--foil); }
+
+  .dock { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 10; display: flex; gap: 10px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 99px; padding: 12px 20px 12px 12px; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; color: #231a07; background: var(--foil); box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.5); }
+  .btn .coin { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6d6, #c9a24c 55%, #7d5d22); box-shadow: inset 0 0 0 2px rgba(80,55,15,.5); }
+  body.scratching .btn { background: #efe6cf; }
+  .hint { position: fixed; left: 22px; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 10; color: var(--muted); font-size: 12px; line-height: 1.6; pointer-events: none; }
+  .hint b { color: var(--text); font-weight: 600; }
+
+  .tag { position: fixed; z-index: 12; pointer-events: none; padding: 8px 12px 9px; border-radius: 10px; background: rgba(15,16,18,.92); border: 1px solid #5c4b25; box-shadow: 0 10px 24px rgba(0,0,0,.4); opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s; white-space: nowrap; }
+  .tag.on { opacity: 1; transform: none; }
+  .tag b { font-size: 15px; font-weight: 700; }
+  .tag span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .coinCursor { position: fixed; z-index: 13; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; pointer-events: none; display: none;
+    background: radial-gradient(circle at 35% 30%, #fff6d6, #d7b35d 50%, #7d5d22 100%); box-shadow: 0 8px 20px rgba(0,0,0,.5), inset 0 0 0 3px rgba(80,55,15,.45), inset 0 0 0 7px rgba(255,240,200,.25); }
+  body.scratching .coinCursor { display: block; }
+  .flake { position: fixed; z-index: 11; width: 5px; height: 3px; pointer-events: none; background: var(--foil); border-radius: 1px; animation: fall .9s cubic-bezier(.3,.6,.6,1) forwards; }
+  @keyframes fall { to { transform: translate(var(--dx), 70px) rotate(var(--r)); opacity: 0; } }
+
+  .ask { position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 20px); z-index: 20; width: min(360px, calc(100vw - 32px)); padding: 18px; border-radius: 18px; background: #17181b; border: 1px solid #4c3f22; box-shadow: 0 20px 50px rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: .3s; }
+  .ask.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .ask h4 { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+  .ask p { color: var(--muted); margin: 4px 0 12px; }
+  .ask input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #3a3a3e; background: #0f1012; color: var(--text); font: inherit; font-size: 16px; }
+  .ask .row { display: flex; gap: 8px; margin-top: 10px; }
+  .ask .row button { flex: 1; padding: 11px; border-radius: 12px; border: 0; font: inherit; font-weight: 700; cursor: pointer; }
+  .ask .ok { background: var(--foil); color: #231a07; }
+  .ask .no { background: #26272b; color: var(--text); }
+  .toast { position: fixed; left: 50%; top: 90px; transform: translate(-50%, -10px); z-index: 30; padding: 10px 16px; border-radius: 99px; background: #efe6cf; color: #1b1406; font-weight: 600; opacity: 0; transition: .3s; pointer-events: none; max-width: calc(100vw - 32px); text-align: center; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- deck ---------- */
+  body.deck .top, body.deck .dock, body.deck .hint { opacity: 0; pointer-events: none; }
+  .top, .dock, .hint { transition: opacity .3s; }
+  .veil { position: fixed; inset: 0; z-index: 14; background: radial-gradient(ellipse at 50% 55%, rgba(15,16,18,.55), rgba(15,16,18,.94)); opacity: 0; pointer-events: none; transition: opacity .5s; }
+  .veil.on { opacity: 1; pointer-events: auto; }
+  .deckHead { position: fixed; left: 0; right: 0; top: max(20px, env(safe-area-inset-top)); z-index: 16; text-align: center; opacity: 0; transform: translateY(-10px); transition: .45s .15s; pointer-events: none; padding: 0 16px; }
+  .deckHead.on { opacity: 1; transform: none; pointer-events: auto; }
+  .deckHead h2 { font-size: clamp(40px, 8vw, 88px); font-weight: 800; letter-spacing: -.04em; line-height: .9; }
+  .deckHead .sub { color: var(--muted); margin-top: 8px; }
+  .chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .chip { border: 1px solid #4c3f22; background: transparent; color: var(--text); border-radius: 99px; padding: 7px 13px; font: inherit; font-size: 13px; cursor: pointer; }
+  .chip.on { background: var(--foil); color: #231a07; border-color: transparent; font-weight: 700; }
+  .close { position: fixed; right: 18px; top: max(18px, env(safe-area-inset-top)); z-index: 17; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #4c3f22; background: #17181b; color: var(--text); font-size: 18px; cursor: pointer; opacity: 0; pointer-events: none; transition: .3s; }
+  .close.on { opacity: 1; pointer-events: auto; }
+  .deckFoot { position: fixed; left: 0; right: 0; bottom: max(22px, env(safe-area-inset-bottom)); z-index: 16; text-align: center; color: var(--muted); font-size: 12px; opacity: 0; transition: .3s .3s; pointer-events: none; }
+  .deckFoot.on { opacity: 1; }
+
+  .print { position: fixed; left: 0; top: 0; z-index: 15; width: var(--pw); height: calc(var(--pw) * .92); perspective: 1200px; touch-action: none; transition: transform .7s cubic-bezier(.2,.8,.2,1), opacity .5s; will-change: transform; cursor: grab; }
+  .print .flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3,.7,.2,1); }
+  .print.back .flip { transform: rotateY(180deg); }
+  .print .face { position: absolute; inset: 0; backface-visibility: hidden; background: #fbf7ee; padding: 12px 12px 0; box-shadow: 0 18px 40px rgba(0,0,0,.55); border-radius: 3px; }
+  .print .face img { display: block; width: 100%; height: 76%; object-fit: cover; pointer-events: none; }
+  .print .face .cap { font-family: 'Caveat'; font-size: 22px; color: #2d3a8c; padding: 6px 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .print .rear { transform: rotateY(180deg); padding: 22px; color: #3a3325; display: flex; flex-direction: column; gap: 6px; background: #f4eedf repeating-linear-gradient(0deg, transparent 0 27px, rgba(120,110,90,.18) 27px 28px); }
+  .print .rear h5 { font-family: 'Caveat'; font-size: 34px; color: #2d3a8c; line-height: 1; }
+  .print .rear p { font-size: 14px; }
+  .print .rear small { margin-top: auto; font-size: 11px; color: #8a7f68; }
+  .print.dragging { transition: none; cursor: grabbing; }
+
+  @media (max-width: 640px) {
+    .brand { font-size: 19px; } .score b { font-size: 30px; } .bar { width: 110px; }
+    .hint { display: none; }
+    .btn { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+  <div class="viewport" id="vp"><div class="world" id="world"><canvas id="under"></canvas><canvas id="foil"></canvas></div></div>
+
+  <header class="top">
+    <div class="brand"><span class="foiltext">cloudpix</span><small>a scratch map of the places I have been</small></div>
+    <div class="score"><b class="foiltext" id="pct">0%</b><small id="cnt">0 of 177 countries</small><div class="bar"><i id="barFill"></i></div></div>
+  </header>
+
+  <div class="hint"><b>Drag</b> to move · <b>scroll</b> or <b>pinch</b> to zoom · <b>tap</b> a scratched country to open it</div>
+  <div class="dock"><button class="btn" id="scratchBtn"><span class="coin"></span><span id="scratchLabel">Scratch a new place</span></button></div>
+
+  <div class="tag" id="tag"></div>
+  <div class="coinCursor" id="coin"></div>
+  <div class="ask" id="ask"><h4 id="askTitle"></h4><p>Which city was it? Photos can come later.</p><input id="askCity" placeholder="City" autocomplete="off" /><div class="row"><button class="no" id="askNo">Cancel</button><button class="ok" id="askOk">Keep this memory</button></div></div>
+  <div class="toast" id="toast"></div>
+
+  <div class="veil" id="veil"></div>
+  <div class="deckHead" id="deckHead"><h2 class="foiltext" id="deckTitle"></h2><div class="sub" id="deckSub"></div><div class="chips" id="chips"></div></div>
+  <button class="close" id="close" aria-label="Back to the map">✕</button>
+  <div class="deckFoot" id="deckFoot">swipe or drag the top print away · tap it to turn it over</div>
+
+<script src="/files/d3.min.js"></script>
+<script src="/files/topojson.min.js"></script>
+<script src="/files/atlas-data.js"></script>
+<script>
+const A = window.ATLAS;
+const W = 3000, H = 1560;
+const vp = document.getElementById('vp'), world = document.getElementById('world');
+const under = document.getElementById('under'), foil = document.getElementById('foil');
+for (const c of [under, foil]) { c.width = W; c.height = H; c.style.width = W + 'px'; c.style.height = H + 'px'; }
+const uctx = under.getContext('2d'), fctx = foil.getContext('2d', { willReadFrequently: false });
+let projection, path, features, imgs = new Map();
+
+const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+const PASTEL = ['#e9a6a0', '#a9cfa4', '#9fc3de', '#e7c98f', '#c8b1dc', '#f0b98a', '#9fd6cf', '#dfd28f'];
+
+// ---------- rendering ----------
+function loadImg(src) {
+  if (imgs.has(src)) return imgs.get(src);
+  const p = new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+  imgs.set(src, p); return p;
+}
+
+function drawOcean() {
+  uctx.fillStyle = '#101114'; uctx.fillRect(0, 0, W, H);
+  uctx.save();
+  uctx.beginPath(); path.context(uctx)({ type: 'Sphere' }); uctx.clip();
+  uctx.fillStyle = '#0b0c0e'; uctx.fillRect(0, 0, W, H);
+  uctx.beginPath(); path(d3.geoGraticule10()); uctx.strokeStyle = 'rgba(210,175,100,.16)'; uctx.lineWidth = 1; uctx.stroke();
+  uctx.restore();
+  uctx.beginPath(); path({ type: 'Sphere' }); uctx.strokeStyle = 'rgba(210,175,100,.55)'; uctx.lineWidth = 2; uctx.stroke();
+  uctx.font = 'italic 500 22px "Bricolage Grotesque"'; uctx.fillStyle = 'rgba(210,175,100,.4)'; uctx.textAlign = 'center';
+  for (const [t, lon, lat] of [['A T L A N T I C', -38, 20], ['P A C I F I C', -145, 2], ['I N D I A N', 78, -24]]) { const [x, y] = projection([lon, lat]); uctx.fillText(t, x, y); }
+}
+
+async function drawCountryUnder(f) {
+  const c = A.byId.get(f.id);
+  uctx.save();
+  uctx.beginPath(); path(f); uctx.clip();
+  if (!c) {
+    uctx.fillStyle = PASTEL[(+f.id || 0) % PASTEL.length]; uctx.fillRect(0, 0, W, H);
+  } else {
+    // collage of this country's photos, cut to its shape
+    const [[x0, y0], [x1, y1]] = path.bounds(f);
+    const w = x1 - x0, h = y1 - y0;
+    const list = c.cities.flatMap((city) => A.photosOf(city).map((p) => A.src(p)));
+    const n = Math.max(1, Math.min(list.length, w * h > 60000 ? 6 : w * h > 8000 ? 3 : 1));
+    const cols = Math.ceil(Math.sqrt(n * w / Math.max(h, 1))), rows = Math.ceil(n / cols);
+    const cw = w / cols, ch = h / rows;
+    const loaded = await Promise.all(list.slice(0, n).map(loadImg));
+    uctx.fillStyle = '#333'; uctx.fillRect(x0, y0, w, h);
+    loaded.forEach((img, i) => {
+      if (!img) return;
+      const cx = x0 + (i % cols) * cw, cy = y0 + Math.floor(i / cols) * ch;
+      const s = Math.max(cw / img.width, ch / img.height);
+      uctx.drawImage(img, cx + (cw - img.width * s) / 2, cy + (ch - img.height * s) / 2, img.width * s, img.height * s);
+    });
+  }
+  uctx.restore();
+  uctx.beginPath(); path(f); uctx.strokeStyle = c ? 'rgba(255,245,215,.9)' : 'rgba(255,255,255,.5)'; uctx.lineWidth = c ? 2 : 1; uctx.stroke();
+}
+
+function drawFoil() {
+  fctx.clearRect(0, 0, W, H);
+  const g = fctx.createLinearGradient(0, 0, W, H);
+  [[0, '#8c6b2c'], [.18, '#e3c983'], [.33, '#a8823a'], [.5, '#f3e2a6'], [.66, '#b28a3d'], [.82, '#e9d08c'], [1, '#8c6b2c']].forEach(([o, c]) => g.addColorStop(o, c));
+  fctx.save();
+  fctx.beginPath(); for (const f of features) path.context(fctx)(f); fctx.clip();
+  fctx.fillStyle = g; fctx.fillRect(0, 0, W, H);
+  // brushed metal: many faint diagonal strokes
+  fctx.globalAlpha = .07;
+  for (let i = 0; i < 900; i++) {
+    const x = rnd() * W, y = rnd() * H;
+    fctx.strokeStyle = rnd() > .5 ? '#fff' : '#3b2a08'; fctx.lineWidth = rnd() * 1.4;
+    fctx.beginPath(); fctx.moveTo(x, y); fctx.lineTo(x + 120 + rnd() * 200, y + 40 + rnd() * 60); fctx.stroke();
+  }
+  fctx.globalAlpha = 1;
+  fctx.restore();
+  // embossed borders: dark line, then a light line one pixel up-left
+  fctx.save();
+  fctx.translate(1.2, 1.2); fctx.beginPath(); for (const f of features) path(f);
+  fctx.strokeStyle = 'rgba(70,48,10,.55)'; fctx.lineWidth = 1.2; fctx.stroke();
+  fctx.translate(-2.2, -2.2); fctx.beginPath(); for (const f of features) path(f);
+  fctx.strokeStyle = 'rgba(255,248,220,.55)'; fctx.lineWidth = 1; fctx.stroke();
+  fctx.restore();
+  path.context(uctx);
+}
+
+// remove foil over a country, with a bitten, hand-scratched edge
+function scratchCountry(f) {
+  fctx.save();
+  fctx.globalCompositeOperation = 'destination-out';
+  fctx.beginPath(); path.context(fctx)(f); fctx.fill();
+  const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+  for (const poly of polys) for (const ring of poly) for (let i = 0; i < ring.length; i++) {
+    const p = projection(ring[i]); if (!p) continue;
+    if (rnd() < .55) { fctx.beginPath(); fctx.arc(p[0] + (rnd() - .5) * 6, p[1] + (rnd() - .5) * 6, 1 + rnd() * 4.5, 0, 7); fctx.fill(); }
+  }
+  fctx.restore();
+  path.context(uctx);
+}
+
+async function renderAll() {
+  path.context(uctx);
+  drawOcean();
+  for (const f of features) await drawCountryUnder(f);
+  drawFoil();
+  for (const f of features) if (A.byId.has(f.id)) scratchCountry(f);
+  updateScore();
+}
+
+function updateScore() {
+  const n = A.DATA.length, total = features.length;
+  document.getElementById('pct').textContent = Math.round(n / total * 100) + '%';
+  document.getElementById('cnt').textContent = `${n} of ${total} countries · ${A.totals().photos.toLocaleString('en')} photos`;
+  document.getElementById('barFill').style.width = (n / total * 100) + '%';
+}
+
+// ---------- view: pan and zoom with mouse, wheel and fingers ----------
+let view = { x: 0, y: 0, k: 1 }, minK = .1, maxK = 1.8;
+function fit() {
+  const k = Math.min(innerWidth / W, innerHeight / H) * (innerWidth < 640 ? 1.9 : 1.02);
+  minK = Math.min(innerWidth / W, innerHeight / H) * .9;
+  view = { k, x: (innerWidth - W * k) / 2, y: (innerHeight - H * k) / 2 + (innerWidth < 640 ? 0 : 20) };
+  if (innerWidth < 640) view.x = innerWidth / 2 - projection([10, 40])[0] * k;
+  apply();
+}
+function apply(anim) {
+  world.style.transition = anim ? 'transform .8s cubic-bezier(.3,.7,.2,1)' : 'none';
+  world.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.k})`;
+}
+function zoomAt(sx, sy, k) {
+  k = Math.max(minK, Math.min(maxK, k));
+  view.x = sx - (sx - view.x) * (k / view.k); view.y = sy - (sy - view.y) * (k / view.k); view.k = k; apply();
+}
+const toMap = (sx, sy) => [(sx - view.x) / view.k, (sy - view.y) / view.k];
+
+const pointers = new Map();
+let pinch = null, moved = false, downAt = null, scratchPts = [];
+const deckOpen = () => document.getElementById('veil').classList.contains('on');
+
+vp.addEventListener('wheel', (e) => { e.preventDefault(); if (deckOpen()) return; zoomAt(e.clientX, e.clientY, view.k * Math.exp(-e.deltaY * .0015)); }, { passive: false });
+vp.addEventListener('pointerdown', (e) => {
+  if (deckOpen()) return;
+  vp.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  moved = false; downAt = { x: e.clientX, y: e.clientY };
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), k: view.k, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, vx: view.x, vy: view.y }; scratchPts = []; }
+  else if (scratching) { scratchPts = []; scratchAt(e.clientX, e.clientY, null); }
+  else vp.classList.add('drag');
+});
+vp.addEventListener('pointermove', (e) => {
+  hoverAt(e.clientX, e.clientY);
+  moveCoin(e.clientX, e.clientY);
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 6) moved = true;
+  if (pinch && pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const k = Math.max(minK, Math.min(maxK, pinch.k * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d));
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    view.k = k; view.x = mx - (pinch.mx - pinch.vx) * (k / pinch.k); view.y = my - (pinch.my - pinch.vy) * (k / pinch.k); apply();
+    return;
+  }
+  if (scratching) return scratchAt(e.clientX, e.clientY, prev);
+  view.x += e.clientX - prev.x; view.y += e.clientY - prev.y; apply();
+});
+const up = (e) => {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinch = null;
+  vp.classList.remove('drag');
+  if (pointers.size) return;
+  if (scratching && scratchPts.length) return finishScratch();
+  if (!moved && !scratching && e.type === 'pointerup') tapAt(e.clientX, e.clientY);
+};
+vp.addEventListener('pointerup', up); vp.addEventListener('pointercancel', up);
+
+// ---------- hover and tap ----------
+function countryAt(sx, sy) {
+  if (!features) return null;
+  const ll = projection.invert(toMap(sx, sy));
+  if (!ll || !isFinite(ll[0])) return null;
+  return features.find((f) => { const b = f._b; return ll[0] >= b[0][0] && ll[0] <= b[1][0] && ll[1] >= b[0][1] && ll[1] <= b[1][1] && d3.geoContains(f, ll); }) || null;
+}
+const tag = document.getElementById('tag');
+let hoverRaf = 0;
+function hoverAt(sx, sy) {
+  if (matchMedia('(hover: none)').matches || deckOpen()) return;
+  cancelAnimationFrame(hoverRaf);
+  hoverRaf = requestAnimationFrame(() => {
+    const f = countryAt(sx, sy);
+    if (!f || pointers.size) { tag.classList.remove('on'); return; }
+    const c = A.byId.get(f.id);
+    if (c) { const s = A.stats(c); tag.innerHTML = `<b class="foiltext">${c.name}</b><span>${A.plural(s.cities, 'city')} · ${A.plural(s.albums, 'album')} · ${A.plural(s.photos, 'photo')} · ${s.from === s.to ? s.from : s.from + '–' + s.to}</span>`; }
+    else tag.innerHTML = `<b>${f.properties.name}</b><span>${scratching ? 'scratch it if you have been here' : 'still under the foil'}</span>`;
+    tag.style.left = Math.min(sx + 18, innerWidth - tag.offsetWidth - 10) + 'px'; tag.style.top = (sy + 18) + 'px';
+    tag.classList.add('on');
+  });
+}
+function tapAt(sx, sy) {
+  const f = countryAt(sx, sy);
+  if (!f) return;
+  const c = A.byId.get(f.id);
+  if (c) openDeck(c, f);
+  else toast(`${f.properties.name} is still under the foil. Scratch it if you have been there.`);
+}
+
+// ---------- scratching ----------
+let scratching = false;
+const scratchBtn = document.getElementById('scratchBtn');
+scratchBtn.onclick = () => setScratch(!scratching);
+function setScratch(on) {
+  scratching = on;
+  document.body.classList.toggle('scratching', on);
+  document.getElementById('scratchLabel').textContent = on ? 'Done scratching' : 'Scratch a new place';
+  if (on) toast('Scratch a country you have been to. Two fingers still move the map.');
+}
+const coin = document.getElementById('coin');
+function moveCoin(x, y) { coin.style.left = x + 'px'; coin.style.top = y + 'px'; }
+function scratchAt(sx, sy, prev) {
+  const [x, y] = toMap(sx, sy);
+  const [px, py] = prev ? toMap(prev.x, prev.y) : [x, y];
+  fctx.save();
+  fctx.globalCompositeOperation = 'destination-out';
+  fctx.lineCap = 'round'; fctx.lineJoin = 'round';
+  fctx.lineWidth = 16 / Math.max(view.k, .35);
+  fctx.beginPath(); fctx.moveTo(px, py); fctx.lineTo(x + (rnd() - .5) * 2, y + (rnd() - .5) * 2); fctx.stroke();
+  fctx.restore();
+  scratchPts.push([x, y]);
+  if (rnd() < .6) flake(sx, sy);
+}
+function flake(x, y) {
+  const el = document.createElement('i');
+  el.className = 'flake';
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  el.style.setProperty('--dx', ((rnd() - .5) * 60) + 'px'); el.style.setProperty('--r', (rnd() * 540) + 'deg');
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 950);
+}
+let pendingCountry = null;
+function finishScratch() {
+  const votes = new Map();
+  for (const [x, y] of scratchPts) { const ll = projection.invert([x, y]); const f = ll && features.find((f) => d3.geoContains(f, ll)); if (f) votes.set(f, (votes.get(f) || 0) + 1); }
+  scratchPts = [];
+  const best = [...votes.entries()].sort((a, b) => b[1] - a[1])[0];
+  if (!best || best[1] < 6) return;
+  const f = best[0];
+  if (A.byId.has(f.id)) return toast(`${f.properties.name} is already scratched. Tap it to open.`);
+  pendingCountry = f;
+  document.getElementById('askTitle').textContent = `You have been to ${f.properties.name}?`;
+  document.getElementById('askCity').value = '';
+  document.getElementById('ask').classList.add('on');
+  setTimeout(() => document.getElementById('askCity').focus(), 250);
+}
+document.getElementById('askNo').onclick = () => document.getElementById('ask').classList.remove('on');
+document.getElementById('askOk').onclick = async () => {
+  const f = pendingCountry, city = document.getElementById('askCity').value.trim() || 'Somewhere';
+  document.getElementById('ask').classList.remove('on');
+  const [lon, lat] = d3.geoCentroid(f);
+  const c = { id: f.id, name: f.properties.name, cities: [] };
+  const ci = { name: city, key: '-', lat, lon, country: c, albums: [] };
+  ci.albums.push({ title: 'First memories', year: 2026, month: 9, photos: 3, city: ci });
+  c.cities.push(ci);
+  A.DATA.push(c); A.byId.set(c.id, c);
+  path.context(uctx); await drawCountryUnder(f);
+  scratchCountry(f); updateScore();
+  setScratch(false);
+  toast(`${c.name} is on your map. Add photos to ${city} any time.`);
+};
+
+let tt;
+function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 3200); }
+
+// ---------- the deck: prints come out of the country ----------
+const veil = document.getElementById('veil'), head = document.getElementById('deckHead'), closeBtn = document.getElementById('close'), foot = document.getElementById('deckFoot');
+let prints = [], saved = null, deckCountry = null, deckFeature = null;
+
+function openDeck(c, f) {
+  tag.classList.remove('on');
+  deckCountry = c; deckFeature = f;
+  saved = { ...view };
+  // fly the camera to the country
+  const [[x0, y0], [x1, y1]] = path.bounds(f);
+  const k = Math.max(minK, Math.min(maxK, Math.min(innerWidth * .5 / (x1 - x0), innerHeight * .45 / (y1 - y0))));
+  view = { k, x: innerWidth / 2 - (x0 + x1) / 2 * k, y: innerHeight * .56 - (y0 + y1) / 2 * k };
+  apply(true);
+  const s = A.stats(c);
+  document.getElementById('deckTitle').textContent = c.name;
+  document.getElementById('deckSub').textContent = `${A.plural(s.cities, 'city')} · ${A.plural(s.albums, 'album')} · ${A.plural(s.photos, 'photo')} · ${s.from === s.to ? s.from : s.from + '–' + s.to}`;
+  const chips = document.getElementById('chips');
+  chips.innerHTML = '';
+  if (c.cities.length > 1) {
+    const all = document.createElement('button'); all.className = 'chip on'; all.textContent = 'All'; all.onclick = () => deal(null, all); chips.appendChild(all);
+    for (const city of c.cities) { const b = document.createElement('button'); b.className = 'chip'; b.textContent = city.name; b.onclick = () => deal(city, b); chips.appendChild(b); }
+  }
+  document.body.classList.add('deck');
+  setTimeout(() => { veil.classList.add('on'); head.classList.add('on'); closeBtn.classList.add('on'); foot.classList.add('on'); deal(null); }, 500);
+}
+
+function deal(onlyCity, chip) {
+  if (chip) { document.querySelectorAll('.chip').forEach((b) => b.classList.remove('on')); chip.classList.add('on'); }
+  clearPrints(false);
+  const c = deckCountry;
+  const items = [];
+  for (const city of c.cities) if (!onlyCity || city === onlyCity) for (const a of city.albums) for (const p of A.photosOf(city)) items.push({ a, p });
+  const list = items.slice(0, 10);
+  const pw = Math.min(innerWidth * .74, 400);
+  const [[x0, y0], [x1, y1]] = path.bounds(deckFeature);
+  list.forEach((it, i) => {
+    const el = document.createElement('div');
+    el.className = 'print';
+    el.style.setProperty('--pw', pw + 'px');
+    el.innerHTML = `<div class="flip"><div class="face"><img src="${A.src(it.p)}" alt=""><div class="cap">${it.a.title}</div></div>
+      <div class="face rear"><h5>${it.a.city.name}</h5><p>${it.a.title}<br>${A.MONTHS[it.a.month - 1]} ${it.a.year} · ${it.a.photos} photos in this album</p><small>Photo: ${it.p.author || 'unknown'} · ${it.p.lic || ''} · Wikimedia Commons</small></div></div>`;
+    // start inside the country on screen, small
+    const sx = view.x + (x0 + rnd() * (x1 - x0)) * view.k, sy = view.y + (y0 + rnd() * (y1 - y0)) * view.k;
+    el.style.transform = `translate(${sx - pw / 2}px, ${sy - pw * .46}px) scale(.08) rotate(${(rnd() - .5) * 60}deg)`;
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    prints.push(el);
+    bindPrint(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transitionDelay = (i * 55) + 'ms';
+      el.style.opacity = '1';
+      layout();
+    }));
+  });
+}
+
+// the stack: top card last in the array
+function layout() {
+  const pw = parseFloat(prints[0]?.style.getPropertyValue('--pw')) || 360;
+  const cx = innerWidth / 2 - pw / 2, cy = Math.max(innerHeight * .56 - pw * .46, innerWidth < 640 ? 200 : 230);
+  prints.forEach((el, i) => {
+    const depth = prints.length - 1 - i;
+    const r = depth === 0 ? 0 : ((i * 37) % 13 - 6) * 1.1;
+    el.style.zIndex = 15 + i;
+    el.dataset.base = `translate(${cx + depth * 3}px, ${cy + depth * 4}px) rotate(${r}deg)`;
+    if (!el.classList.contains('dragging')) el.style.transform = el.dataset.base;
+  });
+}
+
+function bindPrint(el) {
+  let sx, sy, dx = 0, dy = 0, dragging = false, down = false;
+  el.addEventListener('pointerdown', (e) => {
+    if (prints[prints.length - 1] !== el) return;
+    e.stopPropagation(); el.setPointerCapture(e.pointerId);
+    down = true; dragging = false; sx = e.clientX; sy = e.clientY; dx = dy = 0;
+    el.style.transitionDelay = '0ms';
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (!down) return;
+    dx = e.clientX - sx; dy = e.clientY - sy;
+    if (!dragging && Math.hypot(dx, dy) > 6) { dragging = true; el.classList.add('dragging'); }
+    if (dragging) el.style.transform = `${el.dataset.base} translate(${dx}px, ${dy}px) rotate(${dx * .06}deg)`;
+  });
+  el.addEventListener('pointerup', () => {
+    if (!down) return; down = false;
+    el.classList.remove('dragging');
+    if (!dragging) { el.classList.toggle('back'); return; }
+    if (Math.abs(dx) > 110 || Math.abs(dy) > 160) {
+      // thrown: fly out, then slide to the bottom of the stack
+      el.style.transform = `${el.dataset.base} translate(${dx * 4}px, ${dy * 3}px) rotate(${dx * .15}deg)`;
+      el.style.opacity = '0';
+      setTimeout(() => { prints.pop(); prints.unshift(el); el.classList.remove('back'); el.style.transition = 'none'; layout(); requestAnimationFrame(() => { el.style.transition = ''; el.style.opacity = '1'; }); }, 320);
+    } else el.style.transform = el.dataset.base;
+  });
+}
+addEventListener('keydown', (e) => {
+  if (!deckOpen()) return;
+  if (e.key === 'Escape') closeDeck();
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    const el = prints[prints.length - 1]; if (!el) return;
+    el.style.transform = `${el.dataset.base} translate(${e.key === 'ArrowRight' ? 600 : -600}px, 0) rotate(${e.key === 'ArrowRight' ? 20 : -20}deg)`; el.style.opacity = '0';
+    setTimeout(() => { prints.pop(); prints.unshift(el); el.classList.remove('back'); el.style.transition = 'none'; layout(); requestAnimationFrame(() => { el.style.transition = ''; el.style.opacity = '1'; }); }, 300);
+  }
+  if (e.key === ' ') prints[prints.length - 1]?.classList.toggle('back');
+});
+
+function clearPrints(back) {
+  const [[x0, y0], [x1, y1]] = deckFeature ? path.bounds(deckFeature) : [[0, 0], [0, 0]];
+  for (const el of prints) {
+    if (back) { const sx = view.x + (x0 + x1) / 2 * view.k, sy = view.y + (y0 + y1) / 2 * view.k; el.style.transitionDelay = '0ms'; el.style.transform = `translate(${sx}px, ${sy}px) scale(.05)`; el.style.opacity = '0'; setTimeout(() => el.remove(), 700); }
+    else el.remove();
+  }
+  prints = [];
+}
+function closeDeck() {
+  clearPrints(true);
+  document.body.classList.remove('deck');
+  veil.classList.remove('on'); head.classList.remove('on'); closeBtn.classList.remove('on'); foot.classList.remove('on');
+  setTimeout(() => { if (saved) { view = saved; apply(true); } }, 250);
+}
+closeBtn.onclick = closeDeck;
+veil.addEventListener('click', closeDeck);
+addEventListener('resize', () => { if (deckOpen()) layout(); });
+
+// ---------- boot ----------
+(async () => {
+  await A.load();
+  const topo = await d3.json('/files/countries-110m.json');
+  features = topojson.feature(topo, topo.objects.countries).features.filter((f) => f.id !== '010' && f.id);
+  for (const f of features) f._b = d3.geoBounds(f);
+  // antimeridian countries: bounds wrap, widen them to the full range
+  for (const f of features) if (f._b[0][0] > f._b[1][0]) f._b = [[-180, f._b[0][1]], [180, f._b[1][1]]];
+  projection = d3.geoNaturalEarth1().fitExtent([[40, 40], [W - 40, H - 40]], { type: 'Sphere' });
+  path = d3.geoPath(projection, uctx);
+  fit();
+  await renderAll();
+  window.__screenOf = (id) => { const f = features.find((x) => x.id === id); const [x, y] = path.centroid(f); return [view.x + x * view.k, view.y + y * view.k]; };
+  window.__ready = true;
+})();
+addEventListener('resize', () => { if (!deckOpen() && projection) fit(); });
+</script>
+</body>
+</html>
