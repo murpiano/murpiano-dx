@@ -168,6 +168,7 @@
   /* a year of albums, laid out as folders; a folder opens into its photos */
   .viewer { position: fixed; inset: 0; z-index: 25; background: rgba(4,6,13,.95); backdrop-filter: blur(8px); overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity .5s ease; touch-action: pan-y; }
   .viewer.on { opacity: 1; pointer-events: auto; }
+  .viewer.slow { transition: opacity 1.4s ease; }
   .vhead { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 16px; padding: max(22px, env(safe-area-inset-top)) 32px 18px; background: rgba(4,6,13,.985); box-shadow: 0 18px 22px -6px rgba(4,6,13,.95); }
   .vhead { flex-direction: column; align-items: stretch; gap: 16px; }
   .vbar { display: flex; gap: 12px; align-items: center; }
@@ -254,8 +255,6 @@
   .route .lnk:first-child { color: var(--text); font-weight: 500; }
   .tripline { margin-top: 8px; font-size: 13px; color: var(--muted); pointer-events: auto; min-height: 18px; }
   .tripline .lnk { color: var(--lamp); }
-  .open { pointer-events: auto; margin-top: 18px; display: inline-flex; align-items: center; border: 1px solid rgba(255,200,107,.5); background: rgba(255,200,107,.08); color: var(--lamp); border-radius: 99px; padding: 10px 18px; font-weight: 500; cursor: pointer; }
-  .open:hover { background: rgba(255,200,107,.18); }
   .status { margin-top: 10px; font-size: 12px; color: var(--muted); min-height: 16px; }
 
   /* a photo slides out to fill the screen; everything else waits */
@@ -353,27 +352,6 @@
   .chip b { color: var(--star); font-weight: 500; }
   .chip i { font-style: normal; color: var(--muted); }
 
-  /* the window seat */
-  .cabin { position: fixed; inset: 0; z-index: 20; background: radial-gradient(ellipse at 50% 50%, #cfd4dc, #9aa1ad 60%, #6f7683); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .6s; }
-  .cabin.on { opacity: 1; pointer-events: auto; }
-  .cabin::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 7px); pointer-events: none; }
-  .window { position: relative; width: min(64vw, 380px); aspect-ratio: 5 / 7.4; border-radius: 46% / 32%; padding: 22px; background: linear-gradient(145deg, #eef0f3, #b7bdc7); box-shadow: 0 30px 60px rgba(0,0,0,.35), inset 0 2px 6px rgba(255,255,255,.8), inset 0 -8px 20px rgba(0,0,0,.18); transform: scale(.9); transition: transform .7s var(--ease); }
-  .cabin.on .window { transform: none; }
-  .glass { position: relative; width: 100%; height: 100%; border-radius: 46% / 32%; overflow: hidden; background: #8fb4d9; box-shadow: inset 0 0 0 6px #d9dde3, inset 0 0 40px rgba(0,0,0,.45); }
-  .glass img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s; }
-  .glass img.on { opacity: 1; animation: drift 9s linear forwards; }
-  @keyframes drift { from { transform: scale(1.12) translateX(3%); } to { transform: scale(1.22) translateX(-3%); } }
-  .shade { position: absolute; left: 22px; right: 22px; top: 22px; height: 22%; border-radius: 46% 46% 6px 6px / 70% 70% 6px 6px; background: linear-gradient(#f4f5f7, #d6dae0); box-shadow: 0 6px 12px rgba(0,0,0,.2); transition: height .8s cubic-bezier(.3,.7,.2,1); }
-  .shade::after { content: ''; position: absolute; left: 42%; right: 42%; bottom: 8px; height: 6px; border-radius: 3px; background: #aeb4bd; }
-  .cabin.closing .shade { height: calc(100% - 44px); }
-  .seat { position: absolute; left: 50%; transform: translateX(-50%); bottom: max(22px, env(safe-area-inset-bottom)); text-align: center; color: #2c313a; width: min(92vw, 520px); }
-  .seat h3 { font-family: 'Fraunces'; font-style: italic; font-weight: 500; font-size: 26px; }
-  .seat p { font-size: 12px; color: #4e5563; margin-top: 4px; }
-  .thumbs { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
-  .thumbs button { width: 44px; height: 44px; border-radius: 10px; border: 2px solid transparent; padding: 0; overflow: hidden; cursor: pointer; background: #fff; }
-  .thumbs button.on { border-color: #2c313a; }
-  .thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .cabin .x { position: absolute; right: 18px; top: max(18px, env(safe-area-inset-top)); width: 44px; height: 44px; border-radius: 50%; border: 0; background: #2c313a; color: #fff; font-size: 16px; cursor: pointer; }
 
   @media (max-width: 700px) {
     .top { padding-left: 16px; padding-right: 16px; }
@@ -406,8 +384,6 @@
     .route, .status, .totals, .help { display: none; }
     .menu.settings { right: 16px; left: 16px; width: auto; }
     .vtabs button { padding: 7px 11px; }
-    .open { margin-top: 10px; padding: 8px 12px; font-size: 12px; white-space: nowrap; }
-    .window { width: min(72vw, 330px); }
     .track .year .full { display: none; }
     .track .year .short { display: inline; }
     .track .year { padding: 2px 2px; }
@@ -449,7 +425,6 @@
       <div class="place" id="place"></div>
       <div class="route" id="route"></div>
       <div class="tripline" id="tripLine"></div>
-      <button class="open" id="open">Look out of the window →</button>
       <div class="status" id="status"></div>
     </div>
   </section>
@@ -488,12 +463,6 @@
         <div class="cnote">Demo: comments are not saved yet.</div>
       </aside>
     </div>
-  </div>
-
-  <div class="cabin" id="cabin">
-    <button class="x" id="closeCabin" aria-label="Close">✕</button>
-    <div class="window"><div class="glass" id="glass"></div><div class="shade"></div></div>
-    <div class="seat"><h3 id="seatTitle"></h3><p id="seatSub"></p><div class="thumbs" id="thumbs"></div></div>
   </div>
 
 <script src="/files/d3.min.js"></script>
@@ -783,7 +752,7 @@ function draw(now, f) {
     // it pulses once when the plane comes home, and glows while the trip rests there
     const since = HOME._pulseAt == null ? 1e9 : now - HOME._pulseAt;
     const pulse = since < PULSE_MS ? (1 - Math.cos(2 * Math.PI * since / PULSE_MS)) / 2 : 0;
-    const p = projection(hl), k = clamp(R / 300, 1, 2.2) * (1 + .35 * pulse);
+    const p = projection(hl), k = clamp(R / 300, 1, 2.2) * .5 * (1 + .35 * pulse);
     const home = atHome || (flight && flight.fromHome && flight.phase === 0);
     homeLit = ease(homeLit, home ? 1 : 0, f, .95);
     const warm = Math.max(pulse, homeLit * .8, .15);
@@ -982,7 +951,7 @@ function flyTo(i) {
   const ip = from && d3.geoDistance(from, dest) > 1e-4 ? d3.geoInterpolate(from, dest) : null;
   const dist = d3.geoDistance([-lam, -phi], dest);
   flight = { to, ip, q0: quat([lam, phi, gam]), q1: quat([-to.lon, -to.lat, 0]), dist, camMs: 2400 + dist * 900, e: 0, c: 0, phase: 0, pt: 0, done: false, follow: true, fromHome };
-  vx = vy = 0; spinning = false;
+  vx = vy = 0; spinning = false; progressOn = true;
   idx = i;
   showFocus(true);
   buildAlbums(to);
@@ -991,10 +960,11 @@ function flyTo(i) {
 }
 // the last leg of a trip: from the last place back home, with the quiet room in the panel
 const HOME = {};
-let tour = null, atHome = false, origin = null, homeLit = 0, lastTour = null;
+let tour = null, atHome = false, origin = null, homeLit = 0, lastTour = null, cameFrom = null, returnTimer = 0;
 const endLL = (end) => end.home ? homeLL() : [end.city.lon, end.city.lat];
 // the last leg of a trip: to its end, home or another city, with the end card in the panel
 function flyEnd(end) {
+  lastTour = tour;
   const h = endLL(end);
   if (idx < 0) { tour = null; return stop(); }
   const from = [trips[idx].city.lon, trips[idx].city.lat];
@@ -1011,7 +981,7 @@ function showEndPanel(end) {
     albumsEl.innerHTML = end.home || !pic ? `<div class="card cur homeslot">${COZY}</div>` : `<div class="card cur homeslot"><div class="pan"><img class="on" src="${A.src(pic)}" alt=""></div></div>`;
     albumsEl.classList.remove('swap', 'multi');
   }, 420);
-  yearsEl.innerHTML = '';
+  renderYears();
   const cap = $('caption'); cap.classList.add('out'); clearTimeout(cap._t);
   cap._t = setTimeout(() => {
     // the way back into what was just watched: the last place, its album, the trip
@@ -1020,7 +990,6 @@ function showEndPanel(end) {
     $('place').textContent = place.name;
     $('route').innerHTML = `${esc(place.country)} · from <button class="lnk" data-go="city">${esc(last.city.name)}</button> · <button class="lnk" data-go="album">${esc(last.title)}</button>`;
     $('tripLine').innerHTML = trip ? `Trip · ${tid ? `<button class="lnk" data-go="trip" data-id="${tid}">${esc(trip)}</button>` : esc(trip)}` : '';
-    $('open').style.display = 'none';
     $('status').textContent = flight && flight.ip ? `in flight · ${Math.round(d3.geoDistance(flight.ip(0), flight.ip(1)) * 6371).toLocaleString('en')} km` : '';
     cap.classList.remove('out');
   }, 380);
@@ -1030,13 +999,14 @@ function arrive() {
   flight.to._pulseAt = simNow;
   const home = flight.home;
   flight = null; spin = 0;
-  if (home) { atHome = !!(tour && tour.end.home); lastTour = tour; tour = null; stop(); }
+  if (home) { atHome = !!(tour && tour.end.home); lastTour = tour; tour = null; stop(); comeBackLater(); }
   updateTimeline();
   $('status').textContent = '';
   if (playing) dwell = Math.max(3500, photoMs());
 }
 // Esc: let go of the picked place
 function deselect() {
+  clearTimeout(returnTimer);
   stop(); flight = null; lastLeg = null; idx = -1; spinning = true; atHome = false; tour = null;
   showFocus(false); updateTimeline(); updateTotals();
 }
@@ -1052,7 +1022,6 @@ function updateCaption(inFlight) {
   cap._t = setTimeout(() => {
     $('when').textContent = `${A.MONTHS[tr.month - 1]} ${tr.year} · trip ${idx + 1} of ${trips.length}`;
     $('place').textContent = tr.city.name;
-    $('open').style.display = '';
     $('route').innerHTML = `<button class="lnk" data-go="country">${tr.city.country.name}</button> · <button class="lnk" data-go="album">${esc(tr.title)}</button> · ${tr.photos} photos`;
     const j = A.journeyOf(tr);
     $('tripLine').innerHTML = j && j.real ? `Trip · <button class="lnk" data-go="trip" data-id="${j.id}">${esc(j.name)}</button>` : '';
@@ -1124,7 +1093,9 @@ function layoutCards() {
 function renderYears() {
   const years = [...new Set(album.list.map((i) => trips[i].year))];
   yearsEl.innerHTML = '';
-  if (tour) {
+  const scope = tour || (atHome || (flight && flight.home) ? lastTour : null);
+  if (scope) {
+    const tour = scope;
     // the trip or the year being watched; a click opens it in the archive
     const b = document.createElement('button'); b.className = 'cur';
     b.textContent = tour.kind === 'year' ? tour.name : `Trip · ${tour.name}`;
@@ -1593,9 +1564,22 @@ function homeCard(home) {
 }
 // "show on map": the lists close and the globe is already looking at where it all starts
 function snapTo(lon, lat) { camTween = null; lam = -lon; phi = -lat; gam = 0; vx = vy = spin = 0; spinning = false; }
-function toMap() { if (zoomed) unzoomPhoto(); closeViewer(); if (idx >= 0 || atHome) deselect(); stop(); tour = null; }
+function toMap() { cameFrom = viewerOn ? stack.slice() : null; if (zoomed) unzoomPhoto(); closeViewer(); if (idx >= 0 || atHome) deselect(); stop(); tour = null; }
+// a trip or a year that played to its end hands the screen back to the archive page it came from
+function comeBackLater() {
+  clearTimeout(returnTimer);
+  const to = cameFrom; if (!to || !to.length) return;
+  returnTimer = setTimeout(() => {
+    if (viewerOn || zoomed || modal.classList.contains('on')) return;
+    viewer.classList.add('slow');
+    stack = to.slice(0, -1); go(to[to.length - 1]);
+    setTimeout(() => viewer.classList.remove('slow'), 1600);
+  }, 5000);
+}
+function cancelComeBack() { clearTimeout(returnTimer); cameFrom = null; }
 // leaving a trip or a year: the panel goes back to every album of the place, with the years
 function leaveTour() {
+  cancelComeBack();
   if (!tour) return;
   tour = null; stop();
   if (idx >= 0 && !atHome) { album.city = null; buildAlbums(trips[idx].city); }
@@ -1603,7 +1587,7 @@ function leaveTour() {
 // the place in focus without a flight: the panel shows its photos, the light is lit
 function focusOn(i) {
   flight = null; camTween = null;
-  idx = i; atHome = false;
+  idx = i; atHome = false; progressOn = true;
   showFocus(true); album.city = null; buildAlbums(trips[i].city); updateCaption(false); updateTimeline();
   trips[i].city._pulseAt = simNow;
 }
@@ -1697,7 +1681,7 @@ function buildTimeline() {
       // a second click on the chosen year opens its albums as folders
       if (range && range.year === y) return go({ kind: 'year', year: y }, true);
       leaveTour();
-      range = { lo: y, hi: y + 1 - 1e-6, year: y }; pending = null; applyRange();
+      range = { lo: y, hi: y + 1 - 1e-6, year: y }; pending = null; progressOn = false; applyRange();
     });
     b.addEventListener('pointerdown', (e) => e.stopPropagation());
     track.appendChild(b); yearEls.push([y, b]);
@@ -1743,7 +1727,7 @@ const endPick = (e) => {
   pick = null; pending = null; hoverT = null;
   // a range with no trip in it is not taken
   if (!trips.some((tr) => within(tr, next))) { range = null; applyRange(); return flashChip('No trips in that stretch'); }
-  range = next;
+  range = next; progressOn = false;
   applyRange();
 };
 track.addEventListener('pointerup', endPick);
@@ -1768,7 +1752,9 @@ chip.addEventListener('click', clearRange);
 // With a range (or while one is being picked) the line shows only that range, not the trips so far
 // reached: trips up to the one in focus (not counting it while the plane is still on its way),
 // from the start of the picked range if there is one
+let progressOn = true;   // off after a new range is picked, until the plane moves again
 function reachedTrip(k) {
+  if (!progressOn) return false;
   if (idx < 0 || k > (flight && !flight.home ? idx - 1 : idx)) return false;
   return !range || tOf(trips[k]) >= range.lo - 1e-6;
 }
@@ -1778,7 +1764,7 @@ function updateTimeline() {
   const p = idx < 0 ? 0 : pos(tOf(trips[idx]));
   const from = range ? pos(range.lo) : 0;
   knob.style.left = p + '%'; knob.style.opacity = idx < 0 ? '0' : '1';
-  done.style.left = from + '%'; done.style.width = Math.max(0, p - from) + '%';
+  done.style.left = from + '%'; done.style.width = progressOn ? Math.max(0, p - from) + '%' : '0%';
   [...track.querySelectorAll('.trip')].forEach((el, k) => {
     const past = reachedTrip(k), inLive = within(trips[k], live);
     el.classList.toggle('past', past);
@@ -1802,7 +1788,7 @@ function playNext() {
     const next = tour.list[tour.list.indexOf(idx) + 1];
     if (next != null) { flyTo(next); if (!flight) dwell = Math.max(3500, photoMs()); return; }
     if (tour.end) return flyEnd(tour.end);
-    return stop();   // a year ends at its last album; it stays in view
+    stop(); return comeBackLater();   // a year ends at its last album; then the archive comes back
   }
   const i = nextIdx(idx, 1); if (i < 0) return stop();
   flyTo(i); if (!flight) dwell = Math.max(3500, photoMs());
@@ -1833,13 +1819,11 @@ addEventListener('keydown', (e) => {
     return;
   }
   if (viewerOn) { if (e.key === 'Escape') back(); return; }
-  if (cabin.classList.contains('on')) { if (e.key === 'Escape') closeCabin(); if (e.key === 'ArrowRight') showShot(shot + 1); if (e.key === 'ArrowLeft') showShot(shot - 1); return; }
   if (e.key === 'Escape') { if (idx >= 0) deselect(); else clearRange(); }
   if (e.key === 'ArrowRight') { stop(); const i = nextIdx(idx, 1); if (i >= 0) flyTo(i); }
   if (e.key === 'ArrowLeft') { stop(); const i = nextIdx(idx, -1); if (i >= 0) flyTo(i); }
   if (e.key === 'ArrowDown' && idx >= 0) { stop(); setAlbum(album.cur + 1); }
   if (e.key === 'ArrowUp' && idx >= 0) { stop(); setAlbum(album.cur - 1); }
-  if (e.key === 'Enter' && idx >= 0) openCabin();
   if (e.key === ' ') $('play').click();
 });
 
@@ -2124,42 +2108,8 @@ function tap(x, y) {
   // a light outside the trip or year being watched leaves it
   if (tour && !own.some((k) => tour.list.includes(k))) leaveTour();
   const i = (tour && own.find((k) => tour.list.includes(k))) ?? own.find((k) => inRange(trips[k])) ?? own[0];
-  if (idx >= 0 && trips[idx].city === best && !flight) openCabin(); else flyTo(i);
+  if (!(idx >= 0 && trips[idx].city === best && !flight)) flyTo(i);
 }
-
-// ---------- the window seat ----------
-const cabin = $('cabin'), glass = $('glass');
-let shots = [], shot = 0;
-$('open').onclick = openCabin;
-function openCabin() {
-  if (idx < 0) return;
-  stop();
-  const tr = trips[idx];
-  shots = A.photosOf(tr.city);
-  $('seatTitle').textContent = tr.title;
-  $('seatSub').textContent = `${tr.city.name}, ${tr.city.country.name} · ${A.MONTHS[tr.month - 1]} ${tr.year} · ${tr.photos} photos`;
-  glass.innerHTML = '';
-  const thumbs = $('thumbs'); thumbs.innerHTML = '';
-  shots.forEach((p, k) => {
-    const img = document.createElement('img'); img.src = A.src(p); img.alt = ''; glass.appendChild(img);
-    const b = document.createElement('button'); b.innerHTML = `<img src="${A.src(p)}" alt="">`; b.onclick = () => showShot(k); thumbs.appendChild(b);
-  });
-  cabin.classList.remove('closing'); cabin.classList.add('on');
-  shot = -1; showShot(0);
-}
-let swipeX = null;
-glass.addEventListener('pointerdown', (e) => { swipeX = e.clientX; });
-glass.addEventListener('pointerup', (e) => { if (swipeX === null) return; const d = e.clientX - swipeX; swipeX = null; showShot(shot + (d > 40 ? -1 : 1)); });
-function showShot(k) {
-  if (!shots.length) return;
-  k = (k + shots.length) % shots.length;
-  if (k === shot) return;
-  [...glass.querySelectorAll('img')].forEach((im, i) => { im.classList.toggle('on', i === k); if (i === k) { im.style.animation = 'none'; void im.offsetWidth; im.style.animation = ''; } });
-  [...$('thumbs').children].forEach((b, i) => b.classList.toggle('on', i === k));
-  shot = k;
-}
-function closeCabin() { cabin.classList.add('closing'); setTimeout(() => cabin.classList.remove('on'), 650); }
-$('closeCabin').onclick = closeCabin;
 
 // ---------- boot ----------
 (async () => {
