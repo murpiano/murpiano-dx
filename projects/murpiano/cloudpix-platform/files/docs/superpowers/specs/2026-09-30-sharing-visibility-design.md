@@ -102,59 +102,27 @@ Reading it: walk every ancestor (including the item itself); if *any* ancestor's
 
 ## Access paths
 
-Two ways a non-owner reaches content, both authorized through `can_view`:
+**Revised during planning:** a plain Storage RLS policy cannot validate `link_token`. RLS sees only the object path (`owner_id/photo_id`) and the caller's JWT; a link token arrives as a query param or request body on a stateless REST call, which never reaches a `using` clause. Worse, `item_id` values come from `freshId()` (`src/data/edits.ts`), which mixes a timestamp with `Math.random()` — not cryptographically opaque — so "the id itself is the secret" (the fallback a pure-RLS design would lean on) does not hold either. All non-owner reads, archive JSON and photos alike, go through one **Edge Function** instead.
 
-**Photos — direct, via Storage RLS.** A fifth policy on `storage.objects`:
+**`supabase/functions/shared-content/index.ts`** — the single entry point for every non-owner read:
 
-```sql
-create policy "photos: read shared" on storage.objects
-  for select using (
-    bucket_id = 'photos'
-    and public.can_view(
-      (storage.foldername(name))[1]::uuid,
-      'photo',
-      (storage.foldername(name))[2],
-      nullif(current_setting('request.jwt.claims', true)::json->>'link_token', '')::uuid
-    )
-  );
-```
+- Input: `{ owner_id, kind, item_id, token? }`.
+- Runs with the service-role key (server-side only, never shipped to the client).
+- Calls `can_view(owner_id, kind, item_id, token)` (same SQL function as before — still the one place the visibility rule lives) to authorize.
+- Not authorized → returns `404` with a flat, non-descriptive body (see Error handling — never distinguishes "private" from "does not exist").
+- Authorized and `kind` is `trip` or `album` → reads the owner's `archives.data`, extracts that subtree, drops any nested photo whose own `can_view` check fails, then — for every remaining `own`-kind photo — mints a signed URL via the Storage admin API (`createSignedUrl`, service role bypasses RLS entirely for this server-side call) and inlines it on the photo, so the client never talks to Storage directly for shared content.
+- Authorized and `kind` is `photo` → returns just that photo's signed URL.
+- A second function, **`supabase/functions/public-trips/index.ts`**, takes `{ owner_id, viewer_registered }` and returns the trip summaries at `public` level, plus `registered` ones when `viewer_registered` is true (the caller passes this from whether the browser has a session, not from the payload of an easily-forged param — the function re-derives it from the caller's own JWT via `req.headers.get('Authorization')`, falling back to anonymous when absent).
 
-No Edge Function: the client requests a signed/public URL the same way it already does for its own photos, and Storage's RLS either allows or denies the read. (The `link_token` claim is a placeholder for how the client passes a link token on an anonymous read — the implementation plan resolves whether that travels as a query param checked by a small wrapper, or a session-scoped setting; either way `can_view` receives it as `p_token`.)
+`can_view` and `visibility_ancestors` stay exactly as designed above; only *who calls them* changes — a Postgres function invoked from an Edge Function using the service-role client, not from RLS or a client-callable RPC. `content_visibility`'s RLS (owner-only read/write) is unchanged and still governs the *owner's own* reads/writes of their privacy settings from the normal app.
 
-**Archive content (trip/album JSON) — via RPC.** The archive row itself stays owner-only (RLS unchanged), so a stranger cannot `select` it directly. Instead:
-
-```sql
-create or replace function public.get_shared_content(
-  p_owner uuid, p_kind text, p_item_id text, p_token uuid default null
-) returns jsonb
-language plpgsql security definer stable as $$
-begin
-  if not public.can_view(p_owner, p_kind, p_item_id, p_token) then
-    return null;
-  end if;
-  -- extract the trip or album subtree from archives.data for p_owner,
-  -- then strip any nested photo whose own can_view() check fails
-  -- (e.g. one private photo inside an otherwise-public album).
-  ...
-end;
-$$;
-
-create or replace function public.list_public_trips(p_owner uuid)
-returns jsonb
-language sql security definer stable as $$
-  -- trips at level 'public', plus 'registered' ones when auth.uid() is not null,
-  -- for the owner's public profile page.
-  select ...;
-$$;
-```
-
-Both are called through `supabase.rpc(...)` from the client — no new backend interface beyond what `src/backend/supabase.ts` already wraps for auth and storage.
+The `photos` bucket's RLS is untouched (still owner-only, as today) — the Edge Function reads it with the service-role key, which RLS does not apply to.
 
 ## Public handle & profile
 
 Each account gets a URL-safe handle, separate from email. Generated at signup from the account's name (`ivan-petrov`; `-2`, `-3`, ... appended on collision), stored in `auth.user.user_metadata.handle` alongside the existing `name`/`home`, editable later from `AccountForm.tsx` the same way name/home are today (with a uniqueness check on save).
 
-`/u/<handle>` resolves the handle to a `user_id` (a small `handle -> user_id` lookup, either a public-readable column on a minimal profiles table or a security-definer RPC — implementation plan decides which, since it's a small, low-risk choice either way) and then calls `list_public_trips`.
+`/u/<handle>` resolves the handle to a `user_id` (a small `handle -> user_id` lookup, either a public-readable column on a minimal profiles table or a security-definer RPC — implementation plan decides which, since it's a small, low-risk choice either way) and then calls the `public-trips` Edge Function.
 
 ## Routing
 
@@ -171,17 +139,17 @@ The app deploys to GitHub Pages under `/my-world/` (`deploy.yml`, `VITE_BASE: /m
 
 - **Privacy control** on a trip card, an album view, and a photo — a 4-way picker (private/link/registered/public). Writes directly to `content_visibility` via a small upsert, independent of the main archive save-queue (`RemoteRepository`'s queued JSON save is unrelated and unaffected).
 - **Copy-link button**, shown when level is `link` — generates `link_token` if absent, builds `/shared/<owner_id>/<kind>/<item_id>?t=<token>`, copies to clipboard.
-- **Shared view** (`/shared/...` and `/u/<handle>`) — reuses the existing Trip/Album presentational components in a read-only mode (no edit affordances, no upload), fed by `get_shared_content`/`list_public_trips` instead of the local/remote repository.
+- **Shared view** (`/shared/...` and `/u/<handle>`) — reuses the existing Trip/Album presentational components in a read-only mode (no edit affordances, no upload). A new `sharedRepository` (same `Repository` interface as `demoRepository`/`localRepository`/`remoteRepository`, `editable: false`) feeds `World` from the `shared-content`/`public-trips` Edge Functions instead of the local/remote backend — it slots into the exact seam `loadWorld` already uses to pick a repository (`src/app/boot.ts`).
 
 ## Error handling
 
-- Token revoked, item set back to `private`, or viewer lacks rights → `get_shared_content`/storage read returns nothing. The UI shows one neutral "not available" state — never a reason, so a private item's existence isn't confirmed or denied by the error text.
+- Token revoked, item set back to `private`, or viewer lacks rights → the `shared-content` Edge Function returns `404` with no distinguishing detail. The UI shows one neutral "not available" state — never a reason, so a private item's existence isn't confirmed or denied by the error text.
 - `registered`-level content viewed while logged out → same neutral state, with a sign-in prompt (distinct from the flat "not available" for a private/revoked item, since here the fix is actionable).
 - Malformed handle or share URL → same "not available" page.
 
 ## Testing
 
-- **API tests** (same style as the existing archive/photo RLS tests, two accounts): a stranger cannot read a `private` item via RPC or storage; a `link` item is readable with its token and not with none/a wrong one; a `registered` item is blocked for an anonymous request and allowed for a second logged-in account; a `public` item is readable anonymously; strictest-ancestor-wins is exercised directly (`public` album inside `private` trip → blocked; `private` photo inside `public` album → album visible, that photo excluded from the returned JSON and from storage reads).
+- **API tests** (same style as the existing archive/photo RLS tests, two accounts, extended to call the Edge Functions): a stranger cannot read a `private` item via `shared-content`; a `link` item is readable with its token and not with none/a wrong one; a `registered` item is blocked for an anonymous request and allowed for a second logged-in account; a `public` item is readable anonymously; strictest-ancestor-wins is exercised directly (`public` album inside `private` trip → blocked; `private` photo inside `public` album → album visible, that photo excluded from the returned payload).
 - **E2E**: owner sets an album to `public`, a second browser with no session opens `/u/<handle>`, sees the profile list, opens the album, sees its photos; owner reverts to `private`, the same URL now shows "not available."
 
 ## Review Focus
