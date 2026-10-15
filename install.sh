@@ -8,6 +8,7 @@
 #   5. Turns off commit and pull request attribution in Claude Code.
 #   6. Adds Claude Code session hooks that run sync.sh (see sync.sh).
 #   7. Links agent files stored in projects/ into the local project checkouts.
+#   8. Installs global agent rules (global/agent-rules.md) and the 50% autocompact threshold.
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")" && pwd)
@@ -15,17 +16,16 @@ root=$(cd "$(dirname "$0")" && pwd)
 source "$root/config.env"
 
 echo "== Skills"
-for target in "$HOME/.claude/skills" "$HOME/.agents/skills"; do
-  mkdir -p "$target"
-  for skill in "$root"/skills/*/; do
-    link="$target/$(basename "$skill")"
-    if [ -e "$link" ] && [ ! -L "$link" ]; then
-      echo "skip $link: a real folder is in the way"
-      continue
-    fi
-    ln -sfn "${skill%/}" "$link"
-    echo "linked $link"
-  done
+target="$HOME/.claude/skills"
+mkdir -p "$target"
+for skill in "$root"/skills/*/; do
+  link="$target/$(basename "$skill")"
+  if [ -e "$link" ] && [ ! -L "$link" ]; then
+    echo "skip $link: a real folder is in the way"
+    continue
+  fi
+  ln -sfn "${skill%/}" "$link"
+  echo "linked $link"
 done
 
 echo "== Project store"
@@ -118,6 +118,8 @@ path = sys.argv[1]
 with open(path) as f:
     data = json.load(f)
 data["attribution"] = {"commit": "", "pr": "", "sessionUrl": False}
+# Autocompact at 50% of the context window (global/agent-rules.md).
+data.setdefault("env", {})["CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"] = "50"
 
 # Session hooks that keep project agent files in murpiano-dx. Old entries are replaced.
 sync = sys.argv[2]
@@ -134,3 +136,16 @@ with open(path, "w") as f:
     f.write("\n")
 PY
 echo "updated $settings"
+
+echo "== Global agent rules"
+# Rule block goes between markers into each agent's global instruction file. Old block is replaced.
+rules="$root/global/agent-rules.md"
+begin='<!-- >>> murpiano-dx -->'
+end='<!-- <<< murpiano-dx -->'
+for file in "$HOME/.claude/CLAUDE.md"; do
+  mkdir -p "$(dirname "$file")"
+  touch "$file"
+  sed -i "/^$begin\$/,/^$end\$/d" "$file"
+  { echo "$begin"; cat "$rules"; echo "$end"; } >>"$file"
+  echo "updated $file"
+done
