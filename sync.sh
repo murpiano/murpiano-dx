@@ -138,17 +138,21 @@ push() {
   timeout 20 git -C "$dx" push --quiet 2>/dev/null || say "push failed; it will be retried at the next session start"
 }
 
-# The project of this run: git root of the session folder, never murpiano-dx itself.
-session_root() {
+# The session folder from the hook's stdin JSON, or $PWD without it.
+session_cwd() {
   local cwd=""
   if [ ! -t 0 ]; then
     cwd=$(python3 -c 'import json, sys
 try: print(json.load(sys.stdin).get("cwd", ""))
 except Exception: pass' 2>/dev/null)
   fi
-  cwd=${cwd:-$PWD}
+  printf '%s' "${cwd:-$PWD}"
+}
+
+# The project of this run: git root of the session folder, never murpiano-dx itself.
+session_root() {
   local root
-  root=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || return 1
+  root=$(git -C "$(session_cwd)" rev-parse --show-toplevel 2>/dev/null) || return 1
   [ "$root" = "$dx" ] && return 1
   printf '%s' "$root"
 }
@@ -159,9 +163,17 @@ flock -w 30 9 || { say "another sync is running"; exit 0; }
 case "$mode" in
   start)
     pull
-    if root=$(session_root) && key=$(project_key "$root"); then
-      link "$root" "$key"
-      adopt "$root" "$key"
+    cwd=$(session_cwd)
+    root=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)
+    if [ -n "$root" ] && [ "$root" != "$dx" ]; then
+      if key=$(project_key "$root"); then
+        link "$root" "$key"
+        adopt "$root" "$key"
+      else
+        notes+=("This project has a git repository but no GitHub origin, so murpiano-dx does not track it yet: no agent-trace cleanup, no releases (commit convention is kysaro's job, set up per project). Ask the user whether to create a GitHub repository for it (private by default, so the history stays but isn't public: \`gh repo create --private --source=. --remote=origin\`), then run \`bash $dx/sync.sh\` once to link it.")
+      fi
+    elif [ -z "$root" ]; then
+      notes+=("This folder has no git repository, so murpiano-dx does not track it: no commit history, no agent-trace cleanup, no releases. Ask the user whether to start one now, before more work piles up: \`git init\`, a first commit, then a GitHub repository (private by default: \`gh repo create --private --source=. --remote=origin --push\`), then run \`bash $dx/sync.sh\` once to link it.")
     fi
     push
     ;;
