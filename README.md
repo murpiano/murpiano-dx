@@ -36,7 +36,7 @@
 
 | Где | Что | Кто следит |
 | --- | --- | --- |
-| любой репозиторий на машине | автор коммитов `murpiano` с noreply-адресом GitHub | глобальный `git config` |
+| любой репозиторий на машине | автор коммитов `Bogdan Trotsenko` с noreply-адресом аккаунта `murpiano` | глобальный `git config` |
 | любой репозиторий на машине | нет `Co-Authored-By` и ссылок на сессию | `attribution` в `~/.claude/settings.json` |
 | любой репозиторий на машине | `CLAUDE.md`, `.agents/` и другие файлы агентов не попадают в git | глобальный git ignore |
 | проект, который ведёт murpiano-dx | нет коммитов в `main`/`master` | `pre-commit`-хук |

@@ -79,7 +79,7 @@ if [ -t 0 ]; then
     unset token
     echo "saved $token_file"
     echo "updating RELEASE_TOKEN in repositories with releases"
-    for repo in $(gh repo list "$GIT_NAME" --limit 500 --json nameWithOwner -q '.[].nameWithOwner' 2>/dev/null); do
+    for repo in $(gh repo list "$GITHUB_OWNER" --limit 500 --json nameWithOwner -q '.[].nameWithOwner' 2>/dev/null); do
       state=$(gh variable get RELEASES -R "$repo" 2>/dev/null) || continue
       if [ "$state" = on ] || [ "$state" = paused ]; then
         gh secret set RELEASE_TOKEN -R "$repo" <"$token_file" && echo "  $repo"
