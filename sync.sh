@@ -166,9 +166,36 @@ pull() {
 commit() {
   git -C "$dx" add -A projects
   git -C "$dx" diff --cached --quiet && return 0
-  local keys
-  keys=$(git -C "$dx" diff --cached --name-only | awk -F/ 'NF > 3 {print $2 "/" $3}' | sort -u | paste -sd, - | sed 's/,/, /g')
-  git -C "$dx" commit --quiet -m "chore(sync): update ${keys:-project store} from $(hostname)" || say "commit failed"
+  local keys subject body=""
+  keys=$(git -C "$dx" diff --cached --name-only | awk -F/ 'NF > 3 {print $2 "/" $3}' | sort -u)
+  subject=$(sync_subject "$keys" "$(hostname)")
+  # A subject too short to name the projects lists them in the body.
+  if [ -n "$keys" ] && [[ "$subject" != *"${keys%%$'\n'*}"* ]]; then
+    body=$(printf '%s\n' "$keys" | sed 's/^/- /' | cut -c1-72)
+  fi
+  if [ -n "$body" ]; then
+    git -C "$dx" commit --quiet -m "$subject" -m "$body" || say "commit failed"
+  else
+    git -C "$dx" commit --quiet -m "$subject" || say "commit failed"
+  fi
+}
+
+# Commit subject for a sync, within the 72-character limit of kysaro's default preset:
+# the project names when they fit, otherwise their count.
+sync_subject() {
+  local keys=$1 host=$2 count subject
+  count=$(printf '%s\n' "$keys" | grep -c .)
+  if [ "$count" -eq 0 ]; then
+    subject="chore(sync): update project store from $host"
+  else
+    subject="chore(sync): update $(printf '%s\n' "$keys" | paste -sd, - | sed 's/,/, /g') from $host"
+    if [ "${#subject}" -gt 72 ]; then
+      [ "$count" -eq 1 ] && subject="chore(sync): update 1 project from $host" ||
+        subject="chore(sync): update $count projects from $host"
+    fi
+  fi
+  [ "${#subject}" -gt 72 ] && subject=${subject% from *}
+  printf '%s' "$subject"
 }
 
 push() {
