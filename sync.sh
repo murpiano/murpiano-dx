@@ -116,6 +116,45 @@ link() {
   return 0
 }
 
+# This repo's hooks directory: plain .git/hooks, or husky's folder if core.hooksPath is set.
+hooks_dir() {
+  local root=$1 rel
+  rel=$(git -C "$root" rev-parse --git-path hooks 2>/dev/null) || return 1
+  case "$rel" in
+    /*) printf '%s' "$rel" ;;
+    *) printf '%s/%s' "$root" "$rel" ;;
+  esac
+}
+
+precommit_marker='# murpiano-dx: agent-trace pre-commit scan (skills/repo-cleanup)'
+
+# Install the agent-trace pre-commit scanner for a tracked project. Idempotent: skipped if
+# already installed, left alone if the project has its own unrelated pre-commit hook.
+install_precommit_hook() {
+  local root=$1 key=$2 dir target
+  dir=$(hooks_dir "$root") || return 0
+  target="$dir/pre-commit"
+  if [ -e "$target" ]; then
+    grep -qF "$precommit_marker" "$target" 2>/dev/null && return 0
+    say "$key: pre-commit hook already exists; not replaced. Agent-trace scan: bash $dx/skills/repo-cleanup/pre-commit-hook.sh"
+    return 0
+  fi
+  mkdir -p "$dir"
+  { echo '#!/usr/bin/env bash'; echo "$precommit_marker"; echo "exec bash \"$dx/skills/repo-cleanup/pre-commit-hook.sh\""; } >"$target"
+  chmod +x "$target"
+  notes+=("$key: pre-commit hook installed. Every commit is scanned for agent traces and secrets before it is made (skills/repo-cleanup/policy.md); a false positive commits with --no-verify.")
+}
+
+# Note if the project depends on kysaro but this machine has no commit-msg hook for it.
+check_kysaro_hook() {
+  local root=$1 key=$2 dir
+  [ -f "$root/package.json" ] || return 0
+  grep -q '"kysaro"' "$root/package.json" 2>/dev/null || return 0
+  dir=$(hooks_dir "$root") || return 0
+  [ -e "$dir/commit-msg" ] && return 0
+  notes+=("$key: package.json lists kysaro, but this machine has no commit-msg hook for it. Run \`npx kysaro init\` here; a bad commit message currently would not be blocked. If the hook should survive a fresh clone, set up husky first: \`npx husky init\`.")
+}
+
 pull() {
   git -C "$dx" diff --quiet && git -C "$dx" diff --cached --quiet || commit
   if ! timeout 20 git -C "$dx" pull --quiet --rebase --autostash >/dev/null 2>&1; then
@@ -169,6 +208,8 @@ case "$mode" in
       if key=$(project_key "$root"); then
         link "$root" "$key"
         adopt "$root" "$key"
+        install_precommit_hook "$root" "$key"
+        check_kysaro_hook "$root" "$key"
       else
         notes+=("This project has a git repository but no GitHub origin, so murpiano-dx does not track it yet: no agent-trace cleanup, no releases (commit convention is kysaro's job, set up per project). Ask the user whether to create a GitHub repository for it (private by default, so the history stays but isn't public: \`gh repo create --private --source=. --remote=origin\`), then run \`bash $dx/sync.sh\` once to link it.")
       fi
@@ -186,7 +227,11 @@ case "$mode" in
   link)
     for root in "$projects_dir"/*/; do
       root=${root%/}
-      [ -d "$root/.git" ] && [ "$root" != "$dx" ] && key=$(project_key "$root") && link "$root" "$key"
+      if [ -d "$root/.git" ] && [ "$root" != "$dx" ] && key=$(project_key "$root"); then
+        link "$root" "$key"
+        install_precommit_hook "$root" "$key"
+        check_kysaro_hook "$root" "$key"
+      fi
     done
     ;;
   *)
@@ -194,6 +239,8 @@ case "$mode" in
     if root=$(session_root) && key=$(project_key "$root"); then
       adopt "$root" "$key"
       link "$root" "$key"
+      install_precommit_hook "$root" "$key"
+      check_kysaro_hook "$root" "$key"
     fi
     push
     ;;
