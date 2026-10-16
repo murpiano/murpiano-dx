@@ -38,8 +38,12 @@
 - Коммиттер `GitHub <noreply@github.com>` у коммитов, сделанных на сайте (merge по кнопке),
   нормален.
 - Настоящий email в истории — находка: GitHub подставляет его при merge на сайте, если в
-  аккаунте не включено «Keep my email addresses private» (Settings → Emails). Включить и
-  его, и «Block command line pushes that expose my email».
+  аккаунте не включено «Keep my email addresses private» (Settings → Emails). Оба
+  переключателя, и этот, и «Block command line pushes that expose my email», включены с
+  2026-10-17.
+- Коммиты до 2026-10-17 с настоящим email или другим именем оставлены как есть: так решил
+  владелец. Сканер покажет их как находку; принять её, историю ради автора не переписывать
+  и не предлагать. Стандарт действует для новых коммитов.
 
 ## 5. Сообщения и ветки
 
