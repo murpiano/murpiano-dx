@@ -51,9 +51,11 @@ section 'Agent or bot identities in authors and committers' \
 section 'Agent-style branch names' \
   "$(git branch $([ "$refs" = --all ] && echo -a || echo -r) --format='%(refname:short)' | grep -iE "$BRANCH")"
 
+# Owner identity: one email. Names may differ; GitHub's web committer is expected.
 identities=$(git log $refs --format='%an <%ae>%n%cn <%ce>' | sort -u)
-printf '== Author and committer identities (review: should be one)\n%s\n\n' "$identities"
-[ "$(printf '%s\n' "$identities" | wc -l)" -gt 1 ] && findings=$((findings + 1))
+printf '== Author and committer identities (review: one email, besides GitHub <noreply@github.com>)\n%s\n\n' "$identities"
+emails=$(git log $refs --format='%ae%n%ce' | sort -u | grep -vx 'noreply@github.com')
+[ "$(printf '%s\n' "$emails" | grep -c .)" -gt 1 ] && findings=$((findings + 1))
 
 # Secrets. Output names the place only, never the matched value.
 section 'Secret files tracked or in history' \

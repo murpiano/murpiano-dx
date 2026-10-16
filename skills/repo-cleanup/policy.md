@@ -29,8 +29,17 @@
 
 ## 4. Автор
 
-Все авторы и коммиттеры в опубликованной истории — владелец, одно имя и один email. Для
-репозиториев murpiano: `murpiano <159007823+murpiano@users.noreply.github.com>`.
+Все авторы и коммиттеры в опубликованной истории — владелец с одним email: noreply-адресом
+его аккаунта. Для репозиториев murpiano:
+`Bogdan Trotsenko <159007823+murpiano@users.noreply.github.com>`.
+
+- Имя — как в профиле GitHub. В старых коммитах может стоять `murpiano`: email тот же,
+  GitHub показывает их как коммиты владельца, переписывать не нужно.
+- Коммиттер `GitHub <noreply@github.com>` у коммитов, сделанных на сайте (merge по кнопке),
+  нормален.
+- Настоящий email в истории — находка: GitHub подставляет его при merge на сайте, если в
+  аккаунте не включено «Keep my email addresses private» (Settings → Emails). Включить и
+  его, и «Block command line pushes that expose my email».
 
 ## 5. Сообщения и ветки
 
