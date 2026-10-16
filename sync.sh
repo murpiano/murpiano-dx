@@ -210,6 +210,10 @@ case "$mode" in
         adopt "$root" "$key"
         install_precommit_hook "$root" "$key"
         check_kysaro_hook "$root" "$key"
+        branch=$(git -C "$root" branch --show-current 2>/dev/null)
+        if [ "$branch" = main ] || [ "$branch" = master ]; then
+          notes+=("$key: on $branch. Before starting a task that changes code, offer the user a branch for it (skill repo-commit, section 6 of its rules.md); a one-line fix may stay on $branch if the user says so.")
+        fi
       else
         notes+=("This project has a git repository but no GitHub origin, so murpiano-dx does not track it yet: no agent-trace cleanup, no releases (commit convention is kysaro's job, set up per project). Ask the user whether to create a GitHub repository for it (private by default, so the history stays but isn't public: \`gh repo create --private --source=. --remote=origin\`), then run \`bash $dx/sync.sh\` once to link it.")
       fi
