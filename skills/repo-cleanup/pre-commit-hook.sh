@@ -1,11 +1,32 @@
 #!/usr/bin/env bash
 # Installed by murpiano-dx (sync.sh) as this repository's pre-commit hook.
+# Blocks a commit on main or master: work goes to a topic branch (skill repo-commit).
 # Blocks a commit that stages an agent file, an agent mention or a secret.
 # Fast and local only: staged files and the staged diff, no history, no network.
 # Patterns follow policy.md in this folder. Edit there, not per project.
 
 set -uo pipefail
 export LC_ALL=C.UTF-8
+
+# Commits on the default branch. Allowed: the first commit of a repository, the commit that
+# concludes a merge, and MURPIANO_ON_MAIN=1 when the user asked for this commit on main.
+branch=$(git branch --show-current 2>/dev/null)
+if { [ "$branch" = main ] || [ "$branch" = master ]; } &&
+  git rev-parse -q --verify HEAD >/dev/null &&
+  [ ! -e "$(git rev-parse --git-path MERGE_HEAD)" ] &&
+  [ "${MURPIANO_ON_MAIN:-}" != 1 ]; then
+  cat >&2 <<EOF
+[murpiano-dx] Commit blocked: you are on $branch. Work goes to a topic branch.
+Look at the staged and unstaged changes and propose a branch to the user:
+<type>/<short-name>, for example feat/dark-theme or fix/login-timeout
+(skill repo-commit, section 6 of its rules.md). If the changes cover several
+topics, propose one branch per topic. After the user agrees:
+  git switch -c <branch>    # uncommitted changes move along
+and commit again. Commit on $branch only if the user asked for it:
+  MURPIANO_ON_MAIN=1 git commit ...
+EOF
+  exit 1
+fi
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=patterns.sh

@@ -18,8 +18,8 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 ### «Начни релизы»
 
 1. Проверить: репозиторий на GitHub, в `main` есть workflow с `name: CI` и он зелёный.
-   Если тестов или CI нет, сначала настроить их по разделу 8 `rules.md`, закоммитить
-   отдельно (`repo-commit`), push, дождаться зелёного CI.
+   Если тестов или CI нет, сначала настроить их по разделу 8 `rules.md` в ветке
+   `ci/tests` и влить её в `main` по разделу 7 `repo-commit/rules.md`.
    Если README нет вовсе, предложить сначала его: скилл `repo-readme`.
 2. Проверить, что файл `~/.config/murpiano-dx/release-token` есть и не пустой. Если нет,
    попросить пользователя запустить `bash install.sh` из `murpiano-dx` и ввести токен
@@ -28,7 +28,8 @@ description: Use when the user asks to start, pause, resume or remove automatic 
    `.github/scripts/release.sh`.
 4. Если бейджа Release нет и репозиторий публичный, добавить его в README
    (раздел 6 `rules.md`).
-5. Закоммитить: `ci: release on every push to main`. Push.
+5. Закоммитить в ветке `ci/releases`: `ci: release on every push to main`. Влить в `main`
+   по разделу 7 `repo-commit/rules.md`.
 6. `gh secret set RELEASE_TOKEN -R OWNER/REPO < ~/.config/murpiano-dx/release-token`.
 7. Если тегов `v*` ещё нет, выпустить первый релиз вручную: версия `v1.0.0` (или версия
    из `package.json`, если она не ниже и ещё не выпущена), заметки по разделу 5,
@@ -51,13 +52,14 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 1. `gh variable set RELEASES --body off -R OWNER/REPO`.
 2. Для каждого релиза: `gh release delete <tag> --cleanup-tag --yes -R OWNER/REPO`.
 3. Удалить `.github/workflows/release.yml`, `.github/scripts/release.sh`, бейдж Release.
-4. Закоммитить: `ci: stop publishing releases`. Push.
+4. Закоммитить в ветке `ci/stop-releases`: `ci: stop publishing releases`. Влить в `main`
+   по разделу 7 `repo-commit/rules.md`.
 5. `gh secret delete RELEASE_TOKEN -R OWNER/REPO`.
 
 ### «Настрой тесты и CI»
 
-Без релизов, отдельно: по разделу 8 `rules.md`. Закоммитить (`repo-commit`), push, дождаться
-зелёного CI. Если README есть, дописать в него строки про тесты и бейдж CI по разделу 5
+Без релизов, отдельно: по разделу 8 `rules.md` в ветке `ci/tests`, влить в `main` по
+разделу 7 `repo-commit/rules.md`. Если README есть, дописать в него строки про тесты и бейдж CI по разделу 5
 `repo-readme/rules.md`.
 
 ### «Покажи следующий релиз»
