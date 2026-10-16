@@ -89,11 +89,14 @@ projects/murpiano/new-app/
 `/repo-readme`, `/repo-cleanup`, `/repo-release`, `/repo-commit`. Внутри каждой папки:
 `SKILL.md` с шагами, рядом правила, шаблоны и скрипты этого скилла.
 
-### repo-commit: сообщения коммитов
+### repo-commit: ветки и коммиты
 
 Как работает: [SKILL.md](skills/repo-commit/SKILL.md). Правила: [rules.md](skills/repo-commit/rules.md).
 
-Срабатывает не по команде, а на каждый коммит. Тип, scope, subject и, для `feat`/`fix`,
+Срабатывает не по команде, а на каждую задачу и каждый коммит. Перед задачей в `main`
+предлагает ветку `<type>/<имя>` (`feat/dark-theme`), в конце — push, pull request, merge после
+зелёного CI и твоего согласия. При старте сессии на `main` агент получает об этом
+напоминание. Сообщения: тип, scope, subject и, для `feat`/`fix`,
 тело — что изменилось и зачем, по правилам kysaro этого проекта (если его нет — по дефолту
 kysaro). Сам коммиты не проверяет: это делает хук kysaro, если он стоит в проекте
 (`npm i -D kysaro && npx kysaro init`, и `husky`, если хук должен выжить при клоне на новой

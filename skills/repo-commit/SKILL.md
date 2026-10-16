@@ -1,17 +1,29 @@
 ---
 name: repo-commit
-description: Use whenever making a git commit — picks type, scope and subject, writes a body for feat and fix that explains what changed and why, and follows this project's kysaro settings if it has any. Not for deciding when to release: that is repo-release.
+description: Use whenever starting a task in a git repository or making a git commit — offers a branch per task, picks type, scope and subject, writes a body for feat and fix that explains what changed and why, follows this project's kysaro settings, and brings the branch back to main through a pull request. Not for deciding when to release: that is repo-release.
 ---
 
-# Коммиты
+# Ветки и коммиты
 
-Пишет сообщение каждого коммита: тип, scope, subject и, для `feat`/`fix`, тело с тем, что
-изменилось и зачем. Отдельно от того, когда делать релиз — это `repo-release`, он только
+Ведёт git-работу по задаче: ветка под задачу, сообщение каждого коммита (тип, scope,
+subject и, для `feat`/`fix`, тело с тем, что изменилось и зачем), возврат ветки в `main`
+через pull request. Отдельно от того, когда делать релиз — это `repo-release`, он только
 читает готовую историю, сам коммитов не пишет.
 
 Правила: [rules.md](rules.md).
 
-## Шаги
+## Ветка под задачу
+
+1. Перед задачей, которая меняет код: если текущая ветка `main` (или `master`), предложить
+   автору ветку `<type>/<короткое-имя>` (раздел 6 `rules.md`). Создать после согласия:
+   `git switch -c feat/dark-theme`. Мелочь в одну строку может остаться в `main`, если автор
+   так скажет.
+2. Уже на ветке задачи: продолжать в ней. Новая, не связанная задача — новая ветка от
+   свежего `main`.
+3. Задача готова: push ветки, pull request, merge после зелёного CI и согласия автора,
+   удалить ветку (раздел 7 `rules.md`).
+
+## Коммит
 
 1. Если в проекте есть `.kysaro/settings/commits/commit.json` (или `merge.json`/`request.json`
    для своего типа сообщения) — прочитать его: допустимые `type`, `scope`, регистр subject,
@@ -30,11 +42,14 @@ description: Use whenever making a git commit — picks type, scope and subject,
 ## Нельзя
 
 - `--no-verify` без просьбы автора.
+- Ветки с префиксами из `repo-cleanup/policy.md` (`claude/`, `agent/`, `ai/` и т.п.).
+- Merge в `main`, push в `main` и удаление ветки на GitHub без согласия автора.
 - Коммит `feat`/`fix` без тела, если `kysaro` требует его (`body.required`) или изменение
   нетривиальное.
 - Переносить в первый абзац тела детали реализации — `repo-release` берёт из тела только его.
 
 ## Готово, когда
 
+- Работа по задаче идёт в своей ветке, если автор не решил иначе.
 - Коммит прошёл через хук kysaro, если он стоит, без `--no-verify`.
 - У `feat`/`fix` есть тело, первый абзац которого можно взять как пункт заметок релиза.
