@@ -1,6 +1,6 @@
 ---
 name: repo-readme
-description: Use when writing, rewriting or reviewing a repository README, its GitHub description or topics, or when a repository needs the tests or CI that its README badges show.
+description: Use when writing, rewriting or reviewing a repository README, its GitHub description or topics.
 ---
 
 # Витринный README
@@ -19,16 +19,17 @@ README в одном стиле для всех репозиториев murpian
 3. Открыть каждую внешнюю ссылку. О неработающей сказать автору.
 4. Определить тип проекта: веб-приложение, бэкенд, CLI, библиотека. От него зависят
    картинка и секция `API`, `CLI` или `Usage`.
-5. Если нет тестов, скриптов `test` и `check` или `ci.yml`, добавить их по разделу
-   «Тесты и CI» и закоммитить отдельно.
+5. Отметить, что в проекте уже есть: скрипты `test` и `check`, `.github/workflows/ci.yml`,
+   релизы (`gh variable get RELEASES` равно `on` или `paused`). README описывает только это
+   (раздел 5 `rules.md`). Тесты, CI и релизы не создавать: это скилл `repo-release`.
 6. Заполнить `template.md`, пустые блоки убрать, комментарии удалить.
 7. Прогнать проверки из раздела «Проверка» в `rules.md`, исправить всё найденное.
 8. Выполнить команды из `Run locally` на чистом клоне.
 9. Закоммитить README по конвенции репозитория.
 10. Перед push выполнить скилл `repo-cleanup`.
-11. После подтверждения автора: push, дождаться зелёного CI, выставить description,
+11. После подтверждения автора: push, дождаться зелёного CI (если он есть), выставить description,
     website и topics. Релизы включаются командой «начни релизы» (скилл `repo-release`).
-12. Проверить, что бейдж CI показывает `passing`, а бейдж Release, если он есть, текущую
+12. Проверить, что каждый бейдж показывает реальный статус: CI `passing`, Release текущую
     версию.
 
 ## Спросить автора
@@ -41,5 +42,5 @@ README в одном стиле для всех репозиториев murpian
 
 - README идёт в порядке и с названиями секций из `rules.md`.
 - Проверки из `rules.md` ничего не выводят, `prettier --check` проходит.
-- Тесты и CI есть, CI зелёный.
+- В README только то, что есть в проекте: нет тестов, CI или релизов — нет их строк и бейджей.
 - `repo-cleanup` не нашёл непросмотренных следов.

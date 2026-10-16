@@ -1,6 +1,6 @@
 ---
 name: repo-release
-description: Use when the user asks to start, pause, resume or remove automatic releases of a repository, to preview the next release, to rewrite the notes of a GitHub release, or when a README's feature sections may be behind the code.
+description: Use when the user asks to start, pause, resume or remove automatic releases of a repository, to preview the next release, to rewrite the notes of a GitHub release, to set up tests and CI, or when a README's feature sections may be behind the code.
 ---
 
 # Релизы
@@ -18,7 +18,8 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 ### «Начни релизы»
 
 1. Проверить: репозиторий на GitHub, в `main` есть workflow с `name: CI` и он зелёный.
-   Если CI нет, сначала настроить его по скиллу `repo-readme`.
+   Если тестов или CI нет, сначала настроить их по разделу 8 `rules.md`, закоммитить
+   отдельно (`repo-commit`), push, дождаться зелёного CI.
    Если README нет вовсе, предложить сначала его: скилл `repo-readme`.
 2. Проверить, что файл `~/.config/murpiano-dx/release-token` есть и не пустой. Если нет,
    попросить пользователя запустить `bash install.sh` из `murpiano-dx` и ввести токен
@@ -53,6 +54,12 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 4. Закоммитить: `ci: stop publishing releases`. Push.
 5. `gh secret delete RELEASE_TOKEN -R OWNER/REPO`.
 
+### «Настрой тесты и CI»
+
+Без релизов, отдельно: по разделу 8 `rules.md`. Закоммитить (`repo-commit`), push, дождаться
+зелёного CI. Если README есть, дописать в него строки про тесты и бейдж CI по разделу 5
+`repo-readme/rules.md`.
+
 ### «Покажи следующий релиз»
 
 `bash .github/scripts/release.sh --dry-run` в проекте. Показать версию и заметки. Заодно
@@ -75,5 +82,6 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 
 - «Начни»: `release.yml` и `release.sh` в `main`, секрет и `RELEASES=on` заданы, тег `v*`
   есть, бейдж в README (для публичного репозитория).
+- «Настрой тесты и CI»: `npm run check` проходит, `ci.yml` в `main`, CI зелёный.
 - «Приостанови», «Возобнови»: `gh variable get RELEASES` показывает новое значение.
 - «Убери»: релизов и тегов нет, файлов релиза и бейджа нет, `RELEASES=off`.

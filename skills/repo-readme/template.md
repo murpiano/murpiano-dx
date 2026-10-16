@@ -4,6 +4,8 @@
 
 <What it is, in one sentence.> <What it is built on, in one short sentence.>
 
+<!-- Only badges that already show a real status: CI if .github/workflows/ci.yml exists,
+     Release if releases are on. Neither: drop this block. -->
 [![CI](https://github.com/murpiano/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/murpiano/<repo>/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/murpiano/<repo>?color=informational)](https://github.com/murpiano/<repo>/releases/latest)
 
@@ -42,6 +44,8 @@ $ curl <real request>
 
 ## Run locally
 
+<!-- npm test and npm run check: keep only if package.json has these scripts. -->
+
 ```bash
 git clone https://github.com/murpiano/<repo>.git
 cd <repo>
@@ -57,8 +61,8 @@ npm run build     # <what it does>
 
 <!-- Environment variables, if any: table with Variable, Default, Purpose. -->
 
-<Where tests live and what they leave untouched. What CI runs and when,
-with the path .github/workflows/ci.yml. Deploy in one sentence, if any.>
+<Only for what exists: where tests live and what they leave untouched; what CI runs and
+when, with the path .github/workflows/ci.yml; deploy in one sentence.>
 
 ## Where things live
 
