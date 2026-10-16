@@ -1,12 +1,14 @@
 ---
 name: repo-release
-description: Use when the user asks to start, pause, resume or remove automatic releases of a repository, to preview the next release, or to rewrite the notes of a GitHub release.
+description: Use when the user asks to start, pause, resume or remove automatic releases of a repository, to preview the next release, to rewrite the notes of a GitHub release, or when a README's feature sections may be behind the code.
 ---
 
 # Релизы
 
 Релизы выпускаются сами после каждого зелёного CI в `main`. Агент только управляет ими по
-командам пользователя.
+командам пользователя. Коммитами не занимается — это `repo-commit`, здесь только читает
+готовую историю. README не оформляет с нуля — это `repo-readme`, здесь только подновляет
+раздел о возможностях на каждом релизе.
 
 Правила: [rules.md](rules.md). Файлы для проекта: [release.yml](release.yml),
 [release.sh](release.sh).
@@ -17,6 +19,7 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 
 1. Проверить: репозиторий на GitHub, в `main` есть workflow с `name: CI` и он зелёный.
    Если CI нет, сначала настроить его по скиллу `repo-readme`.
+   Если README нет вовсе, предложить сначала его: скилл `repo-readme`.
 2. Проверить, что файл `~/.config/murpiano-dx/release-token` есть и не пустой. Если нет,
    попросить пользователя запустить `bash install.sh` из `murpiano-dx` и ввести токен
    (раздел 4 `rules.md`). Токен не читать и не выводить.
@@ -52,7 +55,9 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 
 ### «Покажи следующий релиз»
 
-`bash .github/scripts/release.sh --dry-run` в проекте. Показать версию и заметки.
+`bash .github/scripts/release.sh --dry-run` в проекте. Показать версию и заметки. Заодно
+проверить README по разделу 7 `rules.md` — большинство релизов после первого уходят из CI
+без агента, это обычно первый момент, когда кто-то смотрит на оба сразу.
 
 ### «Перепиши заметки релиза vX.Y.Z»
 
