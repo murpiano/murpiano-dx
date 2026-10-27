@@ -1,0 +1,3 @@
+{"type":"server-started","port":56908,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:56908/?key=cc00a3854943fab45e078d10d65968b08d593f9450deba22b9eb1b5bb976ce38","screen_dir":"/home/bvtrots/projects/murpiano-brand/.superpowers/brainstorm/139144-1793122670/content","state_dir":"/home/bvtrots/projects/murpiano-brand/.superpowers/brainstorm/139144-1793122670/state","idle_timeout_ms":14400000}
+{"type":"screen-added","file":"/home/bvtrots/projects/murpiano-brand/.superpowers/brainstorm/139144-1793122670/content/boot-sequence-v1.html"}
+{"type":"screen-added","file":"/home/bvtrots/projects/murpiano-brand/.superpowers/brainstorm/139144-1793122670/content/boot-sequence-v2.html"}
