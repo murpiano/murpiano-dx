@@ -1,0 +1,2 @@
+- [ffmpeg VP9 alpha fix](ffmpeg_vp9_alpha_fix.md) — libvpx-vp9 webm needs -auto-alt-ref 0 -lag-in-frames 0 or transparency breaks everywhere but ffmpeg's own check
+- [Smiles emoji pipeline](smiles_emoji_pipeline.md) — raw/ GIFs → smooth transparent Telegram custom emoji webm, plus сборка/ manual assembly workflow
