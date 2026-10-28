@@ -1,2 +1,3 @@
 - [Chat length mismatch bug](chat-length-mismatch-bug.md) — open bugs postponed by user: phone/PC message limit mismatch, PIN on Trusted reconnect
 - [Mesh dev workflow](mesh-dev-workflow.md) — release vs Mesh Dev apps on phone/PC, where dev builds run, Xiaomi adb confirm, release key location
+- [PR title kysaro check](pr-title-kysaro-check.md) — run the PR title through kysaro before gh pr create; never rerun a failed check after editing a PR
