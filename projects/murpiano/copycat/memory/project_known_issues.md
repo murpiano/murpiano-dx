@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: dbcb7f87-5691-4a01-a426-8d24f3d05a1f
-  modified: 2026-10-13T18:53:59.172Z
+  modified: 2026-10-28T06:57:05.354Z
 ---
 
 Copycat (Windows clipboard-history manager, Electron+React+TS+SQLite) has two known environment quirks discovered during initial implementation (2026-10-13):
@@ -32,5 +32,27 @@ env -u ELECTRON_RUN_AS_NODE npx electron out/main/index.js
 ```
 
 Remember to `npm install` afterward (or rerun this rebuild) before running
-`npm test` again — same ABI tradeoff as above. Kill a running instance with
-`pkill -f "out/main/index.js"`.
+`npm test` again — same ABI tradeoff as above.
+
+## Better recipe (verified 2026-10-28)
+
+No rebuild juggling is needed for either side:
+
+```bash
+# Dev with HMR; COPYCAT_DEV_WINDOW=1 gives a framed window that survives blur.
+env -u ELECTRON_RUN_AS_NODE -u WSLENV COPYCAT_DEV_WINDOW=1 npx electron-vite dev
+
+# Run the sqlite-touching suites against Electron's own Node, matching the ABI
+# better-sqlite3 was built for — no "Module did not self-register".
+ELECTRON_RUN_AS_NODE=1 npx electron node_modules/jest/bin/jest.js --runInBand tests/unit
+```
+
+Killing instances: `pkill -f "[e]lectron-vite"` also matches the shell running
+it and kills your own session (exit 144). Collect PIDs first instead:
+`pgrep -f 'dist/[e]lectron' | xargs -r kill`.
+
+Screenshotting the GUI: there is no `import`/`scrot`/`grim` here, and Playwright's
+`_electron` `page.screenshot()` hangs under WSLg. What works is serving the built
+renderer over HTTP (`python3 -m http.server` inside `out/renderer`; `file://`
+breaks ES module loading) and opening it in Playwright's chromium with
+`window.copycat` stubbed via `addInitScript`.
