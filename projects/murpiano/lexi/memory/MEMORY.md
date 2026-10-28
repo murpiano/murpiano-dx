@@ -1,0 +1,1 @@
+- [Node fetch needs env proxy](node-fetch-needs-env-proxy.md) — external AI APIs work only via local proxy; NODE_USE_ENV_PROXY=1
