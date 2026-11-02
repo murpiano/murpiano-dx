@@ -1,6 +1,6 @@
 ---
 name: repo-commit
-description: Use whenever starting a task in a git repository or making a git commit — offers a branch per task, picks type, scope and subject, writes a body for feat and fix that explains what changed and why, follows this project's kysaro settings, and brings the branch back to main through a pull request. Not for deciding when to release: that is repo-release.
+description: Follow murpiano-dx Git rules for task branches, Conventional Commits, project kysaro settings, pull requests and merging. Use when starting repository work or preparing Git changes; releases use repo-release.
 ---
 
 # Ветки и коммиты
@@ -14,20 +14,19 @@ subject и, для `feat`/`fix`, тело с тем, что изменилось
 
 ## Ветка под задачу
 
-1. Перед задачей, которая меняет код: если текущая ветка `main` (или `master`), предложить
-   автору ветку `<type>/<короткое-имя>` (раздел 6 `rules.md`). Создать после согласия:
-   `git switch -c feat/dark-theme`. Мелочь в одну строку может остаться в `main`, если автор
-   так скажет.
+1. Перед задачей, которая меняет код: если текущая ветка `main` (или `master`), создать
+   ветку `<type>/<короткое-имя>` (раздел 6 `rules.md`):
+   `git switch -c feat/dark-theme`. Прямое изменение main — только по указанию владельца.
 2. Уже на ветке задачи: продолжать в ней. Новая, не связанная задача — новая ветка от
    свежего `main`.
-3. Работа уже идёт в `main` без коммитов: перед коммитом разобрать изменения и предложить
-   ветку, а если тем несколько — ветку на каждую. `git switch -c <ветка>` переносит
-   незакоммиченные изменения с собой.
+3. Работа уже идёт в `main` без коммитов: перед коммитом разобрать изменения и создать
+   ветку задачи. `git switch -c <ветка>` переносит незакоммиченные изменения с собой;
+   чужие изменения в коммит не включать.
 4. Задача готова: push ветки, pull request, merge после зелёного CI и согласия автора,
    удалить ветку (раздел 7 `rules.md`).
 
-В проектах, которые ведёт murpiano-dx, коммит в `main` блокирует `pre-commit`-хук. Его
-вывод — сигнал сделать шаг 3, а не обходить хук.
+Порядок работы с ветками соблюдает агент. Kysaro проверяет формат сообщений,
+а не правильность выбора ветки. Защита main на GitHub дополняет этот процесс.
 
 ## Коммит
 
@@ -47,19 +46,24 @@ subject и, для `feat`/`fix`, тело с тем, что изменилось
 
 ## Pull request
 
-1. Заголовок и описание PR прогнать через kysaro до создания PR — хук этого не делает, это
-   делает `kysaro ci` в CI, уже красным:
-   `printf '%s\n\n%s\n' "$title" "$body" | npx kysaro --type request`.
+1. Заголовок, пустую строку и описание PR сохранить во временный файл и проверить
+   kysaro до создания PR. Для локальной зависимости:
+   `npx --no-install kysaro --type request < /tmp/pr-message.txt`.
+   Для проекта без локального пакета используй `npx --yes kysaro` с теми же аргументами.
+   Хук commit-msg не видит PR; после публикации его проверяет `kysaro ci`.
 2. Создать PR, дождаться зелёного CI, merge по разделу 7 `rules.md`.
+
+Push, PR и merge выполняй, если входят в разрешённую пользователем задачу.
+Если разрешение уже получено, повторно не спрашивай. Иначе подготовь результат
+для просмотра и согласуй публикацию.
 
 ## Нельзя
 
-- `--no-verify` без просьбы автора. Он отключает и проверку на следы агентов.
+- `--no-verify` без просьбы автора.
 - `gh pr create` без прогона заголовка и описания через kysaro.
 - `gh run rerun` упавшей проверки заголовка или описания PR: rerun переигрывает старое
   событие. Править сам PR — новый прогон придёт по событию `edited`.
-- `MURPIANO_ON_MAIN=1` без просьбы автора.
-- Ветки с префиксами из `repo-cleanup/policy.md` (`claude/`, `agent/`, `ai/` и т.п.).
+- Ветки с префиксами инструментов (`claude/`, `codex/`, `agent/`, `ai/` и т.п.).
 - Merge в `main`, push в `main` и удаление ветки на GitHub без согласия автора.
 - Коммит `feat`/`fix` без тела, если `kysaro` требует его (`body.required`) или изменение
   нетривиальное.
@@ -69,5 +73,5 @@ subject и, для `feat`/`fix`, тело с тем, что изменилось
 
 - Работа по задаче идёт в своей ветке, если автор не решил иначе.
 - Коммит прошёл через хук kysaro, если он стоит, без `--no-verify`.
-- Заголовок и описание PR прогнаны через `npx kysaro --type request` до создания PR.
+- Заголовок и описание PR проверены kysaro до создания PR.
 - У `feat`/`fix` есть тело, первый абзац которого можно взять как пункт заметок релиза.
