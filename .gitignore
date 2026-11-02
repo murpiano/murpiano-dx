@@ -1,2 +1,2 @@
-/node_modules/
-.kysaro/*.md
+# Personal project data lives outside the public framework repository.
+/projects/
