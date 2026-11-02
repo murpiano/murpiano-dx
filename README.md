@@ -1,9 +1,14 @@
+![murpiano-dx](docs/overview.jpg)
+
 > Agent entry point: read [AGENTS.md](AGENTS.md) and stop reading this README. It contains the concise workflow for Codex. This page is for humans.
 
 # murpiano-dx
 
 Личный помощник разработки: общие правила Git, оформление репозиториев, релизы,
 CI и отдельное хранилище данных каждого проекта. Скрипты на Bash и Python.
+
+[![CI](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml/badge.svg)](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/murpiano/murpiano-dx?color=informational)](https://github.com/murpiano/murpiano-dx/releases/latest)
 
 [Как работает](#как-работает) · [Установка](#установка) · [Команды](#команды)
 
