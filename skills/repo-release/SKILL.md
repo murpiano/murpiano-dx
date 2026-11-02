@@ -22,7 +22,7 @@ description: Use when the user asks to start, pause, resume or remove automatic 
    `ci/tests` и влить её в `main` по разделу 7 `repo-commit/rules.md`.
    Если README нет вовсе, предложить сначала его: скилл `repo-readme`.
 2. Проверить, что файл `~/.config/murpiano-dx/release-token` есть и не пустой. Если нет,
-   попросить пользователя запустить `bash install.sh` из `murpiano-dx` и ввести токен
+   попросить пользователя запустить `bash install.sh --release-token` из `murpiano-dx` и ввести токен
    (раздел 4 `rules.md`). Токен не читать и не выводить.
 3. Скопировать `release.yml` в `.github/workflows/release.yml` и `release.sh` в
    `.github/scripts/release.sh`.
@@ -84,6 +84,7 @@ description: Use when the user asks to start, pause, resume or remove automatic 
 
 - «Начни»: `release.yml` и `release.sh` в `main`, секрет и `RELEASES=on` заданы, тег `v*`
   есть, бейдж в README (для публичного репозитория).
-- «Настрой тесты и CI»: `npm run check` проходит, `ci.yml` в `main`, CI зелёный.
+- «Настрой тесты и CI»: проверки стека проходят, `ci.yml` в согласованной ветке,
+  после публикации CI зелёный. Публикация и merge — в пределах разрешения пользователя.
 - «Приостанови», «Возобнови»: `gh variable get RELEASES` показывает новое значение.
 - «Убери»: релизов и тегов нет, файлов релиза и бейджа нет, `RELEASES=off`.
