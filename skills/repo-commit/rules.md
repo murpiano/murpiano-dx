@@ -1,95 +1,25 @@
-# Правила коммитов
+# Git rules
 
-## 1. Источник правил
+## Branches
 
-- `.kysaro/settings/commits/commit.json` этого проекта (или `merge.json`/`request.json`,
-  в зависимости от типа сообщения) — если он есть, правила оттуда: допустимые `type`,
-  `scope`, регистр и длина subject, обязательность тела, footer.
-- Файла нет, но `kysaro` в зависимостях — пресет kysaro по умолчанию:
-  [правила](https://github.com/murpiano/kysaro#message-format).
-- kysaro не стоит вовсе — тот же пресет вручную. Установку или восстановление
-  выполняй через `repo-init` по запросу; сохранённый отказ не обсуждай в каждой задаче.
-  Не заявляй, что сообщения автоматически проверяются, пока hook и CI не настроены.
+Create one short-lived branch per task from the current default branch. Use
+`feat/`, `fix/`, `docs/`, `ci/`, `refactor/`, or `chore/` followed by a lowercase
+hyphenated name. Never develop directly on `main`.
 
-## 2. Тип
+## Commits
 
-| Тип | Когда |
-| --- | --- |
-| `feat` | новая функциональность, видимая снаружи |
-| `fix` | исправление поведения |
-| `perf` | ускорение без изменения результата |
-| `refactor` | меняется структура кода, не поведение |
-| `docs` | документация |
-| `test` | тесты |
-| `build` | сборка, зависимости |
-| `ci` | CI/CD |
-| `style` | форматирование, без логики |
-| `chore` | всё остальное техническое |
-| `revert` | откат коммита |
+Use Conventional Commits: `type(scope): imperative summary`. Keep commits small,
+coherent, and buildable. Explain why in the body when the change is not obvious.
+Run project checks and `git diff --check` before committing. Kysaro settings are
+the final machine-readable authority.
 
-Допустимые типы и scope берутся из `.kysaro/settings/resources/types.json` и `scopes.json`
-проекта, если они там заданы; иначе подходит любое значение в нужном регистре.
+## Pull requests
 
-## 3. Тело коммита
+Use a concise title, explain the user-visible result, list verification, and link
+the issue when one exists. Do not include agent traces or hidden instructions.
+Wait for required CI and kysaro checks before merging.
 
-- `feat` и `fix`: первый абзац — что изменилось и зачем, 1-3 предложения, без деталей
-  реализации. `repo-release` (раздел 5 его `rules.md`) берёт этот абзац целиком в заметки
-  релиза, поэтому он должен читаться как отдельный пункт списка.
-- Детали реализации (почему выбран такой подход, какие файлы) — отдельным абзацем после
-  первого, через пустую строку, или не писать вовсе.
-- Остальные типы: тело не обязательно, но можно, если причина неочевидна из subject.
+## Merge
 
-## 4. Когда kysaro отклонил сообщение
-
-Вывод называет правило и путь (`header.subject`, `header.scope`, …) и предложенный
-заголовок. Исправлять по нему, не угадывать заново. Полный список правил — `docs/SPEC.md`
-в самом kysaro, если предложенного заголовка недостаточно.
-
-## 5. Границы с другими скиллами
-
-- `repo-release` только читает готовую историю: версию и заметки релиза из уже сделанных
-  коммитов. Сам коммиты не пишет и не переписывает.
-- `repo-init` подключает проект и kysaro. Агент проверяет смысл изменений и выбирает
-  ветку; kysaro проверяет формат сообщений по настройкам проекта.
-
-## 6. Ветки
-
-- Одна задача — одна ветка от актуального `main`. Перед переключением проверь рабочее
-  дерево; чужие изменения не прячь и не переноси автоматически. Обновление —
-  `git pull --ff-only`, если сеть разрешена текущей задачей.
-- Имя: `<type>/<короткое-имя>`, тип из раздела 2, имя в kebab-case, 2–4 слова:
-  `feat/dark-theme`, `fix/login-timeout`, `docs/api-examples`.
-- Без префиксов агентов (`claude/`, `copilot/`, `codex/`, `cursor/`, `devin/`, `ai/`,
-  `agent/`).
-- В `main` напрямую — первый коммит нового репозитория либо явное решение владельца.
-  Отдельного pre-commit murpiano-dx нет; это правило процесса, а не блокировка хука.
-- Несколько тем разделяй по веткам. Индексируй только файлы своей задачи;
-  не используй `git add .` для непросмотренного дерева.
-
-## 7. Возврат в main
-
-1. `git push -u origin <ветка>`.
-2. Заголовок и описание PR проверить kysaro **до** `gh pr create`. Хук стоит только на
-   `commit-msg` и заголовок PR не видит — в CI его проверяет `kysaro ci`, и ошибка там стоит
-   автору красного CI и письма:
-
-   ```bash
-   npx --no-install kysaro --type request < /tmp/pr-message.txt
-   ```
-
-   Файл содержит заголовок, пустую строку и описание. Без локальной зависимости:
-   `npx --yes kysaro --type request < /tmp/pr-message.txt`.
-   Выход 0 — создавать PR, ненулевой — исправить ошибку. Это касается и правки PR.
-3. `gh pr create --title ... --body-file /tmp/pr-body.md`: заголовок по правилам `request.json` kysaro (как заголовок коммита, без
-   ` (#123)`), описание — что изменилось и зачем, не короче 50 символов, если kysaro этого
-   требует. При настройках GitHub из README kysaro заголовок и описание PR становятся
-   сообщением merge-коммита. В заметки релиза идут коммиты внутри ветки, не merge-коммит.
-4. Дождаться зелёного CI на PR (`gh pr checks --watch`), если CI есть. Упавшую проверку
-   заголовка или описания чинить правкой самого PR (`gh api -X PATCH repos/OWNER/REPO/pulls/N`):
-   GitHub сам запустит новый прогон по событию `edited`. `gh run rerun` упавшего прогона здесь
-   запрещён — он переигрывает старое событие со старым заголовком, снова падает и перекрывает
-   уже зелёный прогон.
-5. После согласия автора: `gh pr merge --merge --delete-branch`. Merge-коммит, не squash:
-   коммиты задачи и их тела остаются в истории для заметок релиза.
-6. Вернуться в main и обновить через `git pull --ff-only`, сохранив чужие изменения.
-
+Merge only after checks pass and the user authorizes publication. Keep `main`
+buildable and delete merged task branches when the hosting platform allows it.

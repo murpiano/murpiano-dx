@@ -1,77 +1,36 @@
 ---
 name: repo-commit
-description: Follow murpiano-dx Git rules for task branches, Conventional Commits, project kysaro settings, pull requests and merging. Use when starting repository work or preparing Git changes; releases use repo-release.
+description: Follow murpiano-dx Git rules for task branches, Conventional Commits, project kysaro settings, pull requests, and merges.
 ---
 
-# Ветки и коммиты
+# Git workflow
 
-Ведёт git-работу по задаче: ветка под задачу, сообщение каждого коммита (тип, scope,
-subject и, для `feat`/`fix`, тело с тем, что изменилось и зачем), возврат ветки в `main`
-через pull request. Отдельно от того, когда делать релиз — это `repo-release`, он только
-читает готовую историю, сам коммитов не пишет.
+Use this skill for branches, commits, pull requests, and merges. Read only the
+relevant section of [rules.md](rules.md). Project rules and `.kysaro/settings/`
+take precedence.
 
-Правила: [rules.md](rules.md).
+## Workflow
 
-## Ветка под задачу
+1. Run the project sync check and inspect its local instructions.
+2. Create a task branch from the current default branch. Use a short lowercase
+   prefix such as `feat/`, `fix/`, `docs/`, `ci/`, or `refactor/`.
+3. Make the smallest coherent change and run the project checks.
+4. Create a Conventional Commit. Kysaro validates the exact project format.
+5. Push the branch and open a PR with a useful title and body when requested.
+6. Wait for required checks. Merge only when checks pass and the user authorizes it.
 
-1. Перед задачей, которая меняет код: если текущая ветка `main` (или `master`), создать
-   ветку `<type>/<короткое-имя>` (раздел 6 `rules.md`):
-   `git switch -c feat/dark-theme`. Прямое изменение main — только по указанию владельца.
-2. Уже на ветке задачи: продолжать в ней. Новая, не связанная задача — новая ветка от
-   свежего `main`.
-3. Работа уже идёт в `main` без коммитов: перед коммитом разобрать изменения и создать
-   ветку задачи. `git switch -c <ветка>` переносит незакоммиченные изменения с собой;
-   чужие изменения в коммит не включать.
-4. Задача готова: push ветки, pull request, merge после зелёного CI и согласия автора,
-   удалить ветку (раздел 7 `rules.md`).
+## Commit messages
 
-Порядок работы с ветками соблюдает агент. Kysaro проверяет формат сообщений,
-а не правильность выбора ветки. Защита main на GitHub дополняет этот процесс.
+Use the configured type and scope, keep the subject imperative and concise, and
+keep body lines within the project limit. Do not mention agents or hidden workflow
+details in commits or PRs.
 
-## Коммит
+## Validation
 
-1. Если в проекте есть `.kysaro/settings/commits/commit.json` (или `merge.json`/`request.json`
-   для своего типа сообщения) — прочитать его: допустимые `type`, `scope`, регистр subject,
-   обязательность тела, footer. Нет файла, но `kysaro` в `package.json` — пресет kysaro по
-   умолчанию. Нет kysaro вовсе — тот же дефолт, без хука на выходе.
-2. Определить тип по изменению (таблица в `rules.md`). Scope — по затронутой части проекта,
-   если список scope задан в `.kysaro/settings/resources/scopes.json`, брать из него.
-3. Subject: что сделано, повелительное наклонение, без точки, в регистре из пресета.
-4. `feat`/`fix`: первый абзац тела — что изменилось и зачем, 1-3 предложения, без деталей
-   реализации. Это пойдёт в заметки релиза как есть (`repo-release`, раздел 5 его `rules.md`).
-   Детали реализации — вторым абзацем, если нужны, не в первом.
-5. Закоммитить. Если kysaro отклонил сообщение — прочитать его вывод (называет правило и
-   предложенный заголовок) и исправить, не `--no-verify`. `--no-verify` — только по прямой
-   просьбе автора.
+Run the project tests, `git diff --check`, and the local kysaro range check when
+available. Never bypass a failing hook or CI check without an explicit decision.
 
-## Pull request
+## Done
 
-1. Заголовок, пустую строку и описание PR сохранить во временный файл и проверить
-   kysaro до создания PR. Для локальной зависимости:
-   `npx --no-install kysaro --type request < /tmp/pr-message.txt`.
-   Для проекта без локального пакета используй `npx --yes kysaro` с теми же аргументами.
-   Хук commit-msg не видит PR; после публикации его проверяет `kysaro ci`.
-2. Создать PR, дождаться зелёного CI, merge по разделу 7 `rules.md`.
-
-Push, PR и merge выполняй, если входят в разрешённую пользователем задачу.
-Если разрешение уже получено, повторно не спрашивай. Иначе подготовь результат
-для просмотра и согласуй публикацию.
-
-## Нельзя
-
-- `--no-verify` без просьбы автора.
-- `gh pr create` без прогона заголовка и описания через kysaro.
-- `gh run rerun` упавшей проверки заголовка или описания PR: rerun переигрывает старое
-  событие. Править сам PR — новый прогон придёт по событию `edited`.
-- Ветки с префиксами инструментов (`claude/`, `codex/`, `agent/`, `ai/` и т.п.).
-- Merge в `main`, push в `main` и удаление ветки на GitHub без согласия автора.
-- Коммит `feat`/`fix` без тела, если `kysaro` требует его (`body.required`) или изменение
-  нетривиальное.
-- Переносить в первый абзац тела детали реализации — `repo-release` берёт из тела только его.
-
-## Готово, когда
-
-- Работа по задаче идёт в своей ветке, если автор не решил иначе.
-- Коммит прошёл через хук kysaro, если он стоит, без `--no-verify`.
-- Заголовок и описание PR проверены kysaro до создания PR.
-- У `feat`/`fix` есть тело, первый абзац которого можно взять как пункт заметок релиза.
+The branch is clean, checks pass, the PR describes the user-visible result, and
+merge status matches the user’s request.

@@ -1,122 +1,28 @@
-# Правила релизов
+# Release and CI rules
 
-Релизы выпускает GitHub Actions после каждого зелёного CI в `main`. Агент включает,
-приостанавливает и убирает релизы, выпускает первый и по просьбе переписывает заметки.
+## CI
 
-## 1. Версия
+CI must run the project’s tests and relevant static checks on pull requests and
+pushes to `main`. Keep the workflow reproducible and fail on errors. Do not publish
+artifacts from an unverified commit.
 
-- Semver, тег `vX.Y.Z`. Первый релиз `v1.0.0`, когда проект работает и CI зелёный.
-- Следующая версия считается по коммитам с прошлого тега (`release.sh`):
+## Versioning
 
-  | В коммитах есть | Версия |
-  | --- | --- |
-  | `!` после типа или футер `BREAKING CHANGE:` | major |
-  | `feat` | minor |
-  | `fix`, `perf` | patch |
-  | только `docs`, `chore`, `ci`, `test`, `refactor`, `style`, `build` | релиза нет |
+Use Semantic Versioning. Use `0.x.y` while the framework is experimental; reserve
+`1.0.0` for a stable public contract. Tags and release titles use `vX.Y.Z`.
 
-- Merge-коммиты не учитываются, считаются коммиты внутри них.
-- Номер версии живёт в тегах. `version` в `package.json` при релизе не меняется: иначе в
-  `main` коммитил бы бот. Пакет для npm получает версию из тега при публикации.
+## Release notes
 
-## 2. Файлы в проекте
+Group user-visible changes under Added, Changed, Fixed, and Removed when useful.
+Mention migrations or breaking behavior explicitly. Do not include agent traces.
 
-| Файл | Откуда |
-| --- | --- |
-| `.github/workflows/release.yml` | копия [release.yml](release.yml) |
-| `.github/scripts/release.sh` | копия [release.sh](release.sh) |
+## Automation
 
-Workflow запускается после workflow с `name: CI`, только если CI прошёл на push в `main` и
-переменная репозитория `RELEASES` равна `on`. Тесты и CI настраиваются по разделу 8.
+Automatic releases require green `CI`, the `RELEASE_TOKEN` secret, and
+`RELEASES=on`. Keep the token outside the repository. A release workflow must not
+run when CI fails. Public repositories may show the Release badge.
 
-## 3. Переключатель
+## First release
 
-Переменная репозитория `RELEASES` (Settings → Secrets and variables → Actions → Variables):
-
-| Значение | Что происходит |
-| --- | --- |
-| `on` | каждый подходящий push в `main` выпускает релиз |
-| `paused` | релизы не выпускаются, старые остаются |
-| `off` | релизы убраны, файлов релиза в проекте нет |
-
-## 4. Автор релиза
-
-Релиз создаётся от `murpiano`, а не от `github-actions[bot]`. Для этого в секрете
-репозитория `RELEASE_TOKEN` лежит личный токен GitHub.
-
-- Токен один на все репозитории: fine-grained, Repository access: All repositories,
-  Permissions: Contents — Read and write.
-- На компьютере он хранится в `~/.config/murpiano-dx/release-token` с правами `600`.
-  Туда его кладёт отдельная команда `bash install.sh --release-token` из `murpiano-dx`.
-  Enter оставляет сохранённый. Обычная установка не запрашивает токен.
-- Агент никогда не выводит токен. В секрет он попадает только так:
-
-  ```bash
-  gh secret set RELEASE_TOKEN -R OWNER/REPO < ~/.config/murpiano-dx/release-token
-  ```
-
-- Новый токен сохраняется той же командой. Секрет RELEASE_TOKEN обновляется отдельно
-  в каждом согласованном репозитории; массовых изменений на GitHub нет.
-
-## 5. Заметки
-
-- Автоматические: разделы `Breaking changes`, `New`, `Fixed`. Пункт — subject коммита с
-  заглавной буквы (`feat: add dark theme` даёт `Add dark theme`), под ним первый абзац тела.
-  Слово с другими заглавными (`iOS`) остаётся как есть. В конце ссылка на сравнение с
-  прошлым тегом.
-- Поэтому качество заметок равно качеству коммитов: заголовок с глагола, тело объясняет
-  зачем.
-- Первый релиз и переписанные по просьбе заметки пишутся вручную: абзац о главном, затем
-  пункты; первый релиз объясняет, что это за проект и как им пользоваться. Несовместимое
-  изменение идёт первым и прямо так и называется.
-- Язык как в README: без эмодзи, длинного тире и рекламных слов (правила `repo-readme`).
-
-## 6. README
-
-Бейдж Release стоит в README, только пока `RELEASES` не `off`:
-
-```markdown
-[![Release](https://img.shields.io/github/v/release/OWNER/REPO?color=informational)](https://github.com/OWNER/REPO/releases/latest)
-```
-
-Для приватного репозитория shields.io версию не видит, поэтому бейдж ставится только в
-публичные.
-
-## 7. README между релизами
-
-Большинство релизов после первого выпускает GitHub Actions без агента — там README никто не
-трогает. Поэтому эта проверка идёт не на каждый релиз, а на каждый вызов этого скилла
-(«начни», «покажи следующий», «перепиши заметки»):
-
-- README нет вовсе — предложить `repo-readme`, не писать README самому.
-- README есть: `git log <последний тег>..HEAD --grep='^feat'` — если есть `feat`, которых
-  нет в `What you can do` / `How it works`, дописать по правилам голоса из
-  `repo-readme/rules.md` (раздел 3), в тот же раздел и тем же тоном, не переписывать README
-  целиком и не трогать остальные разделы.
-- Патч README — в ветке `docs/readme-<тема>`, коммит `docs`, влить в `main` по разделу 7
-  `repo-commit/rules.md`.
-
-## 8. Тесты и CI
-
-Нужны релизам: релиз выходит только после зелёного CI. Настраиваются перед первым релизом
-или по команде «настрой тесты и CI». В README о них пишется только то, что уже есть, по
-разделу 5 `repo-readme/rules.md`.
-
-- Тесты хотя бы на главную логику и на то, что приложение собирается и отвечает.
-- Используй существующий стек и пакетный менеджер. Для JS/TS без раннера подходит
-  `vitest`; для Python — существующий pytest либо unittest. Не добавляй Node.js
-  в приложение другого стека ради тестов. JS/TS-тесты рядом с кодом исключи из сборки.
-- Тесты не трогают рабочие данные, прод и сеть: временные папки, фикстуры, моки.
-- В JS/TS-проекте проверки объединяй в `check` (пример для TypeScript и Vitest):
-
-  ```json
-  "test": "vitest run",
-  "check": "tsc --noEmit && vitest run"
-  ```
-
-- `.github/workflows/ci.yml`: `name: CI`, запуск на push в `main` и на pull request.
-  Установи зависимости по lock-файлу, выполни проверки и сборку, если она есть.
-  Для npm это `npm ci`, `npm run check`, `npm run build`; для Python используй
-  команды проекта. Деплой в отдельном workflow.
-- Kysaro проверяет сообщения в своём workflow, подключённом через `repo-init`.
-  CI проверяет код; зелёный kysaro не заменяет тесты.
+Verify tests, CI, README, metadata, and tags before publishing. For an experimental
+framework the first release is `v0.1.0` unless the user specifies another version.
