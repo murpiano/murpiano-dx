@@ -311,7 +311,7 @@ fi
         (self.dx / 'projects/.sync.lock').mkdir()
         result = self.sync(check=False)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('Не удалось открыть блокировку', result.stderr)
+        self.assertIn('Could not acquire the project store lock', result.stderr)
         self.assertFalse((self.project / 'AGENTS.md').exists())
 
     def test_concurrent_connection_leaves_project_untouched(self):
@@ -319,7 +319,7 @@ fi
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             result = self.sync(check=False)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('занято другой синхронизацией', result.stderr)
+        self.assertIn('busy with another sync', result.stderr)
         self.assertFalse((self.project / 'AGENTS.md').exists())
 
     def test_failed_symlink_restores_moved_file(self):
@@ -350,12 +350,12 @@ fi
         self.sync('link', project=self.dx)
         self.assertTrue((self.project / 'AGENTS.md').is_symlink())
         result = self.sync('start', project=self.dx)
-        self.assertIn('самоподключение не требуется', result.stdout)
+        self.assertIn('self-connection is not required', result.stdout)
         self.assertFalse((self.dx / 'AGENTS.md').exists())
 
     def test_reports_missing_kysaro_without_installing_it(self):
         result = self.sync()
-        self.assertIn('Предложи установить kysaro', result.stdout)
+        self.assertIn('Offer kysaro installation', result.stdout)
         self.assertFalse((self.project / 'package.json').exists())
         self.assertFalse((self.project / '.kysaro').exists())
 
@@ -365,7 +365,7 @@ fi
         excludes = self.project / '.git/info/exclude'
         before = excludes.read_bytes()
         result = self.sync('start')
-        self.assertIn('не инициализирован', result.stdout)
+        self.assertIn('is not initialized', result.stdout)
         self.assertFalse(rules.is_symlink())
         self.assertEqual(rules.read_text(), 'Existing instructions\n')
         self.assertEqual(excludes.read_bytes(), before)
@@ -378,7 +378,7 @@ fi
         before = state.read_bytes()
         for mode in ['init', 'start', 'end']:
             result = self.sync(mode)
-            self.assertNotIn('Предложи установить kysaro', result.stdout)
+            self.assertNotIn('Offer kysaro installation', result.stdout)
         self.assertEqual(state.read_bytes(), before)
         self.assertEqual(json.loads(state.read_text())['kysaro'], 'declined')
 
@@ -388,11 +388,11 @@ fi
         self.assertFalse((self.project / 'node_modules').exists())
         failed = self.sync(kysaro='enabled', check=False)
         self.assertNotEqual(failed.returncode, 0)
-        self.assertIn('Настройка kysaro не завершена', failed.stderr)
+        self.assertIn('Kysaro setup incomplete', failed.stderr)
         self.assertEqual(json.loads(state.read_text())['kysaro'], 'approved')
         result = self.sync()
-        self.assertIn('Продолжи согласованную настройку', result.stdout)
-        self.assertNotIn('Предложи установить kysaro', result.stdout)
+        self.assertIn('Continue the approved setup', result.stdout)
+        self.assertNotIn('Offer kysaro installation', result.stdout)
 
     def test_completed_setup_detects_later_missing_dependency(self):
         self.prepare_kysaro_components()
@@ -400,18 +400,18 @@ fi
         state = self.dx / 'projects/owner/app/workflow.json'
         self.assertEqual(json.loads(state.read_text())['kysaro'], 'enabled')
         ready = self.sync('start')
-        self.assertIn('kysaro: настроен', ready.stdout)
+        self.assertIn('kysaro: configured', ready.stdout)
         self.assertEqual(len(ready.stdout.splitlines()), 2)
         (self.project / 'node_modules/.bin/kysaro').unlink()
         broken = self.sync('start')
-        self.assertIn('восстановить: локальный kysaro', broken.stdout)
-        self.assertNotIn('Предложи установить', broken.stdout)
+        self.assertIn('restore: local kysaro', broken.stdout)
+        self.assertNotIn('Offer kysaro installation', broken.stdout)
 
     def test_existing_complete_setup_does_not_ask_for_install(self):
         self.prepare_kysaro_components()
         result = self.sync()
-        self.assertIn('kysaro: настроен', result.stdout)
-        self.assertNotIn('Предложи установить', result.stdout)
+        self.assertIn('kysaro: configured', result.stdout)
+        self.assertNotIn('Offer kysaro installation', result.stdout)
 
     def test_inactive_husky_and_nonexecutable_hook_are_not_ready(self):
         self.prepare_kysaro_components()
@@ -422,7 +422,7 @@ fi
         husky.write_text('npx --no-install kysaro "$1"\n')
         result = self.sync(kysaro='enabled', check=False)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('активный commit-msg', result.stderr)
+        self.assertIn('active commit-msg', result.stderr)
 
     def test_readonly_start_does_not_take_store_lock(self):
         self.sync(kysaro='declined')
@@ -430,7 +430,7 @@ fi
         lock.unlink()
         lock.mkdir()
         result = self.sync('start')
-        self.assertIn('отклонён владельцем', result.stdout)
+        self.assertIn('declined by owner', result.stdout)
         self.assertTrue(lock.is_dir())
 
     def test_start_does_not_restore_links_without_request(self):
@@ -438,7 +438,7 @@ fi
         (self.project / 'AGENTS.md').unlink()
         result = self.sync('start')
         self.assertFalse((self.project / 'AGENTS.md').exists())
-        self.assertIn('восстанови через init', result.stdout)
+        self.assertIn('restore them through init', result.stdout)
 
     def test_corrupt_workflow_is_reported_without_resetting_decision(self):
         self.sync(kysaro='declined')
