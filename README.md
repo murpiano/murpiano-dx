@@ -1,40 +1,40 @@
-![murpiano Developer Experience](resources/logo.png)
+> Agent entry point: read [AGENTS.md](https://github.com/murpiano/murpiano-dx/blob/main/AGENTS.md) and stop reading this README. It contains the concise workflow for Codex. This page is for humans.
 
-> Agent entry point: read [AGENTS.md](AGENTS.md) and stop reading this README. It contains the concise workflow for Codex. This page is for humans.
+![murpiano Developer Experience](resources/logo.png)
 
 # murpiano-dx
 
-Фреймворк агентской разработки: проектная память, общие правила Git, единые
-стандарты репозиториев, CI и релизы для проектов, которые ведёт Codex.
+An agentic development framework: project memory, shared Git rules, consistent
+repository standards, CI, and releases for projects managed by Codex.
 
 [![CI](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml/badge.svg)](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/murpiano/murpiano-dx?color=informational)](https://github.com/murpiano/murpiano-dx/releases/latest)
 
-Репозиторий пока приватный, поэтому Release badge появится после публикации.
 
-[Как работает](#как-работает) · [Установка](#установка) · [Команды](#команды)
+[How it works](#how-it-works) · [Installation](#installation) · [Commands](#commands)
 
-## Что можно делать
+## What it does
 
-Подключать новые и существующие проекты, сохранять данные агентов и память
-проектов отдельно от кода продукта. Агент читает общие правила и применяет их к
-веткам, коммитам, PR, README, релизам и CI. Достаточно обычной задачи: «сделай
-README», «настрой CI», «начни релизы». Дописывать «по правилам murpiano-dx» не
-требуется.
+Connect new and existing projects while keeping agent data and project memory
+separate from product code. The agent reads the shared rules and applies them to
+branches, commits, PRs, README files, releases, and CI. A normal request such as
+“write the README”, “set up CI”, or “start releases” is enough; no special
+“follow murpiano-dx rules” phrase is required.
 
-## Как работает
+## How it works
 
-### Разделение ответственности
+### Separation of responsibilities
 
-| Участник | Ответственность |
+| Participant | Responsibility |
 | --- | --- |
-| murpiano-dx | Источник общих правил, шаблоны, подключение проектов и хранение их контекста |
-| Агент проекта | Читает нужные правила, выполняет задачу, проверяет код и смысл изменений |
-| Kysaro в проекте | Проверяет формат сообщений коммитов через commit-msg и коммитов/PR через CI |
-| CI проекта | Запускает тесты, проверки и сборку; при настройке релизов разрешает выпуск после успеха |
+| murpiano-dx | Shared rules, templates, project connection, and context storage |
+| Project agent | Reads relevant rules, performs the task, and checks code and intent |
+| Kysaro in the project | Checks commit messages through commit-msg and commits/PRs through CI |
+| Project CI | Runs tests, checks, and builds; releases can require a successful run |
 
-Kysaro не выбирает ветку и не оценивает код. Эти решения принимает агент по
-`repo-commit`. Настройки `.kysaro/settings/` конкретного проекта определяют
-машинный формат сообщений. Общий процесс остаётся в murpiano-dx.
+Kysaro does not choose branches or assess code. The agent makes those decisions
+through `repo-commit`. The project’s `.kysaro/settings/` define the machine format
+for messages; the shared process remains in murpiano-dx.
 
 ### Подключение проекта
 

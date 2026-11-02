@@ -1,27 +1,27 @@
-## Проекты murpiano-dx
+## murpiano-dx projects
 
-Один раз в начале работы с проектом выполни `{{SYNC}} start`: это короткая локальная
-проверка без установки и изменения файлов. Неинициализированный проект подключай
-через `repo-init` только по запросу владельца. Этот навык предлагает приватный
-GitHub origin и установку kysaro, сохраняет решения и ведёт настройку по шагам.
+Run `{{SYNC}} start` once at the beginning of work: it is a short local check that
+does not install packages or modify files. Initialize an uninitialized project
+through `repo-init` only when its owner requests it. This skill offers a private
+GitHub origin and kysaro installation, stores decisions, and resumes setup step by step.
 
-Источник общих правил — `{{ROOT}}/skills/`: инициализация — `repo-init`, ветки,
-коммиты и PR — `repo-commit`, README и метаданные — `repo-readme`, релизы и CI —
-`repo-release`. Читай только навык текущей задачи и нужный раздел его правил;
-не перечитывай неизменённое в одной задаче. Специальная фраза пользователя не нужна.
-Правила проекта и настройки kysaro приоритетнее общего формата caveman-commit.
-Kysaro в каждом проекте проверяет сообщения через commit-msg и CI; murpiano-dx
-не подменяет его. Агент отвечает за смысл изменений, тесты и соблюдение процесса.
+The shared rules source is `{{ROOT}}/skills/`: initialization — `repo-init`, branches,
+commits and PRs — `repo-commit`, README and metadata — `repo-readme`, releases and CI —
+`repo-release`. Read only the skill for the current task and the relevant rules section;
+do not reread unchanged content in the same task. No special user phrase is required.
+Project rules and kysaro settings take precedence over the generic caveman-commit format.
+Kysaro checks commit messages through commit-msg and CI in each project; murpiano-dx
+does not replace it. The agent owns change intent, tests, and process compliance.
 
-Данные проекта — `AGENTS.md`, `.agents/`, сохранённая `memory/` и состояние
-инициализации `workflow.json` по пути из start. Читай только относящиеся к задаче
-заметки; индекс памяти при наличии. После новых решений обнови заметку и выполни
-`{{SYNC}} end`. Не копируй общие правила и не повторяй предложение kysaro после
-сохранённого отказа. Восстановление незавершённой настройки выполняй по задаче.
-При запрете записи через ссылку сообщи точный путь, требующий доступа.
-Старую память и настройки Claude автоматически не удаляй и не переписывай.
+Project data is `AGENTS.md`, `.agents/`, saved `memory/`, and `workflow.json`
+initialization state at the path returned by start. Read only task-relevant notes;
+use the memory index when available. After new decisions, update the note and run
+`{{SYNC}} end`. Do not copy shared rules or repeat the kysaro offer after a saved
+decline. Resume incomplete setup only when requested. If a symlink target is not
+writable, report its exact path. Never automatically delete or rewrite old Claude
+memory and settings.
 
-README, метаданные и релизы меняй по задаче пользователя. Служебные данные храни
-отдельно от кода продукта; не добавляй атрибуцию агентам в коммиты и PR.
-Автоматических commit, push и публикаций нет. Для публикации данных самого
-murpiano-dx действуют те же правила repo-commit, что для кода проектов.
+Change README, metadata, and releases only when requested. Keep service data separate
+from product code; do not add agent attribution to commits or PRs. Commits, pushes,
+and publications are not automatic. Publishing murpiano-dx itself follows the same
+repo-commit rules as project code.
