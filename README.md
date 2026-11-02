@@ -9,6 +9,8 @@
 
 [![CI](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml/badge.svg)](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml)
 
+Репозиторий пока приватный, поэтому Release badge появится после публикации.
+
 [Как работает](#как-работает) · [Установка](#установка) · [Команды](#команды)
 
 ## Что можно делать
