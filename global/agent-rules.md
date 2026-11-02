@@ -5,7 +5,8 @@ does not install packages or modify files. Initialize an uninitialized project
 through `repo-init` only when its owner requests it. This skill offers a private
 GitHub origin and kysaro installation, stores decisions, and resumes setup step by step.
 
-The shared rules source is `{{ROOT}}/skills/`: initialization — `repo-init`, branches,
+The shared rules source is `{{ROOT}}/skills/`; editable user overrides are in
+`{{DATA_ROOT}}/rules/`. Initialization — `repo-init`, branches,
 commits and PRs — `repo-commit`, README and metadata — `repo-readme`, releases and CI —
 `repo-release`. Read only the skill for the current task and the relevant rules section;
 do not reread unchanged content in the same task. No special user phrase is required.

@@ -1,2 +1,4 @@
 # Personal project data lives outside the public framework repository.
 /projects/
+__pycache__/
+*.pyc

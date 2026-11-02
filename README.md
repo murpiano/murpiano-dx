@@ -39,12 +39,17 @@ the decision and setup state in `workflow.json`. Existing origins and project fi
 are preserved. Kysaro is offered once and installed locally in each project only
 after approval.
 
-Project data is stored outside this public repository. The default local store is
-`~/.local/share/murpiano-dx`; set `MURPIANO_DX_DATA_DIR` to use another location.
-The framework keeps each connected project's data in this store:
+Project data is stored outside this public repository. The default local workspace
+is `~/.murpiano-dx`; set `MURPIANO_DX_DATA_DIR` to use another location.
+The framework creates this editable structure:
 
 ```text
-projects/OWNER/REPO/
+~/.murpiano-dx/
+├── config/machine.json
+├── rules/             user-editable workflow rules
+├── templates/         README and release templates
+├── logs/
+└── projects/OWNER/REPO/
 ├── workflow.json
 ├── files/
 │   ├── AGENTS.md
@@ -72,6 +77,10 @@ when installing Kysaro.
 ```bash
 bash install.sh
 ```
+
+The installer also exposes `murpiano-dx` in `~/.local/bin`. Run
+`murpiano-dx setup` for the same first-time setup, then use
+`murpiano-dx init /path/to/project`.
 
 The installer configures the four skills under `~/.agents/skills` and updates only
 the murpiano-dx block in `~/.codex/AGENTS.md`. Machine identity is requested during

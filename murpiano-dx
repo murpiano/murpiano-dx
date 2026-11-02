@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root=$(cd "$(dirname "$(realpath "$0")")" && pwd)
+case "${1:-}" in
+  setup)
+    shift
+    exec bash "$root/install.sh" "$@"
+    ;;
+  *)
+    exec bash "$root/sync.sh" "$@"
+    ;;
+esac
