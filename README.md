@@ -1,23 +1,25 @@
-![murpiano-dx](docs/overview.jpg)
+![murpiano Developer Experience](resources/logo.png)
 
 > Agent entry point: read [AGENTS.md](AGENTS.md) and stop reading this README. It contains the concise workflow for Codex. This page is for humans.
 
 # murpiano-dx
 
-Личный помощник разработки: общие правила Git, оформление репозиториев, релизы,
-CI и отдельное хранилище данных каждого проекта. Скрипты на Bash и Python.
+Фреймворк агентской разработки: проектная память, общие правила Git, единые
+стандарты репозиториев, CI и релизы для проектов, которые ведёт Codex.
 
 [![CI](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml/badge.svg)](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/murpiano/murpiano-dx?color=informational)](https://github.com/murpiano/murpiano-dx/releases/latest)
+
+Репозиторий пока приватный, поэтому Release badge появится после публикации.
 
 [Как работает](#как-работает) · [Установка](#установка) · [Команды](#команды)
 
 ## Что можно делать
 
-Подключать новые и существующие проекты, сохранять их инструкции и память отдельно
-от кода продукта. Агент читает общие правила и применяет их к веткам, коммитам,
-PR, README, релизам и CI. Достаточно обычной задачи: «сделай README»,
-«настрой CI», «начни релизы». Дописывать «по правилам murpiano-dx» не требуется.
+Подключать новые и существующие проекты, сохранять данные агентов и память
+проектов отдельно от кода продукта. Агент читает общие правила и применяет их к
+веткам, коммитам, PR, README, релизам и CI. Достаточно обычной задачи: «сделай
+README», «настрой CI», «начни релизы». Дописывать «по правилам murpiano-dx» не
+требуется.
 
 ## Как работает
 
