@@ -1,1 +1,0 @@
-- [Feature Branch Pattern](branching_pattern.md) — All changes on separate branches; main protected and deployable

@@ -39,7 +39,9 @@ the decision and setup state in `workflow.json`. Existing origins and project fi
 are preserved. Kysaro is offered once and installed locally in each project only
 after approval.
 
-Project data is stored separately:
+Project data is stored outside this public repository. The default local store is
+`~/.local/share/murpiano-dx`; set `MURPIANO_DX_DATA_DIR` to use another location.
+The framework keeps each connected project's data in this store:
 
 ```text
 projects/OWNER/REPO/

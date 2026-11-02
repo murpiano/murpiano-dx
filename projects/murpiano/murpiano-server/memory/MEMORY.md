@@ -1,1 +1,0 @@
-- [CloudPix travel globe](cloudpix-travel-globe.md) — rebuild in progress: design doc + prototype committed, next review → plan → build

@@ -14,7 +14,10 @@ import sys
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
-STORE = ROOT / 'projects'
+STORE = Path(os.environ.get(
+    'MURPIANO_DX_DATA_DIR',
+    Path.home() / '.local' / 'share' / 'murpiano-dx',
+)).expanduser()
 PATHS = ('AGENTS.md', '.agents')
 BEGIN = '# >>> murpiano-dx'
 END = '# <<< murpiano-dx'

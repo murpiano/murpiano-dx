@@ -22,7 +22,9 @@ class Workflows(unittest.TestCase):
         self.home.mkdir()
         self.env = os.environ.copy()
         self.env.update(HOME=str(self.home), GIT_CONFIG_GLOBAL=str(self.home / '.gitconfig'),
-                        GIT_CONFIG_NOSYSTEM='1', PROJECTS_DIR=str(self.home / 'projects'))
+                        GIT_CONFIG_NOSYSTEM='1', PROJECTS_DIR=str(self.home / 'projects'),
+                        MURPIANO_DX_DATA_DIR=str(self.base / 'dx with spaces' / 'projects'))
+        os.environ['MURPIANO_DX_DATA_DIR'] = str(self.base / 'dx with spaces' / 'projects')
         for key in list(self.env):
             if key.startswith(('GIT_AUTHOR_', 'GIT_COMMITTER_', 'GIT_CONFIG_')) and key not in (
                     'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM'):
@@ -38,7 +40,7 @@ class Workflows(unittest.TestCase):
         (self.dx / 'config.env').write_text(
             'GIT_NAME="Test User"\nGIT_EMAIL="test@example.invalid"\nGITHUB_OWNER="owner"\n')
         (self.dx / 'projects').mkdir()
-        shutil.copy2(SOURCE / 'projects/.gitignore', self.dx / 'projects/.gitignore')
+        (self.dx / 'projects/.gitignore').write_text('.sync.lock\n')
         self.repo(self.dx)
         self.project = self.home / 'projects/app'
         self.project.mkdir(parents=True)

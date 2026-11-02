@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//home/bvtrots/projects/cloudpix-platform/.superpowers/brainstorm/1562089-1790587256/content/**)",
-      "Bash(node -e \"const p=require\\('./photos.json'\\);const m={};p.forEach\\(x=>m[x.city]=\\(m[x.city]||0\\)+1\\);console.log\\(JSON.stringify\\(m\\)\\)\")"
-    ]
-  }
-}

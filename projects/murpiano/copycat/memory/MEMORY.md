@@ -1,1 +1,0 @@
-- [Known issues](project_known_issues.md) — Copycat: flaky SIGABRT in `npm test`, better-sqlite3 ABI tradeoff between dev/test
