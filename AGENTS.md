@@ -15,7 +15,7 @@ This file is the agent entry point for `murpiano-dx`.
 
 ## Project rules
 
-- Use Russian for communication. Keep code, commands, paths, and technical identifiers unchanged.
+- Use English for communication. Keep code, commands, paths, and technical identifiers unchanged.
 - `skills/` is the source of truth for the workflow. Do not duplicate its full rules here.
 - Do not publish, push, merge, or create releases unless the user explicitly asks for it.
 - Do not remove or rewrite existing project memory and archived Claude data automatically.

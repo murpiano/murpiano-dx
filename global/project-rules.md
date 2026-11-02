@@ -1,11 +1,11 @@
 # {{PROJECT}}
 
-В начале работы выполни `{{SYNC}} start` для короткой проверки состояния.
-Правила читай по задаче из `{{ROOT}}/skills/`: Git — `repo-commit`, README и
-метаданные — `repo-readme`, релизы и CI — `repo-release`. Повторная настройка
-выполняется по запросу через `repo-init`; её состояние — `{{STORE}}/workflow.json`.
+Run `{{SYNC}} start` at the beginning of work for a short state check.
+Read task-specific rules from `{{ROOT}}/skills/`: Git — `repo-commit`, README and
+metadata — `repo-readme`, releases and CI — `repo-release`. Resume setup through
+`repo-init` only when requested; its state is `{{STORE}}/workflow.json`.
 
-Данные проекта хранятся в `{{STORE}}`. Решения, команды проверок и текущее состояние
-задач сохраняй предметными заметками в `.agents/`. Если существует
-`{{STORE}}/memory/MEMORY.md`, прочитай индекс и нужные заметки до изменений.
-Общие правила не копируй. Секреты и временные файлы в память не записывай.
+Project data is stored in `{{STORE}}`. Keep decisions, verification commands, and
+current task state as focused notes in `.agents/`. If `{{STORE}}/memory/MEMORY.md`
+exists, read its index and relevant notes before changes. Do not copy shared rules;
+do not store secrets or temporary files in memory.
