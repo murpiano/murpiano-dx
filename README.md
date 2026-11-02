@@ -1,3 +1,5 @@
+> Agent entry point: read [AGENTS.md](AGENTS.md) and stop reading this README. It contains the concise workflow for Codex. This page is for humans.
+
 # murpiano-dx
 
 Личный помощник разработки: общие правила Git, оформление репозиториев, релизы,
