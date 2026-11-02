@@ -62,8 +62,8 @@ while IFS= read -r -d $'\x1e' record; do
     continue
   fi
   case "$type" in
-    feat) added+=("$item"); ((bump < 2)) && bump=2 ;;
-    fix | perf) fixed+=("$item"); ((bump < 1)) && bump=1 ;;
+    feat) added+=("$item"); if ((bump < 2)); then bump=2; fi ;;
+    fix | perf) fixed+=("$item"); if ((bump < 1)); then bump=1; fi ;;
   esac
 done < <(git log --no-merges --reverse --format='%s%x1f%b%x1e' "$last..$sha")
 
@@ -81,6 +81,7 @@ esac
 tag="v$next"
 
 notes=$(mktemp)
+trap 'rm -f "$notes"' EXIT
 {
   section() {
     local title=$1

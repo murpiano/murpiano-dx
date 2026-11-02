@@ -1,3 +1,5 @@
+<!-- Keep the cover only when a real asset exists. Translate section names together
+     when the project uses another language. -->
 ![<Name>](docs/screenshot.jpg)
 
 # <Name>
@@ -93,4 +95,5 @@ Base URL: `<url>`
 
 ---
 
+<!-- Public showcase footer. Omit the license link when LICENSE does not exist. -->
 <sub>[Bogdan Trotsenko](https://github.com/murpiano) · [murpiano](https://github.com/murpiano) · [Telegram](https://t.me/murpiano) · [<License>](LICENSE)</sub>

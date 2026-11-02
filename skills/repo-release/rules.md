@@ -47,16 +47,16 @@ Workflow запускается после workflow с `name: CI`, только 
 - Токен один на все репозитории: fine-grained, Repository access: All repositories,
   Permissions: Contents — Read and write.
 - На компьютере он хранится в `~/.config/murpiano-dx/release-token` с правами `600`.
-  Туда его кладёт `install.sh` из `murpiano-dx`: спрашивает при установке, Enter оставляет
-  сохранённый.
+  Туда его кладёт отдельная команда `bash install.sh --release-token` из `murpiano-dx`.
+  Enter оставляет сохранённый. Обычная установка не запрашивает токен.
 - Агент никогда не выводит токен. В секрет он попадает только так:
 
   ```bash
   gh secret set RELEASE_TOKEN -R OWNER/REPO < ~/.config/murpiano-dx/release-token
   ```
 
-- Новый токен вводится повторным запуском `install.sh`. Он сам обновляет секрет во всех
-  репозиториях, где `RELEASES` равно `on` или `paused`.
+- Новый токен сохраняется той же командой. Секрет RELEASE_TOKEN обновляется отдельно
+  в каждом согласованном репозитории; массовых изменений на GitHub нет.
 
 ## 5. Заметки
 
@@ -103,16 +103,20 @@ Workflow запускается после workflow с `name: CI`, только 
 разделу 5 `repo-readme/rules.md`.
 
 - Тесты хотя бы на главную логику и на то, что приложение собирается и отвечает.
-- Раннер `vitest`. Тест лежит рядом с кодом: `foo.ts` и `foo.test.ts`. Тесты исключены из
-  сборки через `exclude` в `tsconfig.json`.
+- Используй существующий стек и пакетный менеджер. Для JS/TS без раннера подходит
+  `vitest`; для Python — существующий pytest либо unittest. Не добавляй Node.js
+  в приложение другого стека ради тестов. JS/TS-тесты рядом с кодом исключи из сборки.
 - Тесты не трогают рабочие данные, прод и сеть: временные папки, фикстуры, моки.
-- Скрипты одинаковые во всех проектах (линтер, если есть, тоже входит в `check`):
+- В JS/TS-проекте проверки объединяй в `check` (пример для TypeScript и Vitest):
 
   ```json
   "test": "vitest run",
   "check": "tsc --noEmit && vitest run"
   ```
 
-- `.github/workflows/ci.yml`: `name: CI`, одна джоба `test`, запуск на push в `main` и на
-  pull request, шаги `npm ci`, `npm run check`, `npm run build`. Деплой в отдельном
-  workflow.
+- `.github/workflows/ci.yml`: `name: CI`, запуск на push в `main` и на pull request.
+  Установи зависимости по lock-файлу, выполни проверки и сборку, если она есть.
+  Для npm это `npm ci`, `npm run check`, `npm run build`; для Python используй
+  команды проекта. Деплой в отдельном workflow.
+- Kysaro проверяет сообщения в своём workflow, подключённом через `repo-init`.
+  CI проверяет код; зелёный kysaro не заменяет тесты.
