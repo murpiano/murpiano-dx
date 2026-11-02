@@ -23,8 +23,8 @@ class Workflows(unittest.TestCase):
         self.env = os.environ.copy()
         self.env.update(HOME=str(self.home), GIT_CONFIG_GLOBAL=str(self.home / '.gitconfig'),
                         GIT_CONFIG_NOSYSTEM='1', PROJECTS_DIR=str(self.home / 'projects'),
-                        MURPIANO_DX_DATA_DIR=str(self.base / 'dx with spaces' / 'projects'))
-        os.environ['MURPIANO_DX_DATA_DIR'] = str(self.base / 'dx with spaces' / 'projects')
+                        MURPIANO_DX_DATA_DIR=str(self.base / 'dx with spaces'))
+        os.environ['MURPIANO_DX_DATA_DIR'] = str(self.base / 'dx with spaces')
         for key in list(self.env):
             if key.startswith(('GIT_AUTHOR_', 'GIT_COMMITTER_', 'GIT_CONFIG_')) and key not in (
                     'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM'):
