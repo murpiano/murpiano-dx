@@ -2,6 +2,7 @@
 # Connect local instructions. Release credentials are a separate explicit action.
 set -euo pipefail
 root=$(cd "$(dirname "$0")" && pwd)
+bin_home="${XDG_BIN_HOME:-$HOME/.local/bin}"
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}/murpiano-dx"
 config_file="$config_home/config.env"
 
@@ -45,9 +46,15 @@ setup_config() {
   chmod 600 "$config_file"
   echo "Local settings saved: $config_file"
 }
+install_command() {
+  mkdir -p "$bin_home"
+  ln -sfn "$root/murpiano-dx" "$bin_home/murpiano-dx"
+  echo "Command installed: $bin_home/murpiano-dx"
+}
 case "${1:-}" in
   '')
     setup_config
+    install_command
     python3 "$root/configure-codex.py" "$root"
     echo 'Done. Open a new Codex session. In the project, ask: “initialize the project”.'
     ;;

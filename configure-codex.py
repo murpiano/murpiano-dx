@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Connect shared skills and an idempotent instruction block; never configure Claude."""
 from pathlib import Path
+import os
 import sys
 import shlex
 
@@ -42,7 +43,10 @@ for folder in dict.fromkeys(skill_dirs):
             link.symlink_to(skill, target_is_directory=True)
 command = 'bash ' + shlex.quote(str(root / 'sync.sh'))
 block = (root / 'global' / 'agent-rules.md').read_text()
-block = block.replace('{{SYNC}}', command).replace('{{ROOT}}', str(root))
+data_root = Path(os.environ.get('MURPIANO_DX_DATA_DIR', Path.home() / '.murpiano-dx')).expanduser()
+block = (block.replace('{{SYNC}}', command)
+              .replace('{{ROOT}}', str(root))
+              .replace('{{DATA_ROOT}}', str(data_root)))
 instructions.parent.mkdir(parents=True, exist_ok=True)
 instructions.write_text(text.rstrip() + '\n\n' + begin + '\n' + block.rstrip() + '\n' + end + '\n')
 # Retire the exact global Husky guard shipped by the previous setup. Other code stays.
