@@ -1,6 +1,6 @@
 # Checks commit messages of every push and the title, description and
 # commits of every pull request with kysaro's default preset.
-# This repository has no package.json, so kysaro runs through npx.
+# Kysaro is installed as a project dev dependency and uses the committed settings.
 name: kysaro
 
 on:
@@ -23,5 +23,7 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Install dependencies
+        run: npm ci
       - name: Check messages
-        run: npx -y kysaro ci
+        run: npx --no-install kysaro ci
