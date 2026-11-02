@@ -1,48 +1,28 @@
 ---
 name: repo-init
-description: Initialize a project with murpiano-dx on request, offer a private GitHub origin and kysaro, remember decisions and resume setup. Use for explicit initialization or repairing project setup, not routine development tasks.
+description: Initialize a project with murpiano-dx on request, offer a private GitHub origin and kysaro, remember decisions, and resume setup.
 ---
 
-# Подключение проекта
+# Project initialization
 
-Вызывается по запросу «инициализируй проект» или «восстанови настройку».
-Обычная задача не запускает инициализацию заново. Путь murpiano-dx указан в
-общих инструкциях; здесь `<murpiano-dx>` означает этот путь.
+Run this skill only when the owner asks to initialize or repair a project. A normal
+development task does not reinitialize the project.
 
-1. Из папки проекта выполни `bash <murpiano-dx>/sync.sh init`. Команда создаёт
-   локальный Git при отсутствии, готовит исключения и связывает данные по origin.
-2. Если origin отсутствует, предложи приватный GitHub-репозиторий. После согласия:
-   `gh repo create --private --source=. --remote=origin`, затем повтори `init`.
-   Существующий origin не заменяй. Чужой владелец — сообщи о несовпадении,
-   не создавай второй репозиторий.
-3. Прочитай выведенное состояние kysaro. Уже настроен — проверь только сообщённые
-   проблемы. Сохранён отказ — не предлагай снова без запроса владельца.
-4. Решение не принято — предложи один раз: «Установить kysaro для этого проекта?
-   Он проверит Conventional Commits через commit-msg и коммиты/PR через CI».
-   Если согласие уже дано в задаче, повторно не спрашивай.
-5. После согласия: `bash <murpiano-dx>/sync.sh init --kysaro approved`.
-   После отказа: `bash <murpiano-dx>/sync.sh init --kysaro declined`.
-   Команды сохраняют решение, ничего не скачивают.
-6. Для `approved` прочитай [kysaro.md](kysaro.md) и выполни настройку с проверкой.
-   Затем `bash <murpiano-dx>/sync.sh init --kysaro enabled`: команда проверяет
-   наличие компонентов перед записью завершённого состояния. При ошибке оставь
-   согласованную настройку незавершённой и назови конкретный оставшийся шаг.
+1. From the project directory run `bash <murpiano-dx>/sync.sh init`.
+2. If no origin exists, offer a private GitHub repository. After approval run
+   `gh repo create --private --source=. --remote=origin`, then repeat `init`.
+   Preserve an existing origin and report owner mismatches.
+3. Read the kysaro state. Check only reported problems for an already configured
+   project. Do not repeat a saved decline without a new request.
+4. If no decision exists, ask once whether to install kysaro. It validates
+   Conventional Commits through commit-msg and commits/PRs through CI.
+5. Save the decision with `sync.sh init --kysaro approved` or `declined`.
+   These commands store state and do not download packages.
+6. For `approved`, read [kysaro.md](kysaro.md), configure and verify the project,
+   then run `sync.sh init --kysaro enabled`.
+7. If setup fails, leave the approved state incomplete and report the exact step.
 
-Решение хранится в `projects/OWNER/REPO/workflow.json`. Повторный вызов продолжает
-с этого этапа. `approved` означает согласие на настройку, а не её успешное завершение.
-`start` только показывает состояние: не устанавливает пакеты и не запускает вопросы.
+## Completion
 
-## Границы
-
-Общие правила остаются в murpiano-dx; инструкции проекта содержат только указатели
-и предметные заметки. Машинные настройки `.kysaro/settings/` и workflow входят
-в Git проекта. Kysaro проверяет формат сообщений; порядок веток и смысл изменений
-определяет [repo-commit](../repo-commit/SKILL.md). CI кода — отдельная задача `repo-release`.
-
-В новом проекте первый коммит содержит только просмотренные файлы продукта,
-конфигурацию и проверки. Последующие задачи идут в отдельных ветках.
-Не делай commit, push, PR или релиз только ради подключения без такой задачи.
-
-Итог: путь данных, состояние подключения, выбранное состояние kysaro и оставшиеся
-шаги. Отказ от kysaro допустим; отсутствие автоматической проверки назови явно.
-Не называй локальное наличие workflow успешным запуском GitHub Actions.
+The project has a local Git repository, a preserved or approved origin, linked
+project data, and a verified kysaro installation when the owner approved it.

@@ -1,90 +1,50 @@
 ---
 name: repo-release
-description: Use when the user asks to start, pause, resume or remove automatic releases of a repository, to preview the next release, to rewrite the notes of a GitHub release, to set up tests and CI, or when a README's feature sections may be behind the code.
+description: Use when managing releases, tests, CI, release notes, or release automation.
 ---
 
-# Релизы
+# Releases
 
-Релизы выпускаются сами после каждого зелёного CI в `main`. Агент только управляет ими по
-командам пользователя. Коммитами не занимается — это `repo-commit`, здесь только читает
-готовую историю. README не оформляет с нуля — это `repo-readme`, здесь только подновляет
-раздел о возможностях на каждом релизе.
+Releases follow successful CI on `main`. The agent manages them only when requested.
+Commit work belongs to `repo-commit`; README authoring belongs to `repo-readme`.
 
-Правила: [rules.md](rules.md). Файлы для проекта: [release.yml](release.yml),
-[release.sh](release.sh).
+Rules: [rules.md](rules.md). Project files: `release.yml` and `release.sh`.
 
-## Команды
+## Start releases
 
-### «Начни релизы»
+1. Verify a GitHub repository and a green workflow named `CI` on `main`.
+2. Verify `~/.config/murpiano-dx/release-token` exists and is non-empty. If missing,
+   ask the user to run `bash install.sh --release-token`. Never read or print it.
+3. Copy the release workflow and script into the project.
+4. Add the Release badge for public repositories.
+5. Commit on `ci/releases` with `ci: release on every push to main`, then merge it.
+6. Set the `RELEASE_TOKEN` GitHub secret from the local token file.
+7. If no `v*` tag exists, create the approved first release with release notes.
+8. Set the `RELEASES` variable to `on`.
 
-1. Проверить: репозиторий на GitHub, в `main` есть workflow с `name: CI` и он зелёный.
-   Если тестов или CI нет, сначала настроить их по разделу 8 `rules.md` в ветке
-   `ci/tests` и влить её в `main` по разделу 7 `repo-commit/rules.md`.
-   Если README нет вовсе, предложить сначала его: скилл `repo-readme`.
-2. Проверить, что файл `~/.config/murpiano-dx/release-token` есть и не пустой. Если нет,
-   попросить пользователя запустить `bash install.sh --release-token` из `murpiano-dx` и ввести токен
-   (раздел 4 `rules.md`). Токен не читать и не выводить.
-3. Скопировать `release.yml` в `.github/workflows/release.yml` и `release.sh` в
-   `.github/scripts/release.sh`.
-4. Если бейджа Release нет и репозиторий публичный, добавить его в README
-   (раздел 6 `rules.md`).
-5. Закоммитить в ветке `ci/releases`: `ci: release on every push to main`. Влить в `main`
-   по разделу 7 `repo-commit/rules.md`.
-6. `gh secret set RELEASE_TOKEN -R OWNER/REPO < ~/.config/murpiano-dx/release-token`.
-7. Если тегов `v*` ещё нет, выпустить первый релиз вручную: версия `v1.0.0` (или версия
-   из `package.json`, если она не ниже и ещё не выпущена), заметки по разделу 5,
-   `gh release create vX.Y.Z --target main --title vX.Y.Z --notes-file notes.md`.
-8. `gh variable set RELEASES --body on -R OWNER/REPO`.
+## Manage releases
 
-### «Приостанови релизы»
+- Pause: set `RELEASES` to `paused`.
+- Resume: set `RELEASES` to `on`.
+- Preview: run `bash .github/scripts/release.sh --dry-run`.
+- Rewrite notes: read the release commits, show the notes, then edit the release
+  after user approval.
+- Remove: confirm first, set `RELEASES=off`, delete releases and tags, remove the
+  workflow, script, badge, and secret, then commit and merge the change.
 
-`gh variable set RELEASES --body paused -R OWNER/REPO`.
+## Tests and CI
 
-### «Возобнови релизы»
+Configure checks in `ci/tests`, merge with `repo-commit`, and update README CI
+information and its badge when applicable.
 
-`gh variable set RELEASES --body on -R OWNER/REPO`. Коммиты, накопленные за паузу, войдут в
-следующий релиз.
+## Never
 
-### «Убери релизы»
+- Print or copy the release token anywhere except `gh secret set`.
+- Change `package.json` version only to create a release.
+- Release a commit whose CI is not green.
 
-Необратимо. Перед выполнением показать список релизов и тегов и получить подтверждение.
+## Done when
 
-1. `gh variable set RELEASES --body off -R OWNER/REPO`.
-2. Для каждого релиза: `gh release delete <tag> --cleanup-tag --yes -R OWNER/REPO`.
-3. Удалить `.github/workflows/release.yml`, `.github/scripts/release.sh`, бейдж Release.
-4. Закоммитить в ветке `ci/stop-releases`: `ci: stop publishing releases`. Влить в `main`
-   по разделу 7 `repo-commit/rules.md`.
-5. `gh secret delete RELEASE_TOKEN -R OWNER/REPO`.
-
-### «Настрой тесты и CI»
-
-Без релизов, отдельно: по разделу 8 `rules.md` в ветке `ci/tests`, влить в `main` по
-разделу 7 `repo-commit/rules.md`. Если README есть, дописать в него строки про тесты и бейдж CI по разделу 5
-`repo-readme/rules.md`.
-
-### «Покажи следующий релиз»
-
-`bash .github/scripts/release.sh --dry-run` в проекте. Показать версию и заметки. Заодно
-проверить README по разделу 7 `rules.md` — большинство релизов после первого уходят из CI
-без агента, это обычно первый момент, когда кто-то смотрит на оба сразу.
-
-### «Перепиши заметки релиза vX.Y.Z»
-
-Прочитать коммиты релиза (`git log <прошлый тег>..vX.Y.Z`) и их изменения, написать
-заметки вручную по разделу 5, показать пользователю, после подтверждения
-`gh release edit vX.Y.Z --notes-file notes.md`.
-
-## Нельзя
-
-- Выводить или копировать токен куда-либо, кроме `gh secret set`.
-- Менять `version` в `package.json` ради релиза.
-- Выпускать релиз, если CI на этом коммите не зелёный.
-
-## Готово, когда
-
-- «Начни»: `release.yml` и `release.sh` в `main`, секрет и `RELEASES=on` заданы, тег `v*`
-  есть, бейдж в README (для публичного репозитория).
-- «Настрой тесты и CI»: проверки стека проходят, `ci.yml` в согласованной ветке,
-  после публикации CI зелёный. Публикация и merge — в пределах разрешения пользователя.
-- «Приостанови», «Возобнови»: `gh variable get RELEASES` показывает новое значение.
-- «Убери»: релизов и тегов нет, файлов релиза и бейджа нет, `RELEASES=off`.
+Release files are in `main`, the secret and `RELEASES=on` are set, a `v*` tag exists,
+and public repositories have the Release badge. Pause/resume is verified with
+`gh variable get RELEASES`; removal leaves no release tags or files.
