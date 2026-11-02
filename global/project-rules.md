@@ -1,8 +1,9 @@
 # {{PROJECT}}
 
 Run `{{SYNC}} start` at the beginning of work for a short state check.
-Read task-specific rules from `{{ROOT}}/skills/`: Git — `repo-commit`, README and
-metadata — `repo-readme`, releases and CI — `repo-release`. Resume setup through
+Read task-specific rules from `{{ROOT}}/skills/` and editable overrides in
+`{{DATA_ROOT}}/rules/`: Git — `repo-commit`, README and metadata — `repo-readme`,
+releases and CI — `repo-release`. Resume setup through
 `repo-init` only when requested; its state is `{{STORE}}/workflow.json`.
 
 Project data is stored in `{{STORE}}`. Keep decisions, verification commands, and

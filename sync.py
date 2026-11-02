@@ -16,12 +16,51 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parent
 DATA_ROOT = Path(os.environ.get(
     'MURPIANO_DX_DATA_DIR',
-    Path.home() / '.local' / 'share' / 'murpiano-dx',
+    Path.home() / '.murpiano-dx',
 )).expanduser()
 STORE = DATA_ROOT / 'projects'
 PATHS = ('AGENTS.md', '.agents')
 BEGIN = '# >>> murpiano-dx'
 END = '# <<< murpiano-dx'
+
+
+def ensure_workspace():
+    """Create the editable local workspace without overwriting user files."""
+    (DATA_ROOT / 'config').mkdir(parents=True, exist_ok=True)
+    (DATA_ROOT / 'rules').mkdir(parents=True, exist_ok=True)
+    (DATA_ROOT / 'templates').mkdir(parents=True, exist_ok=True)
+    (DATA_ROOT / 'logs').mkdir(parents=True, exist_ok=True)
+    STORE.mkdir(parents=True, exist_ok=True)
+    machine = DATA_ROOT / 'config' / 'machine.json'
+    if not machine.exists():
+        machine.write_text(json.dumps({
+            'git_name': os.environ.get('GIT_NAME', ''),
+            'git_email': os.environ.get('GIT_EMAIL', ''),
+            'github_owner': os.environ.get('GITHUB_OWNER', ''),
+        }, indent=2) + '\n')
+    defaults = ROOT / 'defaults'
+    for group in ('rules', 'templates'):
+        source = defaults / group
+        target = DATA_ROOT / group
+        if source.is_dir():
+            for item in source.iterdir():
+                destination = target / item.name
+                if not destination.exists():
+                    shutil.copy2(item, destination)
+
+
+def load_machine_config():
+    path = DATA_ROOT / 'config' / 'machine.json'
+    if not path.is_file():
+        return
+    try:
+        values = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return
+    for key, env_name in [('git_name', 'GIT_NAME'), ('git_email', 'GIT_EMAIL'),
+                          ('github_owner', 'GITHUB_OWNER')]:
+        if not os.environ.get(env_name) and values.get(key):
+            os.environ[env_name] = str(values[key])
 
 
 def git(project, *args, check=True):
@@ -129,6 +168,7 @@ def attach(project, key):
             else:
                 text = (ROOT / 'global/project-rules.md').read_text()
                 for token, value in [('{{PROJECT}}', key), ('{{ROOT}}', str(ROOT)),
+                                     ('{{DATA_ROOT}}', str(DATA_ROOT)),
                                      ('{{STORE}}', str(STORE / key)),
                                      ('{{SYNC}}', 'bash ' + shlex.quote(str(ROOT / 'sync.sh')))]:
                     text = text.replace(token, value)
@@ -293,6 +333,8 @@ def main():
     parser.add_argument('--kysaro', choices=['approved', 'declined', 'enabled'],
                         help='Record the owner decision or verify completed setup (init only)')
     args = parser.parse_args()
+    ensure_workspace()
+    load_machine_config()
     if args.kysaro and args.mode != 'init':
         parser.error('--kysaro is only available with init')
     if args.mode == 'link':
