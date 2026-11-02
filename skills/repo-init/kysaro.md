@@ -1,68 +1,24 @@
-# Настройка kysaro после согласия
+# Kysaro setup
 
-Читай только при согласованной установке или восстановлении. До изменения зависимостей
-проверь дерево Git и используй текущую подходящую ветку либо ветку `ci/project-setup`
-по `repo-commit`. В пустом репозитории допускается подготовка первого коммита в main.
+Kysaro is installed separately in each initialized project. murpiano-dx stores the
+decision and verifies the setup; it does not replace the project linter.
 
-## 1. Зависимость
+## Setup sequence
 
-Проверь Node.js, пакетный менеджер, package.json и lock-файл проекта. Используй
-существующий менеджер; не создавай второй lock-файл. Для npm:
+1. Add the local development dependency with the project package manager.
+2. Create or preserve `.kysaro/settings/` using the project’s approved message
+   and pull request rules.
+3. Install the `commit-msg` hook without overwriting an existing custom hook.
+4. Add `.github/workflows/kysaro.yml` to run `npx --no-install kysaro ci`.
+5. Run valid and invalid message checks locally.
+6. Run `bash <murpiano-dx>/sync.sh init --kysaro enabled` only after every component
+   is present.
 
-```bash
-npm install --save-dev kysaro
-npx --no-install kysaro init
-```
+## Rules
 
-Если нужная зависимость уже установлена, не устанавливай её повторно. После
-клонирования восстанавливай версии по lock-файлу (`npm ci` для npm).
-
-В проекте другого стека Node.js нужен только инструментам разработки. Если
-package.json отсутствует, сначала создай минимальный `{ "private": true }`.
-При добавлении npm-инструментов исключи `/node_modules/` в `.gitignore` проекта,
-сохрани package.json и lock-файл в Git.
-Один `npx kysaro init` без локальной зависимости не обеспечивает работу hook.
-Если рантайм или установка недоступны, останови этот шаг с точной причиной.
-
-## 2. Настройки и hook
-
-`kysaro init` создаёт `.kysaro/settings/`, commit-msg и workflow. Существующие
-настройки сохраняй; не используй `--force`. Если есть чужой hook, добавь вызов
-локального kysaro, сохрани порядок и обработку ошибок прежних проверок.
-
-Для нового проекта предложи готовый вариант без отдельного опроса каждого поля:
-пресет Conventional Commits от kysaro, types/scopes проекта при наличии,
-тело для feat/fix по правилам `repo-commit`. Существующий формат проекта приоритетен.
-Дефолт kysaro не требует тела feat/fix: если включаешь машинное требование,
-используй `body.required.when.type: ["feat", "fix"]` в commit.json.
-
-Проверь активный `core.hooksPath`, исполняемость hook и локальный запуск kysaro.
-При Husky пользовательский `.husky/commit-msg` должен вызываться активным wrapper;
-одного файла в неактивной `.husky/` недостаточно. `.git/hooks` после клонирования
-восстанавливается через init, Husky — штатной установкой проекта.
-
-## 3. CI и проверка
-
-В `.github/workflows/kysaro.yml` должны проверяться коммиты на push, заголовок,
-описание и коммиты PR. Настройки `.kysaro/settings/` и workflow входят в Git проекта.
-Защиту main с обязательной проверкой предложи отдельно, если доступна для репозитория.
-Это не заменяет CI кода, тесты или сборку.
-
-Проверь локальным kysaro без создания реальных коммитов:
-
-- Корректное сообщение commit и PR по настройкам проекта: код выхода 0.
-- Заведомо некорректное сообщение: код 1, а не ошибка запуска или конфигурации.
-- Активный hook действительно вызывает установленный kysaro; не запускай чужие
-  проверки с производственными побочными эффектами ради этой проверки.
-
-Для npm: `npx --no-install kysaro --type commit < /tmp/commit-message.txt` и
-`npx --no-install kysaro --type request < /tmp/pr-message.txt`.
-PR-файл содержит заголовок, пустую строку и описание. Правила нестандартного
-проекта бери из `.kysaro/settings/`, не подгоняй их под тестовый пример.
-
-После успеха: `bash <murpiano-dx>/sync.sh init --kysaro enabled`.
-В `.agents/setup.md` кратко сохрани пакетный менеджер, выполненные команды и
-результаты проверки сообщений, путь активного hook и состояние CI. Это данные
-проекта для последующей проверки, без копирования общих правил или полных логов.
-При незавершённом шаге оставь `approved`; кратко запиши причину в `.agents/`.
-Не делай commit, push, PR и изменение GitHub-настроек вне разрешённой задачи.
+- Keep the dependency local to the project.
+- Do not download packages during `sync.sh start` or a state-only `init`.
+- Preserve existing hooks and report conflicts instead of overwriting them.
+- Kysaro validates configured message and PR conventions; the agent chooses the
+  branch and explains the change.
+- A saved `declined` decision suppresses repeated offers until the owner asks again.

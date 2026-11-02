@@ -1,46 +1,26 @@
 ---
 name: repo-readme
-description: Use when writing, rewriting or reviewing a repository README, its GitHub description or topics.
+description: Use when writing, reviewing, or updating a repository README, GitHub description, website, topics, or badges.
 ---
 
-# Витринный README
+# Repository documentation
 
-README в одном стиле для всех репозиториев murpiano: единый порядок секций,
-подтверждённые команды, реальные ограничения. Картинка и бейджи только при наличии.
+Write for humans in clear English. Keep the agent pointer at the top of README:
+read `AGENTS.md` and stop reading the page. Put images after that pointer.
 
-Правила: [rules.md](rules.md). Заготовка: [template.md](template.md).
+## Required content
 
-## Шаги
+- what the project does and who it is for;
+- installation and the smallest useful example;
+- configuration and supported commands;
+- tests, CI, limitations, and links to deeper documentation.
 
-1. Прочитать `rules.md` целиком.
-2. Прочитать код, `package.json`, конфиги, CI, деплой, `LICENSE` и текущий README. Выписать
-   каждый факт, который попадёт в README, вместе с источником.
-3. Открыть каждую внешнюю ссылку. О неработающей сказать автору.
-4. Определить тип проекта: веб-приложение, бэкенд, CLI, библиотека. От него зависят
-   картинка и секция `API`, `CLI` или `Usage`.
-5. Отметить, что в проекте уже есть: скрипты `test` и `check`, `.github/workflows/ci.yml`,
-   релизы (`gh variable get RELEASES` равно `on` или `paused`). README описывает только это
-   (раздел 5 `rules.md`). Тесты, CI и релизы не создавать: это скилл `repo-release`.
-6. Заполнить `template.md`, пустые блоки убрать, комментарии удалить.
-7. Прогнать проверки из раздела «Проверка» в `rules.md`, исправить всё найденное.
-8. Выполнить команды из `Run locally` на чистом клоне.
-9. Подготовить README и предлагаемые description, website и topics. Коммит —
-   по задаче пользователя через `repo-commit`, в текущей подходящей ветке либо `docs/readme`.
-10. Проверить новые изменения: команды работают, внутренние файлы проекта не включены.
-11. При согласованной публикации: pull request и merge по разделу 7 `repo-commit/rules.md`,
-    дождаться зелёного CI (если он есть), выставить description,
-    website и topics. Релизы включаются командой «начни релизы» (скилл `repo-release`).
-12. Проверить, что каждый бейдж показывает реальный статус: CI `passing`, Release текущую
-    версию.
+Use only facts confirmed by the repository. Do not invent features or guarantees.
 
-## Спросить автора
+## GitHub metadata
 
-- Лицензия нужна по задаче, но ещё не выбрана.
-- Публикация или правка метаданных не разрешены текущей задачей.
+Keep the description short and specific. Use a small set of relevant topics and
+set the website only when it is real and maintained. Add a CI badge only when the
+workflow exists and a Release badge only for a public repository with releases.
 
-## Готово, когда
-
-- README идёт в порядке и с названиями секций из `rules.md`.
-- Команды и ссылки проверены; форматирование соответствует проекту.
-- В README только то, что есть в проекте: нет тестов, CI или релизов — нет их строк и бейджей.
-- Description и topics подготовлены; опубликованы, если это разрешено задачей.
+Use [rules.md](rules.md) and [template.md](template.md) for detailed structure.
