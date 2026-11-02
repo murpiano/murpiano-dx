@@ -25,15 +25,15 @@ setup_config() {
   if [ -z "$default_email" ] && [ -n "$gh_id" ] && [ -n "$gh_login" ]; then
     default_email="${gh_id}+${gh_login}@users.noreply.github.com"
   fi
-  echo 'Первичная настройка murpiano-dx. Значения сохраняются только локально.'
-  read -r -p "Имя Git [${default_name}]: " name
+  echo 'Initial murpiano-dx setup. Values are stored locally only.'
+  read -r -p "Git name [${default_name}]: " name
   read -r -p "Email Git [${default_email}]: " email
   read -r -p "GitHub owner [${default_owner}]: " owner
   name="${name:-$default_name}"
   email="${email:-$default_email}"
   owner="${owner:-$default_owner}"
   [ -n "$name" ] && [ -n "$email" ] && [ -n "$owner" ] || {
-    echo 'Имя, email и GitHub owner обязательны.' >&2
+    echo 'Name, email, and GitHub owner are required.' >&2
     return 1
   }
   mkdir -p "$config_home"
@@ -43,25 +43,25 @@ setup_config() {
     printf 'GITHUB_OWNER=%q\n' "$owner"
   } >"$config_file")
   chmod 600 "$config_file"
-  echo "Локальные настройки сохранены: $config_file"
+  echo "Local settings saved: $config_file"
 }
 case "${1:-}" in
   '')
     setup_config
     python3 "$root/configure-codex.py" "$root"
-    echo 'Готово. Открой новую сессию Codex. В проекте скажи: «инициализируй проект».'
+    echo 'Done. Open a new Codex session. In the project, ask: “initialize the project”.'
     ;;
   --release-token)
     token_file="$HOME/.config/murpiano-dx/release-token"
-    [ -t 0 ] || { echo 'Введи токен в интерактивном терминале.' >&2; exit 1; }
-    read -rs -p 'Release token (Enter сохраняет прежний): ' token
+    [ -t 0 ] || { echo 'Enter the token in an interactive terminal.' >&2; exit 1; }
+    read -rs -p 'Release token (Enter keeps the previous value): ' token
     echo
     if [ -n "$token" ]; then
       mkdir -p "$(dirname "$token_file")"
       (umask 077; printf '%s' "$token" >"$token_file")
       chmod 600 "$token_file"
       unset token
-      echo 'Токен сохранён локально. Секрет RELEASE_TOKEN задаётся отдельно в каждом проекте.'
+      echo 'Token saved locally. The RELEASE_TOKEN secret is configured separately for each project.'
     fi
     ;;
   *) echo 'Usage: bash install.sh [--release-token]' >&2; exit 2 ;;

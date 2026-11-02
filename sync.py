@@ -59,12 +59,12 @@ def store_lock():
     try:
         handle = (STORE / '.sync.lock').open('a')
     except OSError as error:
-        raise RuntimeError(f'Не удалось открыть блокировку хранилища: {error}') from error
+        raise RuntimeError(f'Could not acquire the project store lock: {error}') from error
     with handle:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
-            raise RuntimeError('Хранилище занято другой синхронизацией; повтори команду.') from error
+            raise RuntimeError('The project store is busy with another sync; retry the command.') from error
         yield
 
 
@@ -72,7 +72,7 @@ def exclude_agent_files(project):
     path = git_path(project, 'info/exclude')
     text = path.read_text() if path.exists() else ''
     if text.count(BEGIN) != text.count(END) or text.count(BEGIN) > 1:
-        raise RuntimeError(f'Повреждены маркеры исключений: {path}')
+        raise RuntimeError(f'Invalid exclusion markers: {path}')
     if BEGIN in text:
         prefix, rest = text.split(BEGIN, 1)
         _, suffix = rest.split(END, 1)
@@ -95,9 +95,9 @@ def remove_old_hook(project):
     if (len(lines) == 3 and lines[0] == '#!/usr/bin/env bash' and lines[1] == marker
             and lines[2] == f'exec bash "{ROOT}/skills/repo-cleanup/pre-commit-hook.sh"'):
         path.unlink()
-        print('Удалён прежний pre-commit murpiano-dx.')
+        print('Removed the previous murpiano-dx pre-commit hook.')
     else:
-        print(f'Проверь прежний вызов repo-cleanup в {path}: изменённый хук сохранён.')
+        print(f'Check the previous repo-cleanup call in {path}: the modified hook was preserved.')
 
 
 def attach(project, key):
@@ -107,15 +107,15 @@ def attach(project, key):
         source, target = project / name, files / name
         if source.is_symlink():
             if source.resolve() != target.resolve():
-                print(f'Конфликт ссылки: {source}. Ссылка сохранена.')
+                print(f'Link conflict: {source}. The link was preserved.')
             continue
         if git(project, 'ls-files', '--', name):
-            print(f'{name} отслеживается проектом; оставлен на месте.')
+            print(f'{name} is tracked by the project; left in place.')
             continue
         moved = False
         if source.exists():
             if target.exists() or target.is_symlink():
-                print(f'Конфликт файлов: {source} и {target}. Объедини вручную.')
+                print(f'File conflict: {source} and {target}. Merge manually.')
                 continue
             shutil.move(str(source), str(target))
             moved = True
@@ -135,10 +135,10 @@ def attach(project, key):
             if moved:
                 shutil.move(str(target), str(source))
             raise
-    print(f'Данные проекта: {STORE / key}')
+    print(f'Project data: {STORE / key}')
     memory = STORE / key / 'memory'
     if memory.is_dir():
-        print(f'Сохранённая память: {memory}. Прочитай MEMORY.md и нужные заметки.')
+        print(f'Saved memory: {memory}. Read MEMORY.md and relevant notes.')
 
 
 def kysaro_gaps(project):
@@ -147,14 +147,14 @@ def kysaro_gaps(project):
         gaps.append('Node.js')
     binary = project / 'node_modules/.bin/kysaro'
     if not binary.is_file() or not os.access(binary, os.X_OK):
-        gaps.append('локальный kysaro')
+        gaps.append('local kysaro')
     for name in ('commit', 'merge', 'request'):
         path = project / f'.kysaro/settings/commits/{name}.json'
         try:
             if not isinstance(json.loads(path.read_text()), dict):
-                gaps.append(f'настройки {name}')
+                gaps.append(f'{name} settings')
         except (OSError, ValueError):
-            gaps.append(f'настройки {name}')
+            gaps.append(f'{name} settings')
     hooks = git_path(project, 'hooks')
     active = hooks / 'commit-msg'
     hooked = active.is_file() and os.access(active, os.X_OK) and 'kysaro' in active.read_text()
@@ -163,7 +163,7 @@ def kysaro_gaps(project):
         hooked = (active.is_file() and os.access(active, os.X_OK) and
                   user_hook.is_file() and 'kysaro' in user_hook.read_text())
     if not hooked:
-        gaps.append('активный commit-msg')
+        gaps.append('active commit-msg')
     workflows = project / '.github/workflows'
     checked_in_ci = workflows.is_dir() and any(
         p.suffix in ('.yml', '.yaml') and 'kysaro ci' in p.read_text()
@@ -180,10 +180,10 @@ def load_workflow(key):
     try:
         state = json.loads(path.read_text())
     except (ValueError, UnicodeError) as error:
-        raise RuntimeError(f'Некорректное состояние инициализации: {path}') from error
+        raise RuntimeError(f'Invalid initialization state: {path}') from error
     if not isinstance(state, dict) or state.get('kysaro') not in (
             'pending', 'approved', 'declined', 'enabled'):
-        raise RuntimeError(f'Некорректное состояние инициализации: {path}')
+        raise RuntimeError(f'Invalid initialization state: {path}')
     return state
 
 
@@ -198,20 +198,20 @@ def report(project, key, state, initializing=False):
     status = state['kysaro']
     if status == 'enabled':
         gaps = kysaro_gaps(project)
-        status = 'настроен' if not gaps else 'восстановить: ' + ', '.join(gaps)
+        status = 'configured' if not gaps else 'restore: ' + ', '.join(gaps)
     else:
-        status = {'pending': 'решение не принято', 'approved': 'установка согласована, не завершена',
-                  'declined': 'отклонён владельцем'}[status]
+        status = {'pending': 'decision pending', 'approved': 'approved, setup incomplete',
+                  'declined': 'declined by owner'}[status]
     branch = git(project, 'branch', '--show-current')
-    print(f'{key} | ветка: {branch or "detached HEAD"} | kysaro: {status}')
-    print(f'Контекст: {STORE / key}. Правила по задаче: {ROOT}/skills/')
+    print(f'{key} | branch: {branch or "detached HEAD"} | kysaro: {status}')
+    print(f'Context: {STORE / key}. Task rules: {ROOT}/skills/')
     if any(not (project / name).exists() for name in PATHS):
-        print('Инструкции или заметки не подключены в этой копии; восстанови через init по запросу.')
+        print('Instructions or notes are not connected in this copy; restore them through init on request.')
     if initializing and state['kysaro'] == 'pending':
-        print('Предложи установить kysaro: локальная зависимость, commit-msg, настройки и CI. '
-              'Продолжение: skills/repo-init/SKILL.md.')
+        print('Offer kysaro installation: local dependency, commit-msg, settings, and CI. '
+              'Continue with: skills/repo-init/SKILL.md.')
     elif initializing and state['kysaro'] == 'approved':
-        print('Продолжи согласованную настройку по skills/repo-init/kysaro.md.')
+        print('Continue the approved setup from skills/repo-init/kysaro.md.')
 
 
 def connect(folder, mode='start', choice=None, quiet=False):
@@ -220,7 +220,7 @@ def connect(folder, mode='start', choice=None, quiet=False):
     if not root:
         if not initialize:
             if not quiet:
-                print(f'Нет Git-репозитория. Для подключения: bash '
+                print(f'No Git repository. To connect: bash '
                       f'{shlex.quote(str(ROOT / "sync.sh"))} init {shlex.quote(str(folder))}')
             return
         git(folder, 'init', '-b', 'main')
@@ -232,29 +232,29 @@ def connect(folder, mode='start', choice=None, quiet=False):
     project = Path(root).resolve()
     if project == ROOT:
         if not quiet:
-            print('murpiano-dx: используй skills/ как источник общих правил; самоподключение не требуется.')
+            print('murpiano-dx: use skills/ as the shared rules source; self-connection is not required.')
         return
     url = git(project, 'remote', 'get-url', 'origin', check=False)
     if not url:
         if quiet:
             return
         if not initialize:
-            print('Нет origin. По запросу владельца подключи проект через repo-init.')
+            print('No origin. Connect through repo-init when the owner requests it.')
             return
         exclude_agent_files(project)
-        print('Локальный Git готов. Предложи владельцу приватный GitHub-репозиторий.')
-        print('После согласия, из папки проекта: gh repo create --private --source=. --remote=origin')
-        print('Затем повтори init. Коммиты, создание GitHub-репозитория и push автоматически не выполняются.')
+        print('Local Git is ready. Offer the owner a private GitHub repository.')
+        print('After approval, from the project directory: gh repo create --private --source=. --remote=origin')
+        print('Then repeat init. Commits, GitHub repository creation, and push are not automatic.')
         return
     key = project_key(url)
     if key is None:
         if not quiet:
-            print('Origin не относится к настроенному владельцу GitHub; не изменён. Подключение пропущено.')
+            print('Origin does not belong to the configured GitHub owner; unchanged. Connection skipped.')
         return
     if mode == 'start':
         state = load_workflow(key)
         if state is None:
-            print(f'{key}: проект не инициализирован. По запросу владельца используй repo-init.')
+            print(f'{key}: project is not initialized. Use repo-init when the owner requests it.')
         else:
             report(project, key, state)
         return
@@ -262,7 +262,7 @@ def connect(folder, mode='start', choice=None, quiet=False):
         state = load_workflow(key)
         if state is None and not initialize:
             if not quiet:
-                print(f'{key}: сначала выполни явную инициализацию через repo-init.')
+                print(f'{key}: first perform explicit initialization through repo-init.')
             return
         state = state or {'kysaro': 'pending'}
         exclude_agent_files(project)
@@ -272,7 +272,7 @@ def connect(folder, mode='start', choice=None, quiet=False):
             if choice == 'enabled':
                 gaps = kysaro_gaps(project)
                 if gaps:
-                    raise RuntimeError('Настройка kysaro не завершена: ' + ', '.join(gaps))
+                    raise RuntimeError('Kysaro setup incomplete: ' + ', '.join(gaps))
             if choice:
                 state['kysaro'] = choice
             elif state['kysaro'] == 'pending' and not kysaro_gaps(project):
