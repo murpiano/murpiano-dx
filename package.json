@@ -15,7 +15,7 @@
     "developer-experience",
     "git-workflow",
     "kysaro",
-    "codex"
+    "coding-agents"
   ],
   "publishConfig": {
     "access": "public"
@@ -32,6 +32,7 @@
     "resources/project-data-flow.svg",
     "config.env",
     "configure-codex.py",
+    "agent_setup.py",
     "install.sh",
     "murpiano-dx",
     "sync.py",

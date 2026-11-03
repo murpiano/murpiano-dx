@@ -24,6 +24,12 @@ class Workflows(unittest.TestCase):
         self.env.update(HOME=str(self.home), GIT_CONFIG_GLOBAL=str(self.home / '.gitconfig'),
                         GIT_CONFIG_NOSYSTEM='1', PROJECTS_DIR=str(self.home / 'projects'),
                         MURPIANO_DX_DATA_DIR=str(self.base / 'dx with spaces'))
+        # Host-installed agents and profiles must not leak into temporary-home tests.
+        for variable in ('CODEX_HOME', 'CLAUDE_CONFIG_DIR'):
+            self.env.pop(variable, None)
+        self.env['PATH'] = os.pathsep.join(
+            folder for folder in self.env['PATH'].split(os.pathsep)
+            if not any((Path(folder) / agent).is_file() for agent in ('codex', 'claude')))
         os.environ['MURPIANO_DX_DATA_DIR'] = str(self.base / 'dx with spaces')
         for key in list(self.env):
             if key.startswith(('GIT_AUTHOR_', 'GIT_COMMITTER_', 'GIT_CONFIG_')) and key not in (
@@ -31,7 +37,8 @@ class Workflows(unittest.TestCase):
                 del self.env[key]
         self.dx = self.base / 'dx with spaces'
         self.dx.mkdir()
-        for name in ['install.sh', 'configure-codex.py', 'sync.sh', 'sync.py', 'skills', 'global']:
+        for name in ['install.sh', 'configure-codex.py', 'agent_setup.py',
+                     'sync.sh', 'sync.py', 'skills', 'global']:
             source = SOURCE / name
             if source.is_dir():
                 shutil.copytree(source, self.dx / name)
@@ -296,6 +303,134 @@ class Workflows(unittest.TestCase):
         for name in ['repo-init', 'repo-commit', 'repo-readme', 'repo-release']:
             self.assertTrue((self.home / '.agents/skills' / name).is_symlink())
 
+    def test_default_setup_has_generic_entry_point_and_no_agent_specific_settings(self):
+        result = self.run_cmd(['bash', 'install.sh'])
+        self.assertIn('Agent entry point:', result.stdout)
+        self.assertNotIn('Codex', result.stdout)
+        for name in ('.codex', '.claude', '.cursor'):
+            self.assertFalse((self.home / name).exists())
+        entry = self.dx / 'AGENTS.md'
+        self.assertTrue(entry.is_file())
+        self.assertIn(str(self.dx / 'skills'), entry.read_text())
+        self.assertNotIn('{{', entry.read_text())
+        self.assertTrue((self.home / '.agents/skills/repo-init').is_symlink())
+
+    def test_default_setup_preserves_existing_agent_global_instructions(self):
+        instructions = self.home / '.codex/AGENTS.md'
+        instructions.parent.mkdir()
+        instructions.write_text('Custom instructions\n')
+        before = instructions.read_bytes()
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertTrue(instructions.read_bytes().startswith(before))
+        self.assertIn('<!-- >>> murpiano-dx -->', instructions.read_text())
+        self.assertTrue((self.home / '.agents/skills/repo-release').is_symlink())
+
+    def test_legacy_codex_configurator_keeps_explicit_integration(self):
+        self.run_cmd(['python3', 'configure-codex.py', str(self.dx)])
+        self.assertTrue((self.home / '.codex/AGENTS.md').is_file())
+        self.assertTrue((self.home / '.agents/skills/repo-init').is_symlink())
+
+    def fake_agent(self, name):
+        binaries = self.base / 'agent-bin'
+        binaries.mkdir(exist_ok=True)
+        executable = binaries / name
+        # Setup may detect the executable but must never launch an agent.
+        executable.write_text('#!/bin/sh\nexit 71\n')
+        executable.chmod(0o755)
+        if str(binaries) not in self.env['PATH'].split(os.pathsep):
+            self.env['PATH'] = str(binaries) + os.pathsep + self.env['PATH']
+
+    def test_setup_detects_both_agents_from_path_and_links_shared_skills(self):
+        self.fake_agent('codex')
+        self.fake_agent('claude')
+        result = self.run_cmd(['bash', 'install.sh'])
+        self.assertIn('Codex connected:', result.stdout)
+        self.assertIn('Claude Code connected:', result.stdout)
+        codex = self.home / '.codex/AGENTS.md'
+        claude = self.home / '.claude/CLAUDE.md'
+        self.assertEqual(codex.read_text(), claude.read_text())
+        common = self.home / '.agents/skills/repo-commit'
+        native = self.home / '.claude/skills/repo-commit'
+        self.assertEqual(common.resolve(), native.resolve())
+        self.assertEqual(native.resolve(), self.dx / 'skills/repo-commit')
+        first = claude.read_bytes()
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertEqual(claude.read_bytes(), first)
+        self.assertEqual(claude.read_text().count('<!-- >>> murpiano-dx -->'), 1)
+
+    def test_setup_detects_claude_profile_and_preserves_custom_instructions(self):
+        instructions = self.home / '.claude/CLAUDE.md'
+        instructions.parent.mkdir()
+        instructions.write_text('Keep my preferences exactly.\n\n')
+        custom = self.home / '.claude/skills/repo-init'
+        custom.mkdir(parents=True)
+        (custom / 'mine').write_text('my custom skill\n')
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertTrue(instructions.read_text().startswith('Keep my preferences exactly.\n\n'))
+        self.assertEqual((custom / 'mine').read_text(), 'my custom skill\n')
+        self.assertFalse((self.home / '.codex').exists())
+
+    def test_setup_connects_agent_added_after_initial_installation(self):
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertFalse((self.home / '.claude').exists())
+        self.fake_agent('claude')
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertTrue((self.home / '.claude/CLAUDE.md').is_file())
+        self.assertFalse((self.home / '.codex').exists())
+
+    def test_setup_respects_custom_agent_profiles_and_codex_override(self):
+        codex = self.base / 'custom codex'
+        codex.mkdir()
+        base = codex / 'AGENTS.md'
+        base.write_text('Base stays unchanged\n')
+        override = codex / 'AGENTS.override.md'
+        override.write_text('Active override\n')
+        claude = self.base / 'custom claude'
+        self.env.update(CODEX_HOME=str(codex), CLAUDE_CONFIG_DIR=str(claude))
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertEqual(base.read_text(), 'Base stays unchanged\n')
+        self.assertIn('<!-- >>> murpiano-dx -->', override.read_text())
+        self.assertTrue((claude / 'CLAUDE.md').is_file())
+        self.assertTrue((claude / 'skills/repo-readme').is_symlink())
+        self.assertFalse((self.home / '.codex').exists())
+        self.assertFalse((self.home / '.claude').exists())
+
+    def test_setup_checks_all_markers_before_changing_either_agent(self):
+        codex = self.home / '.codex/AGENTS.md'
+        codex.parent.mkdir()
+        codex.write_text('Keep codex\n')
+        claude = self.home / '.claude/CLAUDE.md'
+        claude.parent.mkdir()
+        claude.write_text('Keep claude\n<!-- >>> murpiano-dx -->\n')
+        before = codex.read_bytes(), claude.read_bytes()
+        result = self.run_cmd(['bash', 'install.sh'], check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Invalid murpiano-dx instruction markers', result.stderr)
+        self.assertEqual((codex.read_bytes(), claude.read_bytes()), before)
+        self.assertFalse((self.home / '.agents').exists())
+
+    def test_setup_preserves_claude_instruction_symlink(self):
+        target = self.base / 'shared claude.md'
+        target.write_text('Shared personal instructions\n')
+        linked = self.home / '.claude/CLAUDE.md'
+        linked.parent.mkdir()
+        linked.symlink_to(target)
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertTrue(linked.is_symlink())
+        self.assertIn('Shared personal instructions', target.read_text())
+        self.assertIn('<!-- >>> murpiano-dx -->', target.read_text())
+
+    def test_setup_updates_only_managed_block_and_preserves_surrounding_text(self):
+        instructions = self.home / '.claude/CLAUDE.md'
+        instructions.parent.mkdir()
+        prefix = 'My preferences\n\n'
+        suffix = '\n\nMy closing notes\n\n'
+        instructions.write_text(prefix + '<!-- >>> murpiano-dx -->\nold\n<!-- <<< murpiano-dx -->' + suffix)
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertTrue(instructions.read_text().startswith(prefix))
+        self.assertTrue(instructions.read_text().endswith(suffix))
+        self.assertNotIn('\nold\n', instructions.read_text())
+
     def test_installer_builds_one_runtime_workspace_without_maintenance_files(self):
         workspace = self.base / 'workspace'
         env = self.env.copy()
@@ -308,6 +443,8 @@ class Workflows(unittest.TestCase):
         self.assertTrue((workspace / '.git').is_dir())
         self.assertTrue((workspace / '.murpiano-dx-workspace').is_file())
         self.assertTrue((workspace / 'sync.py').is_file())
+        self.assertTrue((workspace / 'agent_setup.py').is_file())
+        self.assertTrue((workspace / 'AGENTS.md').is_file())
         self.assertTrue((workspace / 'skills/repo-init/SKILL.md').is_file())
         self.assertTrue((workspace / 'projects').is_dir())
         self.assertFalse((workspace / 'tests').exists())
@@ -316,9 +453,32 @@ class Workflows(unittest.TestCase):
                                      cwd=self.base).stdout)
         custom_rule = workspace / 'rules/git.md'
         custom_rule.write_text('custom rule\n')
+        entry = workspace / 'AGENTS.md'
+        entry.write_text('My own agent entry point\n')
         subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
                        text=True, capture_output=True, check=True)
         self.assertEqual(custom_rule.read_text(), 'custom rule\n')
+        self.assertEqual(entry.read_text(), 'My own agent entry point\n')
+
+    def test_setup_upgrades_old_runtime_without_overwriting_personal_rules(self):
+        workspace = self.base / 'old workspace'
+        env = self.env.copy()
+        env.update(MURPIANO_DX_DATA_DIR=str(workspace), GIT_NAME='Workspace User',
+                   GIT_EMAIL='workspace@example.invalid', GITHUB_OWNER='owner',
+                   XDG_BIN_HOME=str(self.base / 'bin'))
+        subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        old = workspace / 'install.sh'
+        old.write_text('#!/bin/sh\necho old installer\n')
+        rules = workspace / 'rules/git.md'
+        rules.write_text('My Git rules\n')
+        machine = (workspace / 'config/machine.json').read_bytes()
+        subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        self.assertEqual(old.read_bytes(), (self.dx / 'install.sh').read_bytes())
+        self.assertIn('old installer', (workspace / '.runtime-backup/install.sh').read_text())
+        self.assertEqual(rules.read_text(), 'My Git rules\n')
+        self.assertEqual((workspace / 'config/machine.json').read_bytes(), machine)
 
     def test_end_commits_and_pushes_workspace_state(self):
         workspace = self.base / 'workspace'
