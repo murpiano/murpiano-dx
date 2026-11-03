@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Connect shared skills and an idempotent instruction block; never configure Claude."""
+"""Connect shared skills and an idempotent Codex instruction block."""
 from pathlib import Path
 import os
 import sys
