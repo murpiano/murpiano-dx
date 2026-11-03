@@ -98,6 +98,23 @@ trap 'rm -f "$notes"' EXIT
   [ -n "$remote" ] && printf 'Full diff: %s/compare/%s...%s\n' "$remote" "$last" "$tag"
 } >"$notes"
 
+# CI reads a committed project copy; it never needs access to personal notes.
+template="$(git rev-parse --show-toplevel)/.github/release-notes.md"
+if [ -f "$template" ]; then
+  content=$(cat "$template")
+  if [[ "$content" != *'{{CHANGES}}'* ]]; then
+    echo 'Release template must contain {{CHANGES}}.' >&2
+    exit 1
+  fi
+  changes=$(cat "$notes")
+  # Bash 5.2 treats & specially in replacements unless this option is disabled.
+  shopt -u patsub_replacement 2>/dev/null || true
+  content=${content//'{{CHANGES}}'/$changes}
+  content=${content//'{{VERSION}}'/$tag}
+  content=${content//'{{PREVIOUS_VERSION}}'/$last}
+  printf '%s\n' "$content" >"$notes"
+fi
+
 echo "$last -> $tag"
 if [ "$dry_run" -eq 1 ]; then
   echo

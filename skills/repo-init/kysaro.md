@@ -1,6 +1,6 @@
-# Kysaro setup
+# [Kysaro](https://github.com/murpiano/kysaro) setup
 
-Kysaro is the Git linter, installed separately in each initialized project. murpiano-dx stores the
+[Kysaro](https://github.com/murpiano/kysaro) is the Git linter, installed separately in each initialized project. murpiano-dx stores the
 decision and verifies the setup; it does not replace the project linter.
 
 ## Setup sequence
@@ -19,6 +19,6 @@ decision and verifies the setup; it does not replace the project linter.
 - Keep the dependency local to the project.
 - Do not download packages during `sync.sh start` or a state-only `init`.
 - Preserve existing hooks and report conflicts instead of overwriting them.
-- Kysaro validates configured message and PR conventions; the agent chooses the
+- [Kysaro](https://github.com/murpiano/kysaro) validates configured message and PR conventions; the agent chooses the
   branch and explains the change.
 - A saved `declined` decision suppresses repeated offers until the owner asks again.

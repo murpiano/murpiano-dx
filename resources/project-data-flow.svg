@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="470" viewBox="0 0 1400 470" role="img" aria-labelledby="title desc">
   <title id="title">Two independent projects use one local murpiano-dx</title>
-  <desc id="desc">murpiano-dx is in the center. An optional private GitHub backup is above it. Project A is on the left and project B on the right. Identical arrows send shared rules and templates to each coding agent and store each project's instructions, notes, decisions, and setup state in murpiano-dx. Source code stays in the project.</desc>
+  <desc id="desc">murpiano-dx is in the center. An optional GitHub backup is above it. Project A is on the left and project B on the right. Identical arrows send shared rules and templates to each coding agent and store each project's instructions, notes, decisions, and setup state in murpiano-dx. Source code stays in the project.</desc>
   <defs>
     <marker id="rules" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#2463a6"/></marker>
     <marker id="notes" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#527164"/></marker>
-    <marker id="backup" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#66778a"/></marker>
+    <marker id="backup" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#66778a"/></marker>
   </defs>
   <rect width="1400" height="470" rx="20" fill="#f8fafc"/>
   <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle" fill="#15283f">
     <rect x="490" y="20" width="420" height="88" rx="14" fill="#fff" stroke="#b7c6d6" stroke-width="2"/>
-    <text x="700" y="56" font-size="22" font-weight="700">Optional private GitHub repository</text>
-    <text x="700" y="84" font-size="18">Backup of your personal murpiano-dx</text>
+    <text x="700" y="56" font-size="22" font-weight="700">Optional GitHub backup</text>
+    <text x="700" y="84" font-size="18">Your choice: private or public</text>
 
-    <path d="M700 230 V119" fill="none" stroke="#66778a" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#backup)"/>
+    <path d="M700 230 V119" fill="none" stroke="#66778a" stroke-width="2" stroke-dasharray="6 5" marker-start="url(#backup)" marker-end="url(#backup)"/>
     <rect x="578" y="135" width="244" height="48" rx="6" fill="#f8fafc"/>
-    <text x="700" y="153" font-size="16" fill="#526379">Commit and push</text>
-    <text x="700" y="175" font-size="16" fill="#526379">when the agent runs end</text>
+    <text x="700" y="153" font-size="16" fill="#526379">Automatic two-way sync</text>
+    <text x="700" y="175" font-size="16" fill="#526379">on session start and end</text>
 
     <rect x="20" y="230" width="265" height="170" rx="16" fill="#fff" stroke="#b7c6d6" stroke-width="2"/>
     <text x="152" y="272" font-size="26" font-weight="700">Project A</text>
