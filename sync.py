@@ -57,6 +57,7 @@ def bootstrap_workspace_files():
         source = SOURCE_ROOT / name
         destination = DATA_ROOT / name
         if source.is_file() and not destination.exists():
+            destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, destination)
     for name in WORKSPACE_DIRS:
         copy_missing_tree(SOURCE_ROOT / name, DATA_ROOT / name)
