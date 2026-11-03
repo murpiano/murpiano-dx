@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Connect project instructions to the shared store without publishing anything."""
+"""Connect project instructions and synchronize the personal workspace."""
 import argparse
 from contextlib import contextmanager
 import fcntl
@@ -14,6 +14,9 @@ import sys
 from urllib.parse import urlsplit
 
 SOURCE_ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(SOURCE_ROOT))
+from workspace_sync import prepare_local_files, synchronize
+
 ROOT = SOURCE_ROOT
 DATA_ROOT = Path(os.environ.get(
     'MURPIANO_DX_DATA_DIR',
@@ -27,14 +30,14 @@ ACTIVE_ROOT = ROOT
 
 WORKSPACE_FILES = (
     'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py', 'configure-codex.py',
-    'agent_setup.py',
+    'agent_setup.py', 'workspace_sync.py', 'session_hook.py',
     'config.env', 'README.md', 'LICENSE', 'resources/logo.png',
     'resources/project-data-flow.svg',
 )
 WORKSPACE_DIRS = ('global', 'skills', 'defaults')
 WORKSPACE_MARKER = '.murpiano-dx-workspace'
 RUNTIME_FILES = {'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py',
-                 'configure-codex.py', 'agent_setup.py'}
+                 'configure-codex.py', 'agent_setup.py', 'workspace_sync.py', 'session_hook.py'}
 
 
 def copy_missing_tree(source, target):
@@ -123,16 +126,22 @@ def ensure_agent_entrypoint():
 
 def initialize_workspace_repo():
     """Make the local workspace a Git repository, preserving existing files."""
-    if DATA_ROOT.resolve() == SOURCE_ROOT.resolve() or (DATA_ROOT / '.git').exists():
+    if (DATA_ROOT.resolve() == SOURCE_ROOT.resolve()
+            and not (DATA_ROOT / WORKSPACE_MARKER).is_file()):
         return
-    result = subprocess.run(['git', 'init', '-b', 'main'], cwd=DATA_ROOT,
-                            text=True, capture_output=True, check=False)
-    if result.returncode:
-        raise RuntimeError(result.stderr.strip() or 'Could not initialize workspace Git')
+    existing = (DATA_ROOT / '.git').exists()
+    if not existing:
+        result = subprocess.run(['git', 'init', '-b', 'main'], cwd=DATA_ROOT,
+                                text=True, capture_output=True, check=False)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or 'Could not initialize workspace Git')
+    prepare_local_files(DATA_ROOT)
     for name, env_name in [('user.name', 'GIT_NAME'), ('user.email', 'GIT_EMAIL')]:
         value = os.environ.get(env_name)
-        if value:
+        if value and not git(DATA_ROOT, 'config', '--get', name, check=False):
             subprocess.run(['git', '-C', str(DATA_ROOT), 'config', name, value], check=True)
+    if existing:
+        return
     identity = subprocess.run(['git', '-C', str(DATA_ROOT), 'config', '--get', 'user.name'],
                               text=True, capture_output=True, check=False).stdout.strip()
     email = subprocess.run(['git', '-C', str(DATA_ROOT), 'config', '--get', 'user.email'],
@@ -145,31 +154,21 @@ def initialize_workspace_repo():
 
 
 def sync_workspace():
-    """Commit workspace state and push it when a private remote is configured."""
-    if (DATA_ROOT / WORKSPACE_MARKER).is_file() is False:
-        return
-    if not (DATA_ROOT / '.git').exists() or not (DATA_ROOT / 'config/machine.json').exists():
-        return
-    subprocess.run(['git', '-C', str(DATA_ROOT), 'add', '-A'], check=True)
-    changes = subprocess.run(['git', '-C', str(DATA_ROOT), 'diff', '--cached', '--quiet'],
-                             check=False)
-    if changes.returncode:
-        identity = subprocess.run(
-            ['git', '-C', str(DATA_ROOT), 'config', '--get', 'user.name'],
-            text=True, capture_output=True, check=False).stdout.strip()
-        email = subprocess.run(
-            ['git', '-C', str(DATA_ROOT), 'config', '--get', 'user.email'],
-            text=True, capture_output=True, check=False).stdout.strip()
-        if not identity or not email:
-            raise RuntimeError('Workspace Git identity is not configured; run murpiano-dx setup.')
-        subprocess.run(['git', '-C', str(DATA_ROOT), 'commit', '-m',
-                        'chore(workspace): sync project state'], check=True,
-                       capture_output=True, text=True)
-        print('Workspace state committed.')
-    remote = git(DATA_ROOT, 'remote', 'get-url', 'origin', check=False)
-    if remote:
-        git(DATA_ROOT, 'push')
-        print(f'Workspace state pushed to {remote}.')
+    completed = synchronize(DATA_ROOT)
+    if (completed and (DATA_ROOT / WORKSPACE_MARKER).is_file()
+            and git(DATA_ROOT, 'remote', 'get-url', 'origin', check=False)):
+        print('Workspace state pushed; remote updates merged.')
+
+
+def select_template(kind):
+    names = {'readme': 'README.md', 'release': 'release-notes.md',
+             'description': 'repository-description.md'}
+    name = names[kind]
+    for folder in (DATA_ROOT / 'templates', SOURCE_ROOT / 'defaults/templates'):
+        path = folder / name
+        if path.is_file():
+            return path
+    raise RuntimeError(f'Template not found: {name}')
 
 
 def load_machine_config():
@@ -409,8 +408,8 @@ def connect(folder, mode='start', choice=None, quiet=False):
             print('No origin. Connect through repo-init when the owner requests it.')
             return
         exclude_agent_files(project)
-        print('Local Git is ready. Offer the owner a private GitHub repository.')
-        print('After approval, from the project directory: gh repo create --private --source=. --remote=origin')
+        print('Local Git is ready. Ask whether to create a GitHub repository, then choose private or public.')
+        print('After approval: gh repo create --private (or --public) --source=. --remote=origin')
         print('Then repeat init. Commits, GitHub repository creation, and push are not automatic.')
         return
     key = project_key(url)
@@ -451,16 +450,30 @@ def connect(folder, mode='start', choice=None, quiet=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['init', 'start', 'end', 'link', 'workspace'], nargs='?', default='start')
+    parser.add_argument('mode', choices=['init', 'start', 'end', 'link', 'workspace', 'template'], nargs='?', default='start')
     parser.add_argument('project', type=Path, nargs='?', default=Path.cwd())
+    parser.add_argument('--kind', choices=['readme', 'release', 'description'])
+    parser.add_argument('--local', action='store_true', help='Check project state without network sync (start only)')
     parser.add_argument('--kysaro', choices=['approved', 'declined', 'enabled'],
                         help='Record the owner decision or verify completed setup (init only)')
     args = parser.parse_args()
+    if args.local and args.mode != 'start':
+        parser.error('--local is only available with start')
+    if args.mode == 'template':
+        if not args.kind:
+            parser.error('template requires --kind readme, release, or description')
+        print(select_template(args.kind))
+        return
     ensure_workspace(update_runtime=(args.mode == 'workspace'))
     load_machine_config()
     if args.mode == 'workspace':
         ensure_agent_entrypoint()
     initialize_workspace_repo()
+    if args.mode == 'start' and not args.local:
+        try:
+            sync_workspace()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+            print(f'Workspace sync pending; local data is available: {error}', file=sys.stderr)
     if args.kysaro and args.mode != 'init':
         parser.error('--kysaro is only available with init')
     if args.mode == 'workspace':
@@ -482,6 +495,6 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (OSError, RuntimeError, ValueError) as error:
+    except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as error:
         print(f'murpiano-dx: {error}', file=sys.stderr)
         sys.exit(1)

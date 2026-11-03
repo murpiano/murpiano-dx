@@ -63,35 +63,6 @@ workspace_path() {
   fi
 }
 
-offer_private_remote() {
-  local workspace="$1" owner answer remote
-  [ -t 0 ] || return 0
-  git -C "$workspace" remote get-url origin >/dev/null 2>&1 && return 0
-  owner="${GITHUB_OWNER:-}"
-  echo 'The local workspace is ready. It can be backed up to a private GitHub repository.'
-  read -r -p "Create ${owner:+$owner/}murpiano-dx-private now? [y/N]: " answer
-  case "$answer" in
-    y|Y|yes|Yes)
-      command -v gh >/dev/null 2>&1 || {
-        echo 'GitHub CLI (gh) is required to create the private repository.' >&2
-        return 1
-      }
-      [ -n "$owner" ] || { echo 'GitHub owner is not configured.' >&2; return 1; }
-      gh repo create "$owner/murpiano-dx-private" --private --source="$workspace" \
-        --remote=origin --push
-      echo 'Private workspace remote configured.'
-      ;;
-    *)
-      read -r -p 'Private repository URL (empty to keep local only): ' remote
-      if [ -n "$remote" ]; then
-        git -C "$workspace" remote add origin "$remote"
-        git -C "$workspace" push -u origin main
-        echo 'Private workspace remote configured.'
-      fi
-      ;;
-  esac
-}
-
 restore_workspace() {
   local remote="${1:-}" target="${2:-$(workspace_path)}" owner
   if [ -z "$remote" ]; then
@@ -104,7 +75,11 @@ restore_workspace() {
       echo 'Could not determine the GitHub owner. Set GITHUB_OWNER or pass a repository URL.' >&2
       exit 1
     }
-    remote="git@github.com:$owner/murpiano-dx-private.git"
+    if gh repo view "$owner/murpiano-dx-workspace" --json name >/dev/null 2>&1; then
+      remote="git@github.com:$owner/murpiano-dx-workspace.git"
+    else
+      remote="git@github.com:$owner/murpiano-dx-private.git"
+    fi
   fi
   [ ! -e "$target" ] || { echo "Workspace already exists: $target" >&2; exit 1; }
   git clone "$remote" "$target"
@@ -126,7 +101,7 @@ case "${1:-}" in
     MURPIANO_DX_DATA_DIR="$workspace" python3 "$root/sync.py" workspace
     install_command "$workspace"
     python3 "$workspace/agent_setup.py" "$workspace"
-    offer_private_remote "$workspace"
+    python3 "$workspace/workspace_sync.py" --configure-remote "$workspace"
     echo "Done. Ask your coding agent to read $workspace/AGENTS.md and initialize the project."
     ;;
   --restore)
