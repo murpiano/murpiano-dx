@@ -110,6 +110,55 @@ class Workflows(unittest.TestCase):
         for name in ['repo-init', 'repo-commit', 'repo-readme', 'repo-release']:
             self.assertTrue((self.home / '.agents/skills' / name).is_symlink())
 
+    def test_installer_builds_one_runtime_workspace_without_maintenance_files(self):
+        workspace = self.base / 'workspace'
+        env = self.env.copy()
+        env.update(MURPIANO_DX_DATA_DIR=str(workspace), GIT_NAME='Workspace User',
+                   GIT_EMAIL='workspace@example.invalid', GITHUB_OWNER='owner',
+                   XDG_BIN_HOME=str(self.base / 'bin'))
+        result = subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                                text=True, capture_output=True, check=True)
+        self.assertIn('Local workspace:', result.stdout)
+        self.assertTrue((workspace / '.git').is_dir())
+        self.assertTrue((workspace / '.murpiano-dx-workspace').is_file())
+        self.assertTrue((workspace / 'sync.py').is_file())
+        self.assertTrue((workspace / 'skills/repo-init/SKILL.md').is_file())
+        self.assertTrue((workspace / 'projects').is_dir())
+        self.assertFalse((workspace / 'tests').exists())
+        self.assertFalse((workspace / '.github').exists())
+        self.assertTrue(self.run_cmd(['git', '-C', str(workspace), 'log', '-1'],
+                                     cwd=self.base).stdout)
+        custom_rule = workspace / 'rules/git.md'
+        custom_rule.write_text('custom rule\n')
+        subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        self.assertEqual(custom_rule.read_text(), 'custom rule\n')
+
+    def test_end_commits_and_pushes_workspace_state(self):
+        workspace = self.base / 'workspace'
+        env = self.env.copy()
+        env.update(MURPIANO_DX_DATA_DIR=str(workspace), GIT_NAME='Workspace User',
+                   GIT_EMAIL='workspace@example.invalid', GITHUB_OWNER='owner',
+                   XDG_BIN_HOME=str(self.base / 'bin'))
+        subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        remote = self.base / 'private.git'
+        subprocess.run(['git', 'init', '--bare', '-q', str(remote)], check=True)
+        self.run_cmd(['git', '-C', str(workspace), 'remote', 'add', 'origin', str(remote)],
+                     cwd=self.base)
+        self.run_cmd(['git', '-C', str(workspace), 'push', '-q', '-u', 'origin', 'main'],
+                     cwd=self.base)
+        (workspace / 'rules/git.md').write_text('private override\n')
+        result = subprocess.run(['bash', str(workspace / 'sync.sh'), 'end'],
+                                cwd=self.project, env=env, text=True,
+                                capture_output=True, check=True)
+        self.assertIn('Workspace state pushed', result.stdout)
+        self.assertEqual(self.run_cmd(['git', '-C', str(workspace), 'status', '--porcelain'],
+                                      cwd=self.base).stdout, '')
+        check = self.base / 'check'
+        self.run_cmd(['git', 'clone', '-q', '-b', 'main', str(remote), str(check)], cwd=self.base)
+        self.assertEqual((check / 'rules/git.md').read_text(), 'private override\n')
+
     def test_installer_removes_only_owned_retired_skill(self):
         folder = self.home / '.agents/skills'
         folder.mkdir(parents=True)

@@ -6,6 +6,10 @@ case "${1:-}" in
     shift
     exec bash "$root/install.sh" "$@"
     ;;
+  restore)
+    shift
+    exec bash "$root/install.sh" --restore "$@"
+    ;;
   *)
     exec bash "$root/sync.sh" "$@"
     ;;

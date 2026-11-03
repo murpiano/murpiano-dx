@@ -23,6 +23,7 @@ writable, report its exact path. Never automatically delete or rewrite old Claud
 memory and settings.
 
 Change README, metadata, and releases only when requested. Keep service data separate
-from product code; do not add agent attribution to commits or PRs. Commits, pushes,
-and publications are not automatic. Publishing murpiano-dx itself follows the same
-repo-commit rules as project code.
+from product code; do not add agent attribution to commits or PRs. Project code
+commits, pushes, and publications are not automatic. `{{SYNC}} end` may commit and
+push only the murpiano-dx workspace state to its configured private remote. Publishing
+murpiano-dx itself follows the same repo-commit rules as project code.

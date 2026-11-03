@@ -47,16 +47,90 @@ setup_config() {
   echo "Local settings saved: $config_file"
 }
 install_command() {
+  local workspace="$1"
   mkdir -p "$bin_home"
-  ln -sfn "$root/murpiano-dx" "$bin_home/murpiano-dx"
+  ln -sfn "$workspace/murpiano-dx" "$bin_home/murpiano-dx"
   echo "Command installed: $bin_home/murpiano-dx"
+}
+
+workspace_path() {
+  if [ -n "${MURPIANO_DX_DATA_DIR:-}" ]; then
+    printf '%s\n' "$MURPIANO_DX_DATA_DIR"
+  elif [ -f "$root/config/machine.json" ]; then
+    printf '%s\n' "$root"
+  else
+    printf '%s\n' "$HOME/.murpiano-dx"
+  fi
+}
+
+offer_private_remote() {
+  local workspace="$1" owner answer remote
+  [ -t 0 ] || return 0
+  git -C "$workspace" remote get-url origin >/dev/null 2>&1 && return 0
+  owner="${GITHUB_OWNER:-}"
+  echo 'The local workspace is ready. It can be backed up to a private GitHub repository.'
+  read -r -p "Create ${owner:+$owner/}murpiano-dx-private now? [y/N]: " answer
+  case "$answer" in
+    y|Y|yes|Yes)
+      command -v gh >/dev/null 2>&1 || {
+        echo 'GitHub CLI (gh) is required to create the private repository.' >&2
+        return 1
+      }
+      [ -n "$owner" ] || { echo 'GitHub owner is not configured.' >&2; return 1; }
+      gh repo create "$owner/murpiano-dx-private" --private --source="$workspace" \
+        --remote=origin --push
+      echo 'Private workspace remote configured.'
+      ;;
+    *)
+      read -r -p 'Private repository URL (empty to keep local only): ' remote
+      if [ -n "$remote" ]; then
+        git -C "$workspace" remote add origin "$remote"
+        git -C "$workspace" push -u origin main
+        echo 'Private workspace remote configured.'
+      fi
+      ;;
+  esac
+}
+
+restore_workspace() {
+  local remote="${1:-}" target="${2:-$(workspace_path)}" owner
+  if [ -z "$remote" ]; then
+    command -v gh >/dev/null 2>&1 || {
+      echo 'GitHub CLI (gh) is required for restore.' >&2
+      exit 1
+    }
+    owner="${GITHUB_OWNER:-$(gh api user --jq '.login' 2>/dev/null || true)}"
+    [ -n "$owner" ] || {
+      echo 'Could not determine the GitHub owner. Set GITHUB_OWNER or pass a repository URL.' >&2
+      exit 1
+    }
+    remote="git@github.com:$owner/murpiano-dx-private.git"
+  fi
+  [ ! -e "$target" ] || { echo "Workspace already exists: $target" >&2; exit 1; }
+  git clone "$remote" "$target"
+  MURPIANO_DX_DATA_DIR="$target" bash "$target/install.sh"
 }
 case "${1:-}" in
   '')
     setup_config
-    install_command
-    python3 "$root/configure-codex.py" "$root"
+    if [ -f "$config_file" ]; then
+      # shellcheck disable=SC1090
+      source "$config_file"
+    elif [ -z "${GIT_NAME:-}" ] && [ -z "${GIT_EMAIL:-}" ] && [ -z "${GITHUB_OWNER:-}" ]; then
+      # shellcheck disable=SC1091
+      source "$root/config.env"
+    fi
+    export GITHUB_OWNER GIT_NAME GIT_EMAIL
+    workspace="$(workspace_path)"
+    MURPIANO_DX_DATA_DIR="$workspace" python3 "$root/sync.py" workspace
+    install_command "$workspace"
+    python3 "$workspace/configure-codex.py" "$workspace"
+    offer_private_remote "$workspace"
     echo 'Done. Open a new Codex session. In the project, ask: “initialize the project”.'
+    ;;
+  --restore)
+    shift
+    restore_workspace "$@"
     ;;
   --release-token)
     token_file="$HOME/.config/murpiano-dx/release-token"
