@@ -100,7 +100,7 @@ case "${1:-}" in
     export MURPIANO_DX_DATA_DIR="$workspace"
     MURPIANO_DX_DATA_DIR="$workspace" python3 "$root/sync.py" workspace
     install_command "$workspace"
-    python3 "$workspace/agent_setup.py" "$workspace"
+    python3 "$workspace/agent_setup.py" "$workspace" "$root"
     python3 "$workspace/workspace_sync.py" --configure-remote "$workspace"
     echo "Done. Ask your coding agent to read $workspace/AGENTS.md and initialize the project."
     ;;

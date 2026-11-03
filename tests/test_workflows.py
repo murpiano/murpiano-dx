@@ -386,6 +386,48 @@ class Workflows(unittest.TestCase):
             self.assertEqual(path.read_bytes(), before)
         self.assertEqual(codex_config.read_text(), '[features]\nhooks = false\n')
 
+    def test_setup_repoints_source_skills_to_personal_workspace(self):
+        folder = self.home / '.agents/skills'
+        folder.mkdir(parents=True)
+        old = folder / 'repo-commit'
+        old.symlink_to(self.dx / 'skills/repo-commit', target_is_directory=True)
+        custom_target = self.base / 'custom skill'
+        custom_target.mkdir()
+        custom = folder / 'repo-readme'
+        custom.symlink_to(custom_target, target_is_directory=True)
+        self.fake_agent('claude')
+        native = self.home / '.claude/skills'
+        native.mkdir(parents=True)
+        native_link = native / 'repo-init'
+        native_link.symlink_to(self.dx / 'skills/repo-init', target_is_directory=True)
+        workspace = self.base / 'personal workspace'
+        env = dict(self.env, MURPIANO_DX_DATA_DIR=str(workspace),
+                   XDG_BIN_HOME=str(self.base / 'bin'))
+        for _ in range(2):
+            result = subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                                    text=True, capture_output=True, check=True)
+            self.assertEqual(old.resolve(), workspace / 'skills/repo-commit')
+            self.assertEqual(native_link.resolve(), workspace / 'skills/repo-init')
+            self.assertEqual(custom.resolve(), custom_target)
+        self.assertIn('Skip conflicting link:', result.stderr)
+        self.assertTrue((self.dx / 'skills/repo-commit/SKILL.md').is_file())
+
+    def test_setup_fills_empty_saved_identity_without_overwriting_personal_values(self):
+        config = self.dx / 'config'
+        config.mkdir()
+        machine = config / 'machine.json'
+        machine.write_text(json.dumps({'git_name': 'My chosen name', 'git_email': '',
+                                       'github_owner': '', 'custom': 'keep'}))
+        self.run_cmd(['bash', 'install.sh'])
+        saved = json.loads(machine.read_text())
+        self.assertEqual(saved['git_name'], 'My chosen name')
+        self.assertEqual(saved['git_email'], 'test@example.invalid')
+        self.assertEqual(saved['github_owner'], 'owner')
+        self.assertEqual(saved['custom'], 'keep')
+        before = machine.read_bytes()
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertEqual(machine.read_bytes(), before)
+
     def test_setup_preserves_hook_config_symlink(self):
         profile = self.home / '.claude'
         profile.mkdir()
