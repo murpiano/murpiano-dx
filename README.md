@@ -14,9 +14,9 @@ standards, Kysaro validation, CI, and releases.
 
 ## What it does
 
-murpiano-dx connects projects to one repeatable agent workflow. It stores project
-memory and agent data separately from product code, provides shared Git rules, and
-guides branches, commits, pull requests, README files, CI, and releases.
+murpiano-dx connects projects to one repeatable agent workflow. It provides shared
+Git rules, project memory, templates, Kysaro validation, and guidance for branches,
+commits, pull requests, README files, CI, and releases.
 
 ## How it works
 
@@ -39,26 +39,31 @@ the decision and setup state in `workflow.json`. Existing origins and project fi
 are preserved. Kysaro is offered once and installed locally in each project only
 after approval.
 
-Project data is stored outside this public repository. The default local workspace
-is `~/.murpiano-dx`; set `MURPIANO_DX_DATA_DIR` to use another location.
-The framework creates this editable structure:
+The first setup creates one editable local Git repository at `~/.murpiano-dx`.
+This repository contains the framework runtime together with the machine settings,
+rules, templates, and connected project data:
 
 ```text
 ~/.murpiano-dx/
+├── framework files (skills, scripts, defaults)
 ├── config/machine.json
 ├── rules/             user-editable workflow rules
 ├── templates/         README and release templates
 ├── logs/
 └── projects/OWNER/REPO/
-├── workflow.json
-├── files/
-│   ├── AGENTS.md
-│   └── .agents/
-└── memory/
+    ├── workflow.json
+    ├── files/
+    │   ├── AGENTS.md
+    │   └── .agents/
+    └── memory/
 ```
 
-The project’s `AGENTS.md` and `.agents/` point to this shared context. Old Claude
-memory and settings are preserved; secrets stay outside project memory.
+The project’s `AGENTS.md` and `.agents/` point to this workspace. Old Claude
+memory and settings are preserved; secrets stay outside project memory. The
+workspace can have a private GitHub remote, while the public repository remains
+the distributable framework source. At `sync end`, workspace changes are committed
+locally and pushed only to that configured workspace remote; project code follows
+the normal Git workflow and is never pushed by this sync.
 
 ## Skills
 
@@ -78,9 +83,22 @@ when installing Kysaro.
 bash install.sh
 ```
 
-The installer also exposes `murpiano-dx` in `~/.local/bin`. Run
-`murpiano-dx setup` for the same first-time setup, then use
-`murpiano-dx init /path/to/project`.
+The installer creates the local workspace, exposes its `murpiano-dx` command in
+`~/.local/bin`, and offers an optional private GitHub remote. Run
+`murpiano-dx setup` for the same first-time setup.
+
+To move an existing setup to another machine, clone the private workspace and run
+its setup script; installing the public repository again is unnecessary:
+
+```bash
+git clone git@github.com:OWNER/murpiano-dx-private.git ~/.murpiano-dx
+~/.murpiano-dx/murpiano-dx setup
+```
+
+After the first setup, `murpiano-dx restore` is also available as a convenience
+command. It finds `OWNER/murpiano-dx-private` through the authenticated GitHub
+account, clones the private workspace, and reconnects Codex to it. A repository
+URL is accepted only as an advanced override.
 
 The installer configures the four skills under `~/.agents/skills` and updates only
 the murpiano-dx block in `~/.codex/AGENTS.md`. Machine identity is requested during
@@ -114,16 +132,17 @@ bash /path/to/murpiano-dx/sync.sh end
 | `start [path]` | Read state only; make no changes |
 | `end [path]` | Refresh instructions and notes |
 | `link` | Restore initialized project links under `PROJECTS_DIR` |
+| `workspace` | Show the local framework and project-data repository |
+| `restore [url]` | Clone the private workspace on a new machine |
 
 Commits, pushes, and pull requests follow `repo-commit`. Releases follow
-`repo-release`. There is no automatic publication command.
+`repo-release`. Workspace synchronization is separate from project publication.
 
 ## Repository layout
 
 ```text
 global/             shared instructions and project templates
 skills/             workflow rules and templates
-projects/           connected project data
 tests/              integration tests
 configure-codex.py  install Codex instructions and skills
 install.sh          install the package
@@ -132,7 +151,7 @@ sync.sh, sync.py    connect and synchronize projects
 
 ## Limitations
 
-- The central murpiano-dx directory must be available and writable for project memory.
+- The local workspace must be available and writable for project memory.
 - A newly cloned project must be connected again; local Git hooks may need restoration.
 - A project without an origin stops after local Git preparation.
 - Archived Claude notes are preserved and should be checked for current relevance.

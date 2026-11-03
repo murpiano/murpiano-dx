@@ -10,4 +10,7 @@ else
   source "$root/config.env"
 fi
 export GITHUB_OWNER GIT_NAME GIT_EMAIL
+if [ -z "${MURPIANO_DX_DATA_DIR:-}" ] && [ -f "$root/config/machine.json" ]; then
+  export MURPIANO_DX_DATA_DIR="$root"
+fi
 exec python3 "$root/sync.py" "$@"
