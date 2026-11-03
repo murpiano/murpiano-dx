@@ -68,6 +68,192 @@ class Workflows(unittest.TestCase):
             args += ['--kysaro', kysaro]
         return self.run_cmd(args, project or self.project, check)
 
+    def migrate(self, *args, check=True):
+        helper = self.dx / 'skills/repo-agent-data/scripts/migrate.py'
+        return self.run_cmd(['python3', str(helper), str(self.project), *args], check=check)
+
+    def migration_module(self):
+        helper = self.dx / 'skills/repo-agent-data/scripts/migrate.py'
+        spec = importlib.util.spec_from_file_location('migration_test', helper)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_agent_data_preview_does_not_change_files_or_index(self):
+        self.sync()
+        folder = self.project / '.codex'
+        folder.mkdir()
+        (folder / 'notes.md').write_text('private decisions\n')
+        before = self.git(self.project, 'status', '--porcelain', '--ignored').stdout
+        index = (self.project / '.git/index').read_bytes()
+        result = self.migrate()
+        self.assertIn('.codex ->', result.stdout)
+        self.assertEqual(self.git(self.project, 'status', '--porcelain', '--ignored').stdout, before)
+        self.assertEqual((self.project / '.git/index').read_bytes(), index)
+        self.assertFalse(folder.is_symlink())
+        self.assertFalse((self.dx / 'projects/owner/app/files/.codex').exists())
+
+    def test_agent_data_migration_preserves_content_and_other_staged_changes(self):
+        (self.project / 'AGENTS.md').write_text('project instructions\n')
+        folder = self.project / '.codex'
+        folder.mkdir()
+        (folder / 'data.bin').write_bytes(bytes(range(256)))
+        executable = folder / 'check.sh'
+        executable.write_text('#!/bin/sh\nexit 0\n')
+        executable.chmod(0o755)
+        self.git(self.project, 'add', 'AGENTS.md', '.codex')
+        self.git(self.project, 'commit', '-qm', 'chore: save existing metadata')
+        head = self.git(self.project, 'rev-parse', 'HEAD').stdout
+        self.sync()
+        (self.project / 'feature.py').write_text('print(1)\n')
+        self.git(self.project, 'add', 'feature.py')
+        staged = self.git(self.project, 'ls-files', '--stage', 'feature.py').stdout
+        result = self.migrate('--apply')
+        self.assertIn('No commit, push, or history rewrite', result.stdout)
+        self.assertEqual(self.git(self.project, 'rev-parse', 'HEAD').stdout, head)
+        self.assertTrue(folder.is_symlink())
+        self.assertTrue((self.project / 'AGENTS.md').is_symlink())
+        self.assertEqual((folder / 'data.bin').read_bytes(), bytes(range(256)))
+        self.assertEqual(executable.stat().st_mode & 0o777, 0o755)
+        self.assertEqual(self.git(self.project, 'ls-files', '--', 'AGENTS.md', '.codex').stdout, '')
+        self.assertEqual(self.git(self.project, 'ls-files', '--stage', 'feature.py').stdout, staged)
+        report = self.dx / 'projects/owner/app/agent-data-migration.json'
+        before = report.read_bytes()
+        state = self.git(self.project, 'diff', '--cached').stdout
+        self.migrate('--apply')
+        self.assertEqual(report.read_bytes(), before)
+        self.assertEqual(self.git(self.project, 'diff', '--cached').stdout, state)
+        self.git(self.project, 'add', '-A')
+        self.assertEqual(self.git(self.project, 'ls-files', '--', '.codex', 'AGENTS.md').stdout, '')
+        self.assertIn('AGENTS.md', json.loads(report.read_text())['paths'])
+
+    def test_agent_data_conflict_preserves_both_copies(self):
+        self.sync()
+        folder = self.project / '.codex'
+        folder.mkdir()
+        (folder / 'notes').write_text('local\n')
+        stored = self.dx / 'projects/owner/app/files/.codex'
+        stored.mkdir()
+        (stored / 'notes').write_text('stored\n')
+        before = (self.project / '.git/index').read_bytes()
+        result = self.migrate('--apply', check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Destination differs', result.stderr)
+        self.assertEqual((folder / 'notes').read_text(), 'local\n')
+        self.assertEqual((stored / 'notes').read_text(), 'stored\n')
+        self.assertEqual((self.project / '.git/index').read_bytes(), before)
+
+    def test_agent_data_staged_edits_are_not_discarded(self):
+        self.sync()
+        (self.project / '.codex').mkdir()
+        note = self.project / '.codex/note'
+        note.write_text('staged\n')
+        self.git(self.project, 'add', '-f', '.codex/note')
+        note.write_text('working\n')
+        index = (self.project / '.git/index').read_bytes()
+        result = self.migrate('--apply', check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('staged edits', result.stderr)
+        self.assertEqual(note.read_text(), 'working\n')
+        self.assertEqual((self.project / '.git/index').read_bytes(), index)
+
+    def test_agent_data_custom_notes_require_explicit_path(self):
+        self.sync()
+        notes = self.project / 'memory'
+        notes.mkdir()
+        (notes / 'MEMORY.md').write_text('project memory\n')
+        self.migrate('--apply')
+        self.assertFalse(notes.is_symlink())
+        self.migrate('--path', 'memory', '--apply')
+        self.assertTrue(notes.is_symlink())
+        self.assertEqual(notes.resolve(), self.dx / 'projects/owner/app/memory')
+        self.assertEqual((notes / 'MEMORY.md').read_text(), 'project memory\n')
+        self.assertIn('memory', self.git(self.project, 'check-ignore', 'memory').stdout)
+
+    def test_agent_data_rejects_external_links_and_nested_repositories(self):
+        self.sync()
+        folder = self.project / '.codex'
+        folder.mkdir()
+        outside = self.base / 'personal'
+        outside.write_text('outside data\n')
+        (folder / 'external').symlink_to(outside)
+        result = self.migrate('--apply', check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('symbolic link', result.stderr)
+        self.assertEqual(outside.read_text(), 'outside data\n')
+        (folder / 'external').unlink()
+        (folder / '.git').mkdir()
+        result = self.migrate('--apply', check=False)
+        self.assertIn('Nested Git repository', result.stderr)
+
+    def test_agent_data_refuses_paths_outside_project_and_product_tooling(self):
+        self.sync()
+        for path in ('../other', str(self.base), '.', '.git', '.kysaro', '.github', '.github/workflows'):
+            with self.subTest(path=path):
+                result = self.migrate('--path', path, '--apply', check=False)
+                self.assertNotEqual(result.returncode, 0)
+
+    def test_agent_data_git_failure_restores_files_and_exclusions(self):
+        (self.project / 'AGENTS.md').write_text('keep instructions\n')
+        self.git(self.project, 'add', 'AGENTS.md')
+        self.git(self.project, 'commit', '-qm', 'chore: save instructions')
+        self.sync()
+        helper = self.migration_module()
+        data = self.dx / 'projects/owner/app'
+        items = helper.plan(self.project, data, [])
+        exclude = self.project / '.git/info/exclude'
+        before = exclude.read_bytes()
+        original = helper.git
+
+        def fail_remove(project, *args):
+            if args[0] == 'rm':
+                raise RuntimeError('simulated index failure')
+            return original(project, *args)
+
+        with patch.object(helper, 'git', side_effect=fail_remove):
+            with self.assertRaisesRegex(RuntimeError, 'simulated index failure'):
+                helper.apply(self.project, data, items)
+        self.assertFalse((self.project / 'AGENTS.md').is_symlink())
+        self.assertEqual((self.project / 'AGENTS.md').read_text(), 'keep instructions\n')
+        self.assertEqual(exclude.read_bytes(), before)
+        self.assertIn('AGENTS.md', self.git(self.project, 'ls-files', 'AGENTS.md').stdout)
+
+    def test_agent_data_failed_link_restores_original_and_keeps_verified_copy(self):
+        self.sync()
+        folder = self.project / '.codex'
+        folder.mkdir()
+        (folder / 'notes').write_text('keep this\n')
+        helper = self.migration_module()
+        data = self.dx / 'projects/owner/app'
+        items = helper.plan(self.project, data, [])
+        with patch.object(Path, 'symlink_to', side_effect=OSError('link denied')):
+            with self.assertRaisesRegex(OSError, 'link denied'):
+                helper.apply(self.project, data, items)
+        self.assertFalse(folder.is_symlink())
+        self.assertEqual((folder / 'notes').read_text(), 'keep this\n')
+        self.assertEqual((data / 'files/.codex/notes').read_text(), 'keep this\n')
+
+    def test_agent_data_leaves_code_documentation_and_linter_in_project(self):
+        self.sync()
+        readme = self.project / 'README.md'
+        readme.write_text('An AI assistant product.\n')
+        settings = self.project / '.kysaro/settings.json'
+        settings.parent.mkdir()
+        settings.write_text('{}\n')
+        self.git(self.project, 'add', 'README.md', '.kysaro/settings.json')
+        self.git(self.project, 'commit', '-qm', 'docs: describe product')
+        self.migrate('--apply')
+        self.assertFalse(readme.is_symlink())
+        self.assertFalse(settings.is_symlink())
+        self.assertEqual(readme.read_text(), 'An AI assistant product.\n')
+        self.assertIn('.kysaro/settings.json', self.git(self.project, 'ls-files').stdout)
+
+    def test_agent_data_helper_installed_as_skill(self):
+        self.run_cmd(['bash', 'install.sh'])
+        skill = self.home / '.agents/skills/repo-agent-data'
+        self.assertTrue(skill.is_symlink())
+        self.assertTrue((skill / 'scripts/migrate.py').is_file())
+
     def prepare_kysaro_components(self):
         binary = self.project / 'node_modules/.bin/kysaro'
         binary.parent.mkdir(parents=True)
