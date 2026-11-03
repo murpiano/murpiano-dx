@@ -29,6 +29,7 @@
     "global",
     "skills",
     "resources/logo.png",
+    "resources/project-data-flow.svg",
     "config.env",
     "configure-codex.py",
     "install.sh",

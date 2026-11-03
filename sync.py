@@ -28,6 +28,7 @@ ACTIVE_ROOT = ROOT
 WORKSPACE_FILES = (
     'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py', 'configure-codex.py',
     'config.env', 'README.md', 'LICENSE', 'resources/logo.png',
+    'resources/project-data-flow.svg',
 )
 WORKSPACE_DIRS = ('global', 'skills', 'defaults')
 WORKSPACE_MARKER = '.murpiano-dx-workspace'
