@@ -87,6 +87,22 @@ The installer creates the local workspace, exposes its `murpiano-dx` command in
 `~/.local/bin`, and offers an optional private GitHub remote. Run
 `murpiano-dx setup` for the same first-time setup.
 
+After the npm package is published, the same bootstrap is available with:
+
+```bash
+npm install --global murpiano-dx
+murpiano-dx setup
+```
+
+For a one-time restore without a global install:
+
+```bash
+npx murpiano-dx restore
+```
+
+Maintainers publish the package from the GitHub Release workflow after configuring
+the `NPM_TOKEN` repository secret.
+
 To move an existing setup to another machine, clone the private workspace and run
 its setup script; installing the public repository again is unnecessary:
 
@@ -111,6 +127,7 @@ python3 -B -m unittest discover -s tests -v
 bash -n install.sh
 bash -n sync.sh
 bash -n skills/repo-release/release.sh
+npm pack --dry-run
 ```
 
 ## Commands

@@ -26,3 +26,13 @@ run when CI fails. Public repositories may show the Release badge.
 
 Verify tests, CI, README, metadata, and tags before publishing. For an experimental
 framework the first release is `v0.1.0` unless the user specifies another version.
+
+## npm package
+
+The npm package contains runtime files only. Keep `package.json` `files` as an
+allowlist; never include `tests/`, `.github/`, `.git/`, `projects/`, `.agents/`,
+`.kysaro/`, logs, or machine configuration.
+
+Run `npm pack --dry-run` locally and in CI. The package version must match the
+GitHub release tag. Publish only from the release workflow with `NPM_TOKEN` stored
+as a GitHub Secret; never print or commit the token.

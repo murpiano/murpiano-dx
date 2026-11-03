@@ -1,4 +1,48 @@
 {
+  "name": "murpiano-dx",
+  "version": "0.3.0",
+  "description": "Agentic development framework for project memory, Git workflow, CI, releases, and Kysaro validation.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/murpiano/murpiano-dx.git"
+  },
+  "homepage": "https://github.com/murpiano/murpiano-dx#readme",
+  "bugs": {
+    "url": "https://github.com/murpiano/murpiano-dx/issues"
+  },
+  "keywords": [
+    "agentic-development",
+    "developer-experience",
+    "git-workflow",
+    "kysaro",
+    "codex"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "murpiano-dx": "bin/murpiano-dx.js"
+  },
+  "files": [
+    "bin",
+    "defaults",
+    "global",
+    "skills",
+    "resources/logo.png",
+    "config.env",
+    "configure-codex.py",
+    "install.sh",
+    "murpiano-dx",
+    "sync.py",
+    "sync.sh",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "package:check": "npm pack --dry-run"
+  },
   "devDependencies": {
     "kysaro": "^0.3.0"
   }
