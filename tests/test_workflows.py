@@ -38,7 +38,7 @@ class Workflows(unittest.TestCase):
         self.dx = self.base / 'dx with spaces'
         self.dx.mkdir()
         for name in ['install.sh', 'configure-codex.py', 'agent_setup.py',
-                     'sync.sh', 'sync.py', 'skills', 'global']:
+                     'sync.sh', 'sync.py', 'workspace_sync.py', 'session_hook.py', 'skills', 'global', 'defaults']:
             source = SOURCE / name
             if source.is_dir():
                 shutil.copytree(source, self.dx / name)
@@ -358,6 +358,64 @@ class Workflows(unittest.TestCase):
         self.assertEqual(claude.read_bytes(), first)
         self.assertEqual(claude.read_text().count('<!-- >>> murpiano-dx -->'), 1)
 
+    def test_setup_installs_session_hooks_and_preserves_custom_settings(self):
+        for agent, filename in [('codex', 'hooks.json'), ('claude', 'settings.json')]:
+            profile = self.home / ('.' + agent)
+            profile.mkdir()
+            hook = {'hooks': [{'type': 'command', 'command': 'echo my custom hook'}]}
+            settings = {'mySetting': 'keep', 'hooks': {'SessionStart': [hook], 'Stop': [hook]}}
+            (profile / filename).write_text(json.dumps(settings))
+        codex_config = self.home / '.codex/config.toml'
+        codex_config.write_text('[features]\nhooks = false\n')
+        self.run_cmd(['bash', 'install.sh'])
+        first = {}
+        for agent, filename in [('codex', 'hooks.json'), ('claude', 'settings.json')]:
+            path = self.home / ('.' + agent) / filename
+            settings = json.loads(path.read_text())
+            self.assertEqual(settings['mySetting'], 'keep')
+            self.assertEqual(settings['hooks']['Stop'], [hook])
+            self.assertEqual(settings['hooks']['SessionStart'][0], hook)
+            self.assertEqual(len(settings['hooks']['SessionStart']), 2)
+            self.assertEqual(len(settings['hooks']['SessionEnd']), 1)
+            command = settings['hooks']['SessionEnd'][0]['hooks'][0]['command']
+            self.assertIn('session_hook.py', command)
+            self.assertTrue(command.endswith(' end'))
+            first[path] = path.read_bytes()
+        self.run_cmd(['bash', 'install.sh'])
+        for path, before in first.items():
+            self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(codex_config.read_text(), '[features]\nhooks = false\n')
+
+    def test_setup_preserves_hook_config_symlink(self):
+        profile = self.home / '.claude'
+        profile.mkdir()
+        original = self.base / 'shared hooks.json'
+        original.write_text('{"custom": "keep"}\n')
+        settings = profile / 'settings.json'
+        settings.symlink_to(original)
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertTrue(settings.is_symlink())
+        self.assertEqual(json.loads(original.read_text())['custom'], 'keep')
+        self.assertIn('SessionEnd', json.loads(original.read_text())['hooks'])
+
+    def test_invalid_hooks_stop_setup_before_any_agent_instructions_change(self):
+        codex = self.home / '.codex'
+        codex.mkdir()
+        (codex / 'AGENTS.md').write_text('Preserve Codex\n')
+        claude = self.home / '.claude'
+        claude.mkdir()
+        (claude / 'CLAUDE.md').write_text('Preserve Claude\n')
+        settings = claude / 'settings.json'
+        settings.write_text('{invalid JSON')
+        result = self.run_cmd(['bash', 'install.sh'], check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Invalid hook settings', result.stderr)
+        self.assertEqual((codex / 'AGENTS.md').read_text(), 'Preserve Codex\n')
+        self.assertEqual((claude / 'CLAUDE.md').read_text(), 'Preserve Claude\n')
+        self.assertEqual(settings.read_text(), '{invalid JSON')
+        self.assertFalse((codex / 'hooks.json').exists())
+        self.assertFalse((self.home / '.agents').exists())
+
     def test_setup_detects_claude_profile_and_preserves_custom_instructions(self):
         instructions = self.home / '.claude/CLAUDE.md'
         instructions.parent.mkdir()
@@ -480,7 +538,7 @@ class Workflows(unittest.TestCase):
         self.assertEqual(rules.read_text(), 'My Git rules\n')
         self.assertEqual((workspace / 'config/machine.json').read_bytes(), machine)
 
-    def test_end_commits_and_pushes_workspace_state(self):
+    def test_end_pushes_and_start_gets_other_machine_changes(self):
         workspace = self.base / 'workspace'
         env = self.env.copy()
         env.update(MURPIANO_DX_DATA_DIR=str(workspace), GIT_NAME='Workspace User',
@@ -504,6 +562,30 @@ class Workflows(unittest.TestCase):
         check = self.base / 'check'
         self.run_cmd(['git', 'clone', '-q', '-b', 'main', str(remote), str(check)], cwd=self.base)
         self.assertEqual((check / 'rules/git.md').read_text(), 'private override\n')
+        self.git(check, 'config', 'user.name', 'Other Machine')
+        self.git(check, 'config', 'user.email', 'other@example.invalid')
+        (check / 'rules/git.md').write_text('updated on another machine\n')
+        self.git(check, 'add', 'rules/git.md')
+        self.git(check, 'commit', '-qm', 'chore: update shared rules')
+        self.git(check, 'push')
+        subprocess.run(['bash', str(workspace / 'sync.sh'), 'start'],
+                       cwd=self.project, env=env, text=True, capture_output=True, check=True)
+        self.assertEqual((workspace / 'rules/git.md').read_text(), 'updated on another machine\n')
+        head = self.git(workspace, 'rev-parse', 'HEAD').stdout
+        (workspace / 'local-only.md').write_text('still uncommitted\n')
+        self.git(workspace, 'remote', 'set-url', 'origin', str(self.base / 'offline.git'))
+        local = subprocess.run(['bash', str(workspace / 'sync.sh'), 'start', '--local'],
+                               cwd=self.project, env=env, text=True, capture_output=True, check=True)
+        self.assertNotIn('sync pending', local.stderr)
+        self.assertEqual(self.git(workspace, 'rev-parse', 'HEAD').stdout, head)
+        # A restored clone has no local Git identity. Setup restores it from saved settings.
+        self.git(check, 'config', '--unset', 'user.name')
+        self.git(check, 'config', '--unset', 'user.email')
+        env['MURPIANO_DX_DATA_DIR'] = str(check)
+        subprocess.run(['bash', str(check / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        self.assertTrue(self.git(check, 'config', '--get', 'user.name').stdout.strip())
+        self.assertTrue(self.git(check, 'config', '--get', 'user.email').stdout.strip())
 
     def test_installer_removes_only_owned_retired_skill(self):
         folder = self.home / '.agents/skills'
@@ -860,6 +942,37 @@ fi
         self.assertIn('v1.1.0', result.stdout)
         self.assertIn('Second fix', result.stdout)
         self.assertEqual(self.git(self.project, 'tag').stdout.strip(), 'v1.0.0')
+
+    def test_personal_template_and_missing_file_fallback(self):
+        personal = self.dx / 'templates'
+        personal.mkdir()
+        (personal / 'README.md').write_text('My custom README\n')
+        for kind, name in [('readme', 'README.md'), ('description', 'repository-description.md'),
+                           ('release', 'release-notes.md')]:
+            result = self.run_cmd(['bash', 'sync.sh', 'template', '--kind', kind])
+            expected = personal / name if kind == 'readme' else self.dx / 'defaults/templates' / name
+            self.assertEqual(result.stdout.strip(), str(expected))
+        (personal / 'README.md').unlink()
+        result = self.run_cmd(['bash', 'sync.sh', 'template', '--kind', 'readme'])
+        self.assertEqual(result.stdout.strip(), str(self.dx / 'defaults/templates/README.md'))
+
+    def test_release_template_preserves_generated_changes(self):
+        self.git(self.project, 'tag', 'v0.1.0')
+        self.git(self.project, 'commit', '--allow-empty', '-qm', 'feat: support A & B')
+        folder = self.project / '.github'
+        folder.mkdir()
+        template = folder / 'release-notes.md'
+        template.write_text('# Product {{VERSION}}\n\n{{CHANGES}}\nPrevious: {{PREVIOUS_VERSION}}\n')
+        args = ['bash', str(self.dx / 'skills/repo-release/release.sh'), '--dry-run']
+        result = self.run_cmd(args, self.project)
+        self.assertIn('# Product v0.2.0', result.stdout)
+        self.assertIn('- Support A & B', result.stdout)
+        self.assertIn('Previous: v0.1.0', result.stdout)
+        self.assertNotIn('{{CHANGES}}', result.stdout)
+        template.write_text('Invalid template without changes\n')
+        invalid = self.run_cmd(args, self.project, check=False)
+        self.assertNotEqual(invalid.returncode, 0)
+        self.assertIn('must contain {{CHANGES}}', invalid.stderr)
 
 
 if __name__ == '__main__':

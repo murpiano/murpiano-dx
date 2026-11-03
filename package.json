@@ -1,7 +1,7 @@
 {
   "name": "murpiano-dx",
   "version": "0.3.0",
-  "description": "Agentic development framework for project memory, Git workflow, CI, releases, and Kysaro validation.",
+  "description": "Shared development rules and project notes for coding agents, with Git convention checks, documentation, CI, and releases.",
   "repository": {
     "type": "git",
     "url": "https://github.com/murpiano/murpiano-dx.git"
@@ -36,6 +36,8 @@
     "install.sh",
     "murpiano-dx",
     "sync.py",
+    "workspace_sync.py",
+    "session_hook.py",
     "sync.sh",
     "README.md"
   ],

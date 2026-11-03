@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Detect supported coding agents and connect their shared workflow instructions."""
 from pathlib import Path
+import json
 import os
 import shlex
 import shutil
@@ -36,6 +37,40 @@ def instruction_plan(path, block):
     return path, updated
 
 
+def hook_plan(path, root):
+    """Add our lifecycle handlers without replacing user hooks or settings."""
+    if path.is_symlink():
+        path = path.resolve(strict=True)
+    original = path.read_text() if path.exists() else ''
+    try:
+        settings = json.loads(original) if original else {}
+        if not isinstance(settings, dict):
+            raise ValueError('expected a JSON object')
+        hooks = settings.setdefault('hooks', {})
+        if not isinstance(hooks, dict):
+            raise ValueError('hooks must be an object')
+        for name, event, timeout in [('SessionStart', 'start', 120), ('SessionEnd', 'end', 3)]:
+            groups = hooks.setdefault(name, [])
+            if not isinstance(groups, list):
+                raise ValueError(f'{name} must be an array')
+            command = 'python3 ' + shlex.quote(str(root / 'session_hook.py')) + ' ' + event
+            exists = False
+            for group in groups:
+                if not isinstance(group, dict) or not isinstance(group.get('hooks'), list):
+                    raise ValueError(f'{name} contains an invalid hook group')
+                if any(not isinstance(handler, dict) for handler in group['hooks']):
+                    raise ValueError(f'{name} contains an invalid handler')
+                if any(handler.get('command') == command for handler in group['hooks']):
+                    exists = True
+            if not exists:
+                groups.append({'hooks': [{'type': 'command', 'command': command, 'timeout': timeout}]})
+    except (ValueError, TypeError) as error:
+        raise RuntimeError(f'Invalid hook settings: {path}: {error}; file left untouched') from error
+    if original and json.loads(original) == settings:
+        return path, original
+    return path, json.dumps(settings, indent=2) + '\n'
+
+
 def configure(root, only=None):
     home = Path.home()
     data = Path(os.environ.get('MURPIANO_DX_DATA_DIR', root)).expanduser().resolve()
@@ -44,6 +79,7 @@ def configure(root, only=None):
                          ('{{SYNC}}', 'bash ' + shlex.quote(str(root / 'sync.sh')))]:
         block = block.replace(token, value)
     plans = []
+    hook_plans = []
     folders = [home / '.agents/skills']
     for command, label, variable, default, filename in agent_profiles(home):
         configured = os.environ.get(variable)
@@ -63,6 +99,8 @@ def configure(root, only=None):
         # Validate every detected adapter before modifying any global instructions.
         target, updated = instruction_plan(path, block)
         plans.append((label, target, updated))
+        hook_file = profile / ('hooks.json' if command == 'codex' else 'settings.json')
+        hook_plans.append((label, *hook_plan(hook_file, root)))
         if command == 'claude':
             folders.append(profile / 'skills')
         elif str(target).startswith('/mnt/'):
@@ -73,6 +111,14 @@ def configure(root, only=None):
         if not target.exists() or target.read_text() != updated:
             target.write_text(updated)
         print(f'{label} connected: {target}')
+    for label, target, updated in hook_plans:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if not target.exists() or target.read_text() != updated:
+            target.write_text(updated)
+        print(f'{label} session hooks configured: {target}')
+        if label == 'Codex':
+            print('Review and trust new hooks once in Codex /hooks (or Settings > Hooks). '
+                  'Existing hook trust and disabled-hook preferences are preserved.')
     retire_legacy_guard(home)
     print(f'Agent entry point: {root / "AGENTS.md"}')
     if not plans:
