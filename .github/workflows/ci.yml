@@ -20,3 +20,5 @@ jobs:
         run: bash -n install.sh && bash -n sync.sh && bash -n skills/repo-release/release.sh
       - name: Integration tests
         run: python3 -B -m unittest discover -s tests -v
+      - name: Check npm package contents
+        run: npm pack --dry-run

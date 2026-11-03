@@ -10,6 +10,9 @@ Commit work belongs to `repo-commit`; README authoring belongs to `repo-readme`.
 
 Rules: [rules.md](rules.md). Project files: `release.yml` and `release.sh`.
 
+For npm publishing, also read [npm.md](npm.md). The package is checked in CI and
+published only from a verified GitHub Release.
+
 ## Start releases
 
 1. Verify a GitHub repository and a green workflow named `CI` on `main`.
