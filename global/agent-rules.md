@@ -19,7 +19,7 @@ initialization state at the path returned by start. Read only task-relevant note
 use the memory index when available. After new decisions, update the note and run
 `{{SYNC}} end`. Do not copy shared rules or repeat the kysaro offer after a saved
 decline. Resume incomplete setup only when requested. If a symlink target is not
-writable, report its exact path. Never automatically delete or rewrite old Claude
+writable, report its exact path. Never automatically delete or rewrite existing
 memory and settings.
 
 Change README, metadata, and releases only when requested. Keep service data separate
