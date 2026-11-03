@@ -101,6 +101,19 @@ def ensure_workspace(update_runtime=False):
             'git_email': os.environ.get('GIT_EMAIL', ''),
             'github_owner': os.environ.get('GITHUB_OWNER', ''),
         }, indent=2) + '\n')
+    elif update_runtime:
+        # Earlier local checks could create an empty identity before onboarding.
+        # Explicit setup fills missing values without replacing personal settings.
+        values = json.loads(machine.read_text())
+        if not isinstance(values, dict):
+            raise RuntimeError(f'Expected a JSON object in {machine}; settings left unchanged.')
+        updated = dict(values)
+        for key, env_name in [('git_name', 'GIT_NAME'), ('git_email', 'GIT_EMAIL'),
+                              ('github_owner', 'GITHUB_OWNER')]:
+            if not updated.get(key) and os.environ.get(env_name):
+                updated[key] = os.environ[env_name]
+        if updated != values:
+            machine.write_text(json.dumps(updated, indent=2) + '\n')
     defaults = SOURCE_ROOT / 'defaults'
     for group in ('rules', 'templates'):
         source = defaults / group

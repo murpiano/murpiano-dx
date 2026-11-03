@@ -71,7 +71,7 @@ def hook_plan(path, root):
     return path, json.dumps(settings, indent=2) + '\n'
 
 
-def configure(root, only=None):
+def configure(root, only=None, previous_root=None):
     home = Path.home()
     data = Path(os.environ.get('MURPIANO_DX_DATA_DIR', root)).expanduser().resolve()
     block = (root / 'global/agent-rules.md').read_text()
@@ -105,7 +105,7 @@ def configure(root, only=None):
             folders.append(profile / 'skills')
         elif str(target).startswith('/mnt/'):
             folders.append(target.parent.parent / '.agents/skills')
-    connect_skills(root, folders)
+    connect_skills(root, folders, previous_root=previous_root)
     for label, target, updated in plans:
         target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists() or target.read_text() != updated:
@@ -125,7 +125,7 @@ def configure(root, only=None):
         print('No supported agent detected. Point your agent to the shared entry point.')
 
 
-def connect_skills(root, folders):
+def connect_skills(root, folders, previous_root=None):
     for folder in dict.fromkeys(folders):
         folder.mkdir(parents=True, exist_ok=True)
         retired = folder / 'repo-cleanup'
@@ -137,6 +137,18 @@ def connect_skills(root, folders):
             link = folder / skill.name
             if link.is_symlink():
                 if link.resolve() == skill:
+                    continue
+                # Setup knows the exact source checkout. Migrate only links to
+                # that checkout, preserving arbitrary custom skills and links.
+                if (previous_root is not None
+                        and link.resolve() == previous_root.resolve() / 'skills' / skill.name):
+                    temporary = folder / f'.{skill.name}.murpiano-dx-{os.getpid()}'
+                    temporary.symlink_to(skill, target_is_directory=True)
+                    try:
+                        temporary.replace(link)
+                    finally:
+                        temporary.unlink(missing_ok=True)
+                    print(f'Reconnected skill: {link} -> {skill}')
                     continue
                 print(f'Skip conflicting link: {link}', file=sys.stderr)
             elif link.exists():
@@ -167,7 +179,8 @@ fi
 
 if __name__ == '__main__':
     try:
-        configure(Path(sys.argv[1]).resolve())
+        configure(Path(sys.argv[1]).resolve(), previous_root=(
+            Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else None))
     except (OSError, RuntimeError) as error:
         print(f'murpiano-dx: {error}', file=sys.stderr)
         sys.exit(1)
