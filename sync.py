@@ -13,7 +13,8 @@ import subprocess
 import sys
 from urllib.parse import urlsplit
 
-ROOT = Path(__file__).resolve().parent
+SOURCE_ROOT = Path(__file__).resolve().parent
+ROOT = SOURCE_ROOT
 DATA_ROOT = Path(os.environ.get(
     'MURPIANO_DX_DATA_DIR',
     Path.home() / '.murpiano-dx',
@@ -22,10 +23,55 @@ STORE = DATA_ROOT / 'projects'
 PATHS = ('AGENTS.md', '.agents')
 BEGIN = '# >>> murpiano-dx'
 END = '# <<< murpiano-dx'
+ACTIVE_ROOT = ROOT
+
+WORKSPACE_FILES = (
+    'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py', 'configure-codex.py',
+    'config.env', 'README.md', 'LICENSE', 'resources/logo.png',
+)
+WORKSPACE_DIRS = ('global', 'skills', 'defaults')
+WORKSPACE_MARKER = '.murpiano-dx-workspace'
+
+
+def copy_missing_tree(source, target):
+    if not source.is_dir():
+        return
+    for item in source.rglob('*'):
+        relative = item.relative_to(source)
+        destination = target / relative
+        if item.is_dir():
+            destination.mkdir(parents=True, exist_ok=True)
+        elif not destination.exists():
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(item, destination)
+
+
+def bootstrap_workspace_files():
+    """Copy the distributable framework into the user's local workspace."""
+    global ACTIVE_ROOT
+    if DATA_ROOT.resolve() == SOURCE_ROOT.resolve():
+        ACTIVE_ROOT = SOURCE_ROOT
+        return
+    DATA_ROOT.mkdir(parents=True, exist_ok=True)
+    for name in WORKSPACE_FILES:
+        source = SOURCE_ROOT / name
+        destination = DATA_ROOT / name
+        if source.is_file() and not destination.exists():
+            shutil.copy2(source, destination)
+    for name in WORKSPACE_DIRS:
+        copy_missing_tree(SOURCE_ROOT / name, DATA_ROOT / name)
+    workspace_ignore = DATA_ROOT / '.gitignore'
+    if not workspace_ignore.exists():
+        workspace_ignore.write_text('__pycache__/\n*.pyc\n')
+    marker = DATA_ROOT / WORKSPACE_MARKER
+    if not marker.exists():
+        marker.write_text('Local murpiano-dx workspace.\n')
+    ACTIVE_ROOT = DATA_ROOT
 
 
 def ensure_workspace():
     """Create the editable local workspace without overwriting user files."""
+    bootstrap_workspace_files()
     (DATA_ROOT / 'config').mkdir(parents=True, exist_ok=True)
     (DATA_ROOT / 'rules').mkdir(parents=True, exist_ok=True)
     (DATA_ROOT / 'templates').mkdir(parents=True, exist_ok=True)
@@ -38,7 +84,7 @@ def ensure_workspace():
             'git_email': os.environ.get('GIT_EMAIL', ''),
             'github_owner': os.environ.get('GITHUB_OWNER', ''),
         }, indent=2) + '\n')
-    defaults = ROOT / 'defaults'
+    defaults = SOURCE_ROOT / 'defaults'
     for group in ('rules', 'templates'):
         source = defaults / group
         target = DATA_ROOT / group
@@ -47,6 +93,57 @@ def ensure_workspace():
                 destination = target / item.name
                 if not destination.exists():
                     shutil.copy2(item, destination)
+
+
+def initialize_workspace_repo():
+    """Make the local workspace a Git repository, preserving existing files."""
+    if DATA_ROOT.resolve() == SOURCE_ROOT.resolve() or (DATA_ROOT / '.git').exists():
+        return
+    result = subprocess.run(['git', 'init', '-b', 'main'], cwd=DATA_ROOT,
+                            text=True, capture_output=True, check=False)
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or 'Could not initialize workspace Git')
+    for name, env_name in [('user.name', 'GIT_NAME'), ('user.email', 'GIT_EMAIL')]:
+        value = os.environ.get(env_name)
+        if value:
+            subprocess.run(['git', '-C', str(DATA_ROOT), 'config', name, value], check=True)
+    identity = subprocess.run(['git', '-C', str(DATA_ROOT), 'config', '--get', 'user.name'],
+                              text=True, capture_output=True, check=False).stdout.strip()
+    email = subprocess.run(['git', '-C', str(DATA_ROOT), 'config', '--get', 'user.email'],
+                           text=True, capture_output=True, check=False).stdout.strip()
+    if identity and email:
+        subprocess.run(['git', '-C', str(DATA_ROOT), 'add', '-A'], check=True)
+        subprocess.run(['git', '-C', str(DATA_ROOT), 'commit', '-m',
+                        'chore: initialize local workspace'], check=True,
+                       capture_output=True, text=True)
+
+
+def sync_workspace():
+    """Commit workspace state and push it when a private remote is configured."""
+    if (DATA_ROOT / WORKSPACE_MARKER).is_file() is False:
+        return
+    if not (DATA_ROOT / '.git').exists() or not (DATA_ROOT / 'config/machine.json').exists():
+        return
+    subprocess.run(['git', '-C', str(DATA_ROOT), 'add', '-A'], check=True)
+    changes = subprocess.run(['git', '-C', str(DATA_ROOT), 'diff', '--cached', '--quiet'],
+                             check=False)
+    if changes.returncode:
+        identity = subprocess.run(
+            ['git', '-C', str(DATA_ROOT), 'config', '--get', 'user.name'],
+            text=True, capture_output=True, check=False).stdout.strip()
+        email = subprocess.run(
+            ['git', '-C', str(DATA_ROOT), 'config', '--get', 'user.email'],
+            text=True, capture_output=True, check=False).stdout.strip()
+        if not identity or not email:
+            raise RuntimeError('Workspace Git identity is not configured; run murpiano-dx setup.')
+        subprocess.run(['git', '-C', str(DATA_ROOT), 'commit', '-m',
+                        'chore(workspace): sync project state'], check=True,
+                       capture_output=True, text=True)
+        print('Workspace state committed.')
+    remote = git(DATA_ROOT, 'remote', 'get-url', 'origin', check=False)
+    if remote:
+        git(DATA_ROOT, 'push')
+        print(f'Workspace state pushed to {remote}.')
 
 
 def load_machine_config():
@@ -120,7 +217,7 @@ def exclude_agent_files(project):
         prefix, rest = text.split(BEGIN, 1)
         _, suffix = rest.split(END, 1)
         text = prefix + suffix
-    rules = (ROOT / 'global/gitignore-agents').read_text().rstrip()
+    rules = (ACTIVE_ROOT / 'global/gitignore-agents').read_text().rstrip()
     updated = text.rstrip() + '\n\n' + BEGIN + '\n' + rules + '\n' + END + '\n'
     if not path.exists() or path.read_text() != updated:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -136,7 +233,7 @@ def remove_old_hook(project):
     if marker not in lines:
         return
     if (len(lines) == 3 and lines[0] == '#!/usr/bin/env bash' and lines[1] == marker
-            and lines[2] == f'exec bash "{ROOT}/skills/repo-cleanup/pre-commit-hook.sh"'):
+            and lines[2] == f'exec bash "{ACTIVE_ROOT}/skills/repo-cleanup/pre-commit-hook.sh"'):
         path.unlink()
         print('Removed the previous murpiano-dx pre-commit hook.')
     else:
@@ -166,11 +263,11 @@ def attach(project, key):
             if name == '.agents':
                 target.mkdir()
             else:
-                text = (ROOT / 'global/project-rules.md').read_text()
-                for token, value in [('{{PROJECT}}', key), ('{{ROOT}}', str(ROOT)),
+                text = (ACTIVE_ROOT / 'global/project-rules.md').read_text()
+                for token, value in [('{{PROJECT}}', key), ('{{ROOT}}', str(ACTIVE_ROOT)),
                                      ('{{DATA_ROOT}}', str(DATA_ROOT)),
                                      ('{{STORE}}', str(STORE / key)),
-                                     ('{{SYNC}}', 'bash ' + shlex.quote(str(ROOT / 'sync.sh')))]:
+                                     ('{{SYNC}}', 'bash ' + shlex.quote(str(ACTIVE_ROOT / 'sync.sh')))]:
                     text = text.replace(token, value)
                 target.write_text(text)
         try:
@@ -248,7 +345,7 @@ def report(project, key, state, initializing=False):
                   'declined': 'declined by owner'}[status]
     branch = git(project, 'branch', '--show-current')
     print(f'{key} | branch: {branch or "detached HEAD"} | kysaro: {status}')
-    print(f'Context: {STORE / key}. Task rules: {ROOT}/skills/')
+    print(f'Context: {STORE / key}. Task rules: {ACTIVE_ROOT}/skills/')
     if any(not (project / name).exists() for name in PATHS):
         print('Instructions or notes are not connected in this copy; restore them through init on request.')
     if initializing and state['kysaro'] == 'pending':
@@ -265,7 +362,7 @@ def connect(folder, mode='start', choice=None, quiet=False):
         if not initialize:
             if not quiet:
                 print(f'No Git repository. To connect: bash '
-                      f'{shlex.quote(str(ROOT / "sync.sh"))} init {shlex.quote(str(folder))}')
+                      f'{shlex.quote(str(ACTIVE_ROOT / "sync.sh"))} init {shlex.quote(str(folder))}')
             return
         git(folder, 'init', '-b', 'main')
         for name, value in [('user.name', os.environ['GIT_NAME']),
@@ -274,7 +371,7 @@ def connect(folder, mode='start', choice=None, quiet=False):
                 git(folder, 'config', '--local', name, value)
         root = str(folder)
     project = Path(root).resolve()
-    if project == ROOT:
+    if project == ACTIVE_ROOT:
         if not quiet:
             print('murpiano-dx: use skills/ as the shared rules source; self-connection is not required.')
         return
@@ -328,15 +425,20 @@ def connect(folder, mode='start', choice=None, quiet=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['init', 'start', 'end', 'link'], nargs='?', default='start')
+    parser.add_argument('mode', choices=['init', 'start', 'end', 'link', 'workspace'], nargs='?', default='start')
     parser.add_argument('project', type=Path, nargs='?', default=Path.cwd())
     parser.add_argument('--kysaro', choices=['approved', 'declined', 'enabled'],
                         help='Record the owner decision or verify completed setup (init only)')
     args = parser.parse_args()
     ensure_workspace()
     load_machine_config()
+    initialize_workspace_repo()
     if args.kysaro and args.mode != 'init':
         parser.error('--kysaro is only available with init')
+    if args.mode == 'workspace':
+        print(f'Local workspace: {DATA_ROOT}')
+        print('Framework files and project data are stored in this Git repository.')
+        return
     if args.mode == 'link':
         parent = Path(os.environ.get('PROJECTS_DIR', Path.home() / 'projects'))
         if parent.is_dir():
@@ -345,6 +447,8 @@ def main():
                     connect(folder.resolve(), mode='link', quiet=True)
     else:
         connect(args.project.resolve(), mode=args.mode, choice=args.kysaro)
+    if args.mode == 'end':
+        sync_workspace()
 
 
 if __name__ == '__main__':
