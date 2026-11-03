@@ -10,6 +10,9 @@ murpiano-dx is a development assistant framework for working with coding agents.
 Install it once and connect your projects. Their agents then use your shared rules
 for Git, README files, descriptions, badges, CI, and releases.
 
+Use it with any coding agent that can read local files and run shell commands.
+The rules are plain Markdown files. No particular agent is required.
+
 Project instructions, saved agent notes, decisions, and setup state live in your
 personal murpiano-dx. Local links let agents use these files from each project.
 The links are excluded from Git, so these files stay out of future project
@@ -63,10 +66,10 @@ not mean every chat message or every tool call is captured automatically.
 ## First installation
 
 Requirements: Linux or WSL, Bash, Git, Python 3.11+, and GitHub CLI (`gh`).
-Node.js/npm is also required to install the Kysaro Git linter or use the npm entry point.
+Node.js and npm are needed only if you install the Kysaro Git linter.
 Sign in with `gh auth login` to use GitHub account defaults and private backups.
 
-Until the npm package is published, install from this repository:
+Install from this repository:
 
 ```bash
 git clone https://github.com/murpiano/murpiano-dx.git
@@ -75,24 +78,36 @@ bash install.sh
 ```
 
 Setup asks for your Git identity and GitHub account, creates your personal
-`~/.murpiano-dx` folder, and connects the framework's instructions to Codex.
+`~/.murpiano-dx` folder, and prepares instructions for your coding agent.
 It also offers a private GitHub repository for your personal copy.
+
+**One setup command connects the agents it finds.** Codex and Claude Code are
+connected automatically when their command is on `PATH` or their configuration
+folder exists. Both use the same murpiano-dx rules and project data.
+Your existing instructions stay in place; setup updates only its own marked block.
+
+If you install another supported agent later, run `murpiano-dx setup` again.
+Restart the agent session to load its updated instructions. Custom profile paths
+set through `CODEX_HOME` or `CLAUDE_CONFIG_DIR` are respected.
 
 The public repository contains the framework and default rules. Your personal
 copy contains your settings and project notes. Its optional private repository
 is a backup of that personal copy.
 
-After npm publication, you can start the same setup with:
-
-```bash
-npx murpiano-dx setup
-```
-
 ### Connect your first project
 
-Open the project in Codex and ask:
+Open the project with your coding agent and ask:
 
 > Initialize this project with murpiano-dx.
+
+For an agent without an automatic adapter, start with:
+
+> Read ~/.murpiano-dx/AGENTS.md and initialize this project with murpiano-dx.
+
+Connected projects have an `AGENTS.md` entry point. If your agent does not read
+that filename automatically, tell it to read the file or add a reference to it
+in the agent's own local instructions. Skill discovery and session hooks depend
+on the agent; the shared rules and commands stay the same.
 
 The agent connects its instructions and notes to your personal murpiano-dx.
 If the project has no GitHub repository, it offers to create a private one.
@@ -117,7 +132,7 @@ data into your project's folder in murpiano-dx and checks that the copy matches.
 It leaves working local links and removes previously tracked metadata from the
 Git index. You can keep working with the agent as before.
 
-For example, `AGENTS.md`, `.agents/`, and `.codex/` can live in murpiano-dx while
+For example, `AGENTS.md`, `.agents/`, and existing agent settings can live in murpiano-dx while
 your code stays in the project. Other note folders can be added to the migration
 explicitly. Code, README files, CI, and Git-linter settings stay in the project.
 
@@ -144,8 +159,8 @@ git clone git@github.com:OWNER/murpiano-dx-private.git ~/.murpiano-dx
 ~/.murpiano-dx/murpiano-dx setup
 ```
 
-Your rules, templates, and saved project data come from that copy. Setup connects
-Codex on the new machine without replacing your existing rules.
+Your rules, templates, and saved project data come from that copy. Setup detects
+the agents on the new machine and connects them without replacing your existing rules.
 Reconnect local project folders with `murpiano-dx link`; restore project Git hooks
 where needed.
 
@@ -157,14 +172,13 @@ setup. It uses your signed-in GitHub account and the repository name
 murpiano-dx restore git@github.com:OWNER/custom-name.git
 ```
 
-After npm publication, a new machine can use `npx murpiano-dx restore` directly.
-
 ## Where do I change my rules?
 
 Edit the files in your personal folder:
 
 ```text
 ~/.murpiano-dx/
+├── AGENTS.md                  entry point for any coding agent
 ├── rules/                     your shared Git, README, CI, and release rules
 ├── templates/                 your README, description, and release templates
 ├── config/machine.json        saved Git identity and GitHub account
@@ -188,7 +202,7 @@ folder, or pass its path.
 
 | Command | Purpose |
 | --- | --- |
-| `murpiano-dx setup` | Set up your personal copy and connect Codex |
+| `murpiano-dx setup` | Set up your personal copy and automatically connect detected agents |
 | `murpiano-dx restore [url]` | Clone an existing personal copy and run setup |
 | `murpiano-dx init [path]` | Connect a project and report its setup state |
 | `murpiano-dx start [path]` | Show a project's saved setup state |
@@ -205,12 +219,9 @@ connect. Your personal folder must remain available for the project links to wor
 ## Developing murpiano-dx
 
 The public repository includes tests and GitHub workflows for maintaining the
-framework. These are excluded from the installed personal copy and npm package.
-The npm package is prepared but still needs publication. Maintainer instructions:
-[npm publishing](skills/repo-release/npm.md).
+framework. These are excluded from the installed personal copy.
 
 ```bash
 python3 -B -m unittest discover -s tests -v
 bash -n install.sh sync.sh murpiano-dx skills/repo-release/release.sh
-npm run package:check
 ```

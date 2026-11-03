@@ -27,11 +27,14 @@ ACTIVE_ROOT = ROOT
 
 WORKSPACE_FILES = (
     'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py', 'configure-codex.py',
+    'agent_setup.py',
     'config.env', 'README.md', 'LICENSE', 'resources/logo.png',
     'resources/project-data-flow.svg',
 )
 WORKSPACE_DIRS = ('global', 'skills', 'defaults')
 WORKSPACE_MARKER = '.murpiano-dx-workspace'
+RUNTIME_FILES = {'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py',
+                 'configure-codex.py', 'agent_setup.py'}
 
 
 def copy_missing_tree(source, target):
@@ -47,7 +50,7 @@ def copy_missing_tree(source, target):
             shutil.copy2(item, destination)
 
 
-def bootstrap_workspace_files():
+def bootstrap_workspace_files(update_runtime=False):
     """Copy the distributable framework into the user's local workspace."""
     global ACTIVE_ROOT
     if DATA_ROOT.resolve() == SOURCE_ROOT.resolve():
@@ -57,8 +60,17 @@ def bootstrap_workspace_files():
     for name in WORKSPACE_FILES:
         source = SOURCE_ROOT / name
         destination = DATA_ROOT / name
-        if source.is_file() and not destination.exists():
+        if source.is_file() and (not destination.exists() or
+                                 (update_runtime and name in RUNTIME_FILES)):
             destination.parent.mkdir(parents=True, exist_ok=True)
+            if destination.is_symlink():
+                raise RuntimeError(f'Runtime file is a symbolic link; review it before setup: {destination}')
+            if destination.exists() and source.read_bytes() != destination.read_bytes():
+                # Keep a rollback copy when upgrading an already installed runtime.
+                backup = DATA_ROOT / '.runtime-backup' / name
+                if not backup.exists():
+                    backup.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(destination, backup)
             shutil.copy2(source, destination)
     for name in WORKSPACE_DIRS:
         copy_missing_tree(SOURCE_ROOT / name, DATA_ROOT / name)
@@ -71,9 +83,9 @@ def bootstrap_workspace_files():
     ACTIVE_ROOT = DATA_ROOT
 
 
-def ensure_workspace():
+def ensure_workspace(update_runtime=False):
     """Create the editable local workspace without overwriting user files."""
-    bootstrap_workspace_files()
+    bootstrap_workspace_files(update_runtime=update_runtime)
     (DATA_ROOT / 'config').mkdir(parents=True, exist_ok=True)
     (DATA_ROOT / 'rules').mkdir(parents=True, exist_ok=True)
     (DATA_ROOT / 'templates').mkdir(parents=True, exist_ok=True)
@@ -95,6 +107,18 @@ def ensure_workspace():
                 destination = target / item.name
                 if not destination.exists():
                     shutil.copy2(item, destination)
+
+
+def ensure_agent_entrypoint():
+    """Prepare the shared entry point during setup, preserving user instructions."""
+    instructions = DATA_ROOT / 'AGENTS.md'
+    if not instructions.exists():
+        text = (DATA_ROOT / 'global/agent-rules.md').read_text()
+        for token, value in [('{{ROOT}}', str(DATA_ROOT)),
+                             ('{{DATA_ROOT}}', str(DATA_ROOT)),
+                             ('{{SYNC}}', 'bash ' + shlex.quote(str(DATA_ROOT / 'sync.sh')))]:
+            text = text.replace(token, value)
+        instructions.write_text('# murpiano-dx\n\n' + text)
 
 
 def initialize_workspace_repo():
@@ -432,8 +456,10 @@ def main():
     parser.add_argument('--kysaro', choices=['approved', 'declined', 'enabled'],
                         help='Record the owner decision or verify completed setup (init only)')
     args = parser.parse_args()
-    ensure_workspace()
+    ensure_workspace(update_runtime=(args.mode == 'workspace'))
     load_machine_config()
+    if args.mode == 'workspace':
+        ensure_agent_entrypoint()
     initialize_workspace_repo()
     if args.kysaro and args.mode != 'init':
         parser.error('--kysaro is only available with init')

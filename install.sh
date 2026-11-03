@@ -122,11 +122,12 @@ case "${1:-}" in
     fi
     export GITHUB_OWNER GIT_NAME GIT_EMAIL
     workspace="$(workspace_path)"
+    export MURPIANO_DX_DATA_DIR="$workspace"
     MURPIANO_DX_DATA_DIR="$workspace" python3 "$root/sync.py" workspace
     install_command "$workspace"
-    python3 "$workspace/configure-codex.py" "$workspace"
+    python3 "$workspace/agent_setup.py" "$workspace"
     offer_private_remote "$workspace"
-    echo 'Done. Open a new Codex session. In the project, ask: “initialize the project”.'
+    echo "Done. Ask your coding agent to read $workspace/AGENTS.md and initialize the project."
     ;;
   --restore)
     shift
@@ -145,5 +146,5 @@ case "${1:-}" in
       echo 'Token saved locally. The RELEASE_TOKEN secret is configured separately for each project.'
     fi
     ;;
-  *) echo 'Usage: bash install.sh [--release-token]' >&2; exit 2 ;;
+  *) echo 'Usage: bash install.sh [--restore [url] [path] | --release-token]' >&2; exit 2 ;;
 esac
