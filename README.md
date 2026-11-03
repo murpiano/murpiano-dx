@@ -4,13 +4,17 @@
 
 # murpiano-dx
 
-**One place for the rules and notes your coding agents use across your projects.**
+**One set of development rules for all your projects. One place for their agent data.**
 
-murpiano-dx is a development assistant framework for people who work with coding
-agents. Install it once, connect your projects, and give their agents the same
-rules for Git, README files, repository descriptions, badges, CI, and releases.
-Each project's saved agent notes and decisions stay together in your local
-murpiano-dx folder.
+murpiano-dx is a development assistant framework for working with coding agents.
+Install it once and connect your projects. Their agents then use your shared rules
+for Git, README files, descriptions, badges, CI, and releases.
+
+Project instructions, saved agent notes, decisions, and setup state live in your
+personal murpiano-dx. Local links let agents use these files from each project.
+The links are excluded from Git, so these files stay out of future project
+commits. Your projects follow one style without publishing their internal work notes.
+Existing projects may need the [agent-data migration](#already-have-agent-files-in-a-project) below first.
 
 [![CI](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml/badge.svg)](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/murpiano/murpiano-dx?color=informational)](https://github.com/murpiano/murpiano-dx/releases/latest)
@@ -25,19 +29,7 @@ After you connect a project, its agent reads the shared rules and keeps project
 notes in this central folder. Connect another project, and it uses the same rules
 with its own notes.
 
-```mermaid
-flowchart LR
-    A["Project A · coding agent"]
-    B["Project B · coding agent"]
-    DX["Your local murpiano-dx<br/>Rules · Templates<br/>Separate notes for each project"]
-    BACKUP["Optional private GitHub repository<br/>Your settings and saved project data"]
-
-    DX -->|"Git rules · README templates<br/>CI and release instructions"| A
-    A -->|"Agent notes · Decisions<br/>Setup state"| DX
-    DX -->|"Git rules · README templates<br/>CI and release instructions"| B
-    B -->|"Agent notes · Decisions<br/>Setup state"| DX
-    DX -.->|"Commit and push when the agent runs end"| BACKUP
-```
+![murpiano-dx in the center, an optional private backup above it, and two independent projects on either side. Each agent reads shared rules and saves its own project data in murpiano-dx.](resources/project-data-flow.svg)
 
 The two lines for each project show two different things: **rules go to the
 agent; saved notes and setup state live in murpiano-dx.** The project keeps its
@@ -51,16 +43,17 @@ not need to repeat those rules in every project or every chat.
 
 | Task | What murpiano-dx provides |
 | --- | --- |
-| Connect a project | Setup steps, an offer to create a private GitHub repository, and an offer to install Kysaro |
-| Keep agent notes | A place for saved instructions, decisions, task state, and verification notes for each project |
+| Connect a project | Setup steps, an offer to create a private GitHub repository, and an offer to install the Kysaro Git linter |
+| Keep agent data out of project commits | Central storage for instructions, notes, decisions, and setup state; local links are excluded from Git |
+| Migrate an existing project | A preview and verified move of existing agent files into murpiano-dx, including files already tracked by Git |
 | Work with Git | Rules for task branches, Conventional Commits, pull requests, and merges |
-| Check commit conventions | Setup guidance for Kysaro, installed in each project to check commits and pull requests |
+| Check Git conventions | The Kysaro Git linter, installed in each project to check commits and pull requests |
 | Describe a project | Shared templates for README files, repository descriptions, and badges |
 | Set up CI | Instructions for automatic tests and other checks on changes |
 | Prepare a release | Rules for version numbers, tags, release notes, and release automation |
 
 **The agent does the work.** murpiano-dx supplies the instructions and stores saved
-context. Kysaro checks the configured Git conventions. CI runs the project's
+context. The Kysaro Git linter checks the configured Git conventions. CI runs the project's
 tests and checks on GitHub. A release publishes a named version after those
 checks pass.
 
@@ -70,7 +63,7 @@ not mean every chat message or every tool call is captured automatically.
 ## First installation
 
 Requirements: Linux or WSL, Bash, Git, Python 3.11+, and GitHub CLI (`gh`).
-Node.js/npm is also required to install Kysaro or use the npm entry point.
+Node.js/npm is also required to install the Kysaro Git linter or use the npm entry point.
 Sign in with `gh auth login` to use GitHub account defaults and private backups.
 
 Until the npm package is published, install from this repository:
@@ -103,11 +96,35 @@ Open the project in Codex and ask:
 
 The agent connects its instructions and notes to your personal murpiano-dx.
 If the project has no GitHub repository, it offers to create a private one.
-It also asks whether to install Kysaro. Existing files and saved setup decisions
+It also asks whether to install the Kysaro Git linter. Existing files and saved setup decisions
 are preserved.
+
+For a new project, `AGENTS.md` and `.agents/` are stored in murpiano-dx from the
+start. For an existing project, untracked copies move there during connection.
+Already tracked files and other existing agent folders need the migration below.
 
 Then work normally: “write the README”, “commit this change”, “set up CI”, or
 “prepare a release”. The connected agent reads the relevant rules for the task.
+
+### Already have agent files in a project?
+
+Ask the agent:
+
+> Move this project's existing agent files into murpiano-dx and keep them out of future commits.
+
+The `repo-agent-data` skill previews the files it finds. It then copies the reviewed
+data into your project's folder in murpiano-dx and checks that the copy matches.
+It leaves working local links and removes previously tracked metadata from the
+Git index. You can keep working with the agent as before.
+
+For example, `AGENTS.md`, `.agents/`, and `.codex/` can live in murpiano-dx while
+your code stays in the project. Other note folders can be added to the migration
+explicitly. Code, README files, CI, and Git-linter settings stay in the project.
+
+The migration stages removals for your next commit; it does not commit or push
+them. Files in old commits remain in history. Moving files cannot erase previous
+publications, and known-filename detection cannot find every possible note
+embedded in code or documentation. The skill includes a review of current files.
 
 ### Finish a session
 
@@ -153,7 +170,7 @@ Edit the files in your personal folder:
 ├── config/machine.json        saved Git identity and GitHub account
 ├── skills/                    step-by-step instructions for agents
 ├── projects/OWNER/REPO/        separate data for each connected project
-│   ├── workflow.json          setup decisions, including Kysaro
+│   ├── workflow.json          setup decisions, including the Git linter
 │   ├── files/
 │   │   ├── AGENTS.md          project instructions
 │   │   └── .agents/           saved project notes
@@ -162,7 +179,7 @@ Edit the files in your personal folder:
 ```
 
 Connected projects use local links to their saved agent files. Project-specific
-rules and Kysaro settings take precedence over shared defaults.
+rules and Git-linter settings take precedence over shared defaults.
 
 ## Commands
 
@@ -180,7 +197,7 @@ folder, or pass its path.
 | `murpiano-dx workspace` | Show the personal folder path |
 
 Agents use `init --kysaro approved`, `declined`, or `enabled` to record your
-decision and verify Kysaro setup. You do not need to manage these states by hand.
+decision and verify the Kysaro Git linter setup. You do not need to manage these states by hand.
 
 Projects currently need a GitHub origin owned by your configured account to
 connect. Your personal folder must remain available for the project links to work.

@@ -14,13 +14,16 @@ development task does not reinitialize the project.
    Preserve an existing origin and report owner mismatches.
 3. Read the kysaro state. Check only reported problems for an already configured
    project. Do not repeat a saved decline without a new request.
-4. If no decision exists, ask once whether to install kysaro. It validates
+4. If no decision exists, ask once whether to install kysaro, the Git linter. It validates
    Conventional Commits through commit-msg and commits/PRs through CI.
 5. Save the decision with `sync.sh init --kysaro approved` or `declined`.
    These commands store state and do not download packages.
 6. For `approved`, read [kysaro.md](kysaro.md), configure and verify the project,
    then run `sync.sh init --kysaro enabled`.
 7. If setup fails, leave the approved state incomplete and report the exact step.
+8. If existing tracked instructions or other agent metadata remain, report them.
+   Use `repo-agent-data` when the owner asks to migrate them for publication.
+   Local Git exclusions alone do not untrack already committed files.
 
 ## Completion
 

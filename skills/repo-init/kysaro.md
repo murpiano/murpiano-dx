@@ -1,6 +1,6 @@
 # Kysaro setup
 
-Kysaro is installed separately in each initialized project. murpiano-dx stores the
+Kysaro is the Git linter, installed separately in each initialized project. murpiano-dx stores the
 decision and verifies the setup; it does not replace the project linter.
 
 ## Setup sequence
