@@ -14,7 +14,7 @@ published tree. Ordinary development does not run this migration.
    `python3 <murpiano-dx>/skills/repo-agent-data/scripts/migrate.py <project>`.
    It lists known agent metadata paths, their storage destinations, and tracked
    files that would be removed from the project index. Preview does not write.
-3. Inspect the listed paths. Keep product documentation, CI, Kysaro settings, and
+3. Inspect the listed paths. Keep product documentation, CI, [Kysaro](https://github.com/murpiano/kysaro) settings, and
    code in the project. Do not copy credentials or access tokens into project
    memory. Split mixed-purpose files before migrating them. Custom notes such as
    `docs/plans` or `memory` require explicit `--path <relative-path>` arguments;

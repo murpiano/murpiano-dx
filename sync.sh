@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local project connection. No automatic commits or network operations.
+# Connect project data; synchronize only the personal workspace repository.
 set -euo pipefail
 root=$(cd "$(dirname "$0")" && pwd)
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}/murpiano-dx"

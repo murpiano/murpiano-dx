@@ -10,6 +10,17 @@ Commit work belongs to `repo-commit`; README authoring belongs to `repo-readme`.
 
 Rules: [rules.md](rules.md). Project files: `release.yml` and `release.sh`.
 
+Read the user's `rules/releases.md` and resolve the notes template with
+`bash <murpiano-dx>/sync.sh template --kind release`. Read the returned file;
+the user's `templates/release-notes.md` takes precedence over bundled defaults.
+Editing that file is enough; no registration is required. An explicit task template wins.
+For manual notes, follow its structure. For automatic releases, copy the selected
+template to the project's `.github/release-notes.md` during setup or requested updates.
+That copy must contain `{{CHANGES}}`, replaced by generated change sections; it may
+also use `{{VERSION}}` and `{{PREVIOUS_VERSION}}`. CI uses the committed copy,
+because the personal workspace is not available on GitHub runners. Do not copy
+project notes, machine settings, or secrets into it.
+
 For npm publishing, also read [npm.md](npm.md). The package is checked in CI and
 published only from a verified GitHub Release.
 
@@ -18,7 +29,7 @@ published only from a verified GitHub Release.
 1. Verify a GitHub repository and a green workflow named `CI` on `main`.
 2. Verify `~/.config/murpiano-dx/release-token` exists and is non-empty. If missing,
    ask the user to run `bash install.sh --release-token`. Never read or print it.
-3. Copy the release workflow and script into the project.
+3. Copy the release workflow, script, and selected release-notes template into the project.
 4. Add the Release badge for public repositories.
 5. Commit on `ci/releases` with `ci: release on every push to main`, then merge it.
 6. Set the `RELEASE_TOKEN` GitHub secret from the local token file.

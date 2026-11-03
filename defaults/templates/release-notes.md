@@ -1,7 +1,1 @@
-## Added
-
-## Changed
-
-## Fixed
-
-## Removed
+{{CHANGES}}

@@ -1,6 +1,6 @@
 ---
 name: repo-commit
-description: Follow murpiano-dx Git rules for task branches, Conventional Commits, project kysaro settings, pull requests, and merges.
+description: Follow murpiano-dx Git rules for task branches, Conventional Commits, project Git linter settings, pull requests, and merges.
 ---
 
 # Git workflow
@@ -15,7 +15,7 @@ take precedence.
 2. Create a task branch from the current default branch. Use a short lowercase
    prefix such as `feat/`, `fix/`, `docs/`, `ci/`, or `refactor/`.
 3. Make the smallest coherent change and run the project checks.
-4. Create a Conventional Commit. Kysaro validates the exact project format.
+4. Create a Conventional Commit. [Kysaro](https://github.com/murpiano/kysaro) validates the exact project format.
 5. Push the branch and open a PR with a useful title and body when requested.
 6. Wait for required checks. Merge only when checks pass and the user authorizes it.
 
@@ -27,7 +27,7 @@ details in commits or PRs.
 
 ## Validation
 
-Run the project tests, `git diff --check`, and the local kysaro range check when
+Run the project tests, `git diff --check`, and the local [Kysaro](https://github.com/murpiano/kysaro) range check when
 available. Never bypass a failing hook or CI check without an explicit decision.
 
 ## Done
