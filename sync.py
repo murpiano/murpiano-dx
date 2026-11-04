@@ -38,14 +38,62 @@ WORKSPACE_DIRS = ('global', 'skills', 'defaults')
 WORKSPACE_MARKER = '.murpiano-dx-workspace'
 RUNTIME_FILES = {'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py',
                  'configure-codex.py', 'agent_setup.py', 'workspace_sync.py', 'session_hook.py'}
+TEMPLATE_LOCATIONS = {
+    'readme': Path('skills/repo-readme/templates/README.md'),
+    'description': Path('skills/repo-readme/templates/repository-description.md'),
+    'release': Path('skills/repo-release/templates/release-notes.md'),
+}
 
 
-def copy_missing_tree(source, target):
+def migrate_skill_templates():
+    """Move legacy personal templates on explicit setup; archive redundant copies."""
+    moves = []
+    archive = DATA_ROOT / '.runtime-backup/skill-templates'
+    for relative in TEMPLATE_LOCATIONS.values():
+        old = DATA_ROOT / 'templates' / relative.name
+        new = DATA_ROOT / relative
+        if old.exists():
+            if new.exists() and old.read_bytes() != new.read_bytes():
+                raise RuntimeError(f'Conflicting templates; both kept: {old} and {new}')
+            moves.append((old, archive / 'templates' / relative.name if new.exists() else new))
+    workflow = DATA_ROOT / 'skills/repo-release/release.yml'
+    new_workflow = DATA_ROOT / 'skills/repo-release/templates/release.yml'
+    if workflow.exists():
+        if new_workflow.exists() and workflow.read_bytes() != new_workflow.read_bytes():
+            raise RuntimeError(f'Conflicting templates; both kept: {workflow} and {new_workflow}')
+        moves.append((workflow, archive / 'skills/repo-release/release.yml'
+                      if new_workflow.exists() else new_workflow))
+    redundant = [DATA_ROOT / 'defaults/templates' / path.name
+                 for path in TEMPLATE_LOCATIONS.values()]
+    redundant.append(DATA_ROOT / 'skills/repo-readme/template.md')
+    for old in redundant:
+        if old.exists():
+            moves.append((old, archive / old.relative_to(DATA_ROOT)))
+    # Validate the whole move plan before changing any template.
+    for old, new in moves:
+        if old.is_symlink() or new.is_symlink():
+            raise RuntimeError(f'Template is a symbolic link; review it before setup: {old} -> {new}')
+        if new.exists() and old.read_bytes() != new.read_bytes():
+            raise RuntimeError(f'Template archive conflict; both kept: {old} and {new}')
+    for old, new in moves:
+        new.parent.mkdir(parents=True, exist_ok=True)
+        if new.exists():
+            old.unlink()  # Identical archived copy already preserves these bytes.
+        else:
+            old.rename(new)
+    for folder in (DATA_ROOT / 'templates', DATA_ROOT / 'defaults/templates'):
+        if folder.is_dir() and not any(folder.iterdir()):
+            folder.rmdir()
+
+
+def copy_missing_tree(source, target, skip=()):
     if not source.is_dir():
         return
     for item in source.rglob('*'):
         relative = item.relative_to(source)
         destination = target / relative
+        if destination in skip:
+            continue
         if item.is_dir():
             destination.mkdir(parents=True, exist_ok=True)
         elif not destination.exists():
@@ -56,6 +104,8 @@ def copy_missing_tree(source, target):
 def bootstrap_workspace_files(update_runtime=False):
     """Copy the distributable framework into the user's local workspace."""
     global ACTIVE_ROOT
+    if update_runtime:
+        migrate_skill_templates()
     if DATA_ROOT.resolve() == SOURCE_ROOT.resolve():
         ACTIVE_ROOT = SOURCE_ROOT
         return
@@ -75,8 +125,12 @@ def bootstrap_workspace_files(update_runtime=False):
                     backup.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(destination, backup)
             shutil.copy2(source, destination)
+    legacy_templates = {DATA_ROOT / relative for relative in TEMPLATE_LOCATIONS.values()
+                        if (DATA_ROOT / 'templates' / relative.name).is_file()}
+    if (DATA_ROOT / 'skills/repo-release/release.yml').is_file():
+        legacy_templates.add(DATA_ROOT / 'skills/repo-release/templates/release.yml')
     for name in WORKSPACE_DIRS:
-        copy_missing_tree(SOURCE_ROOT / name, DATA_ROOT / name)
+        copy_missing_tree(SOURCE_ROOT / name, DATA_ROOT / name, skip=legacy_templates)
     workspace_ignore = DATA_ROOT / '.gitignore'
     if not workspace_ignore.exists():
         workspace_ignore.write_text('__pycache__/\n*.pyc\n')
@@ -91,7 +145,6 @@ def ensure_workspace(update_runtime=False):
     bootstrap_workspace_files(update_runtime=update_runtime)
     (DATA_ROOT / 'config').mkdir(parents=True, exist_ok=True)
     (DATA_ROOT / 'rules').mkdir(parents=True, exist_ok=True)
-    (DATA_ROOT / 'templates').mkdir(parents=True, exist_ok=True)
     (DATA_ROOT / 'logs').mkdir(parents=True, exist_ok=True)
     STORE.mkdir(parents=True, exist_ok=True)
     machine = DATA_ROOT / 'config' / 'machine.json'
@@ -115,7 +168,7 @@ def ensure_workspace(update_runtime=False):
         if updated != values:
             machine.write_text(json.dumps(updated, indent=2) + '\n')
     defaults = SOURCE_ROOT / 'defaults'
-    for group in ('rules', 'templates'):
+    for group in ('rules',):
         source = defaults / group
         target = DATA_ROOT / group
         if source.is_dir():
@@ -174,14 +227,14 @@ def sync_workspace():
 
 
 def select_template(kind):
-    names = {'readme': 'README.md', 'release': 'release-notes.md',
-             'description': 'repository-description.md'}
-    name = names[kind]
-    for folder in (DATA_ROOT / 'templates', SOURCE_ROOT / 'defaults/templates'):
-        path = folder / name
+    relative = TEMPLATE_LOCATIONS[kind]
+    # Read old personal paths until explicit setup migrates them. Template lookup
+    # itself is read-only and must not replace an existing personal choice.
+    for path in (DATA_ROOT / 'templates' / relative.name,
+                 DATA_ROOT / relative, SOURCE_ROOT / relative):
         if path.is_file():
             return path
-    raise RuntimeError(f'Template not found: {name}')
+    raise RuntimeError(f'Template not found: {relative}')
 
 
 def load_machine_config():
