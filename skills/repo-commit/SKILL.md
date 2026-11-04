@@ -29,6 +29,9 @@ details in commits or PRs.
 
 Run the project tests, `git diff --check`, and the local [Kysaro](https://github.com/murpiano/kysaro) range check when
 available. Never bypass a failing hook or CI check without an explicit decision.
+When README changes, follow `repo-readme` and run
+`bash <murpiano-dx>/sync.sh check-readme <project>` before commit, PR, or merge.
+Fix all template failures; do not silently waive them.
 
 ## Done
 
