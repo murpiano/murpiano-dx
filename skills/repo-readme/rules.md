@@ -5,8 +5,11 @@
 Use the selected template's section names and order. Preserve its static text,
 footer, and links; fill placeholders with verified project facts. Follow explicit
 conditional instructions. Existing README structure does not override the template.
-Only an explicit user instruction permits a departure. Keep agent-only pointers
-and development traces out of public product documentation.
+Only an explicit user instruction permits a departure. Preserve any existing
+agent entry-point notice as the first line. Keep the footer's four links exactly
+as written, including MIT regardless of a local LICENSE file; do not insert
+separator dots or HTML wrappers. Keep unrelated development traces out of
+public product documentation.
 
 ## Accuracy
 

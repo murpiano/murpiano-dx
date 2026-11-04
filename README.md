@@ -1,3 +1,5 @@
+> Agent entry point: read [AGENTS.md](https://github.com/murpiano/murpiano-dx/blob/main/AGENTS.md) and stop reading this README. This page is for humans.
+
 ![murpiano Developer Experience](resources/logo.png)
 
 # murpiano-dx
@@ -283,4 +285,4 @@ decision and verify the [Kysaro](https://github.com/murpiano/kysaro) Git linter 
 
 ---
 
-<sub>[Bogdan Trotsenko](https://github.com/murpiano) · [murpiano](https://github.com/murpiano) · [Telegram](https://t.me/murpiano)</sub>
+[Bogdan Trotsenko](https://github.com/murpiano) [murpiano](https://github.com/murpiano) [Telegram](https://t.me/murpiano) [MIT](https://github.com/murpiano/my-world/blob/main/LICENSE)
