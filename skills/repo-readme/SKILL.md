@@ -18,6 +18,14 @@ template corrections must not remove it. Product documentation about AI is allow
 
 Use only facts confirmed by the repository. Do not invent features or guarantees.
 
+## Default license
+
+Use MIT by default for a project that has no license, unless the user chooses
+another license. Create `LICENSE` from `templates/LICENSE`, replacing `{{YEAR}}`
+with the current year and `{{COPYRIGHT_HOLDER}}` with the verified project owner.
+Keep package license metadata consistent when present. Preserve existing licenses;
+do not replace them without explicit user instruction.
+
 ## GitHub metadata
 
 Keep the description short and specific. Use a small set of relevant topics and

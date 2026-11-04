@@ -1,5 +1,6 @@
 {
   "name": "murpiano-dx",
+  "license": "MIT",
   "version": "0.3.0",
   "description": "Shared development rules and project notes for coding agents, with Git convention checks, documentation, CI, and releases.",
   "repository": {
