@@ -1016,6 +1016,25 @@ fi
         self.assertNotEqual(invalid.returncode, 0)
         self.assertIn('must contain {{CHANGES}}', invalid.stderr)
 
+    def test_check_readme_uses_personal_template_without_initializing(self):
+        personal = self.dx / 'templates'
+        personal.mkdir()
+        (personal / 'README.md').write_text('## Rough edges\n')
+        (self.project / 'README.md').write_text('## License\n')
+        args = ['bash', 'sync.sh', 'check-readme', str(self.project)]
+        invalid = self.run_cmd(args, check=False)
+        self.assertNotEqual(invalid.returncode, 0)
+        self.assertIn('Rough edges', invalid.stderr)
+        self.assertFalse((self.project / 'AGENTS.md').exists())
+        (self.project / 'README.md').write_text('## Rough edges\n')
+        valid = self.run_cmd(args)
+        self.assertIn(str(personal / 'README.md'), valid.stdout)
+        explicit = self.base / 'explicit.md'
+        explicit.write_text('## Custom\n')
+        overridden = self.run_cmd(args + ['--template', str(explicit)], check=False)
+        self.assertNotEqual(overridden.returncode, 0)
+        self.assertIn('Custom', overridden.stderr)
+
 
 if __name__ == '__main__':
     unittest.main()
