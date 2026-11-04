@@ -2,10 +2,11 @@
 
 ## Order
 
-1. Agent pointer and project title.
-2. One-sentence purpose and the main CI/Release badges.
-3. Human overview, installation, usage, configuration, and project structure.
-4. Development checks, limitations, and links.
+Use the selected template's section names and order. Preserve its static text,
+footer, and links; fill placeholders with verified project facts. Follow explicit
+conditional instructions. Existing README structure does not override the template.
+Only an explicit user instruction permits a departure. Keep agent-only pointers
+and development traces out of public product documentation.
 
 ## Accuracy
 
@@ -22,3 +23,6 @@ and at least one published release. Remove stale badges.
 
 Check links, headings, code fences, spelling, and `git diff --check`. Keep the
 README focused on user value; put agent-only workflow in `AGENTS.md` and skills.
+Run `bash <murpiano-dx>/sync.sh check-readme <project>` before completion,
+commit, PR, or publication. Use `--template <path>` for an explicitly selected
+template. Fix all failures and review factual accuracy separately.
