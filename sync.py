@@ -463,13 +463,21 @@ def connect(folder, mode='start', choice=None, quiet=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['init', 'start', 'end', 'link', 'workspace', 'template'], nargs='?', default='start')
+    parser.add_argument('mode', choices=['init', 'start', 'end', 'link', 'workspace', 'template', 'check-readme'], nargs='?', default='start')
     parser.add_argument('project', type=Path, nargs='?', default=Path.cwd())
     parser.add_argument('--kind', choices=['readme', 'release', 'description'])
+    parser.add_argument('--template', type=Path, help='Explicit README template (check-readme only)')
     parser.add_argument('--local', action='store_true', help='Check project state without network sync (start only)')
     parser.add_argument('--kysaro', choices=['approved', 'declined', 'enabled'],
                         help='Record the owner decision or verify completed setup (init only)')
     args = parser.parse_args()
+    if args.template and args.mode != 'check-readme':
+        parser.error('--template is only available with check-readme')
+    if args.mode == 'check-readme':
+        template = args.template or select_template('readme')
+        checker = SOURCE_ROOT / 'skills/repo-readme/scripts/check_readme.py'
+        sys.exit(subprocess.call([sys.executable, str(checker),
+                                  str(args.project / 'README.md'), '--template', str(template)]))
     if args.local and args.mode != 'start':
         parser.error('--local is only available with start')
     if args.mode == 'template':

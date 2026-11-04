@@ -5,8 +5,8 @@ description: Use when writing, reviewing, or updating a repository README, GitHu
 
 # Repository documentation
 
-Write for humans in clear English. Keep the agent pointer at the top of README:
-read `AGENTS.md` and stop reading the page. Put images after that pointer.
+Write for humans in clear English. Keep agent instructions in `AGENTS.md` and
+skills, not in the public README. Product documentation about AI is allowed.
 
 ## Required content
 
@@ -31,3 +31,21 @@ Editing those files is enough; no registration or special user phrase is needed.
 An explicitly requested template for the current task takes precedence.
 Use [rules.md](rules.md) for details and [template.md](template.md) only if neither
 a user template nor a default template is available. Never overwrite user templates.
+
+## Template contract
+
+The selected template is mandatory, not inspiration. Preserve its fixed section
+names and order, static text, footer, and links. Replace placeholders with facts
+verified in the repository. The existing README never overrides the template.
+Apply conditional instructions in the template, such as using CLI instead of API.
+Depart from the contract only when the user explicitly requests the exception.
+If the selected template differs from the user's stated template, resolve the
+discrepancy before editing; do not silently substitute another template.
+
+Before completing a README change or committing, opening a PR, or publishing it,
+run `bash <murpiano-dx>/sync.sh check-readme <project>` and fix every failure.
+Use `--template <path>` when the user explicitly selected another template.
+Also review fixed prose, commands, links, and conditional sections manually: the
+checker validates structure, footer, and remaining placeholders, not factual accuracy.
+Report the selected template path and the validation result. Never claim template
+compliance when validation fails.
