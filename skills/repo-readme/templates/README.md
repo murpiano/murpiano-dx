@@ -1,4 +1,7 @@
 <!-- Preserve an existing agent entry-point notice as the first line.
+     Default license: MIT. For projects without a license, create LICENSE from
+     this skill's templates/LICENSE and fill its year and verified copyright holder.
+     Preserve existing licenses unless the user explicitly requests a change.
      Keep the cover only when a real asset exists. Translate section names together
      when the project uses another language. -->
 ![<Name>](docs/screenshot.jpg)
@@ -96,4 +99,4 @@ Base URL: `<url>`
 
 ---
 
-[Bogdan Trotsenko](https://github.com/murpiano) [murpiano](https://github.com/murpiano) [Telegram](https://t.me/murpiano) [MIT](https://github.com/murpiano/my-world/blob/main/LICENSE)
+<sub>[Bogdan Trotsenko](https://github.com/murpiano) · [murpiano](https://github.com/murpiano) · [Telegram](https://t.me/murpiano) · [MIT](LICENSE)</sub>
