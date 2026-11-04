@@ -10,8 +10,8 @@ static text, footer, and links. Replace placeholders with verified project facts
 Follow the template's conditional instructions. The existing README never takes
 precedence. Depart only on explicit user instruction. Preserve an existing agent
 entry-point notice as the first line; template corrections must not remove it.
-Preserve all four footer links, including MIT even without a local LICENSE file.
-Do not add separator dots or HTML wrappers to the footer. Keep unrelated
+Preserve all four footer links, including `[MIT](LICENSE)`, inside `<sub>` and
+separated by ` · `. Do not omit the license link. Keep unrelated
 development traces out of public product documentation.
 
 Run `bash <murpiano-dx>/sync.sh check-readme <project>` and fix every failure
