@@ -25,12 +25,14 @@ workflow exists and a Release badge only for a public repository with releases.
 
 Read the user's `rules/readme.md`. Resolve each requested template with
 `bash <murpiano-dx>/sync.sh template --kind readme` or `--kind description`,
-then read the returned file. The user's `templates/README.md` and
-`templates/repository-description.md` take precedence over bundled defaults.
+then read the returned file. Templates live inside this skill in
+`templates/README.md` and `templates/repository-description.md`. The personal
+workspace's skill templates take precedence over the distribution's copies.
 Editing those files is enough; no registration or special user phrase is needed.
 An explicitly requested template for the current task takes precedence.
-Use [rules.md](rules.md) for details and [template.md](template.md) only if neither
-a user template nor a default template is available. Never overwrite user templates.
+Use [rules.md](rules.md) for details. Never overwrite user templates during an update.
+Explicit setup migrates old workspace-level `templates/` files into this skill;
+until then, template lookup still honors the old personal paths.
 
 ## Template contract
 

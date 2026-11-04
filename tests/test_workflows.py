@@ -992,11 +992,95 @@ fi
         for kind, name in [('readme', 'README.md'), ('description', 'repository-description.md'),
                            ('release', 'release-notes.md')]:
             result = self.run_cmd(['bash', 'sync.sh', 'template', '--kind', kind])
-            expected = personal / name if kind == 'readme' else self.dx / 'defaults/templates' / name
+            skill = 'repo-release' if kind == 'release' else 'repo-readme'
+            expected = personal / name if kind == 'readme' else self.dx / 'skills' / skill / 'templates' / name
             self.assertEqual(result.stdout.strip(), str(expected))
         (personal / 'README.md').unlink()
         result = self.run_cmd(['bash', 'sync.sh', 'template', '--kind', 'readme'])
-        self.assertEqual(result.stdout.strip(), str(self.dx / 'defaults/templates/README.md'))
+        self.assertEqual(result.stdout.strip(), str(self.dx / 'skills/repo-readme/templates/README.md'))
+
+    def test_setup_migrates_personal_templates_without_changing_bytes(self):
+        personal = self.dx / 'templates'
+        personal.mkdir()
+        (personal / 'README.md').write_text('Custom README template\n')
+        destination = self.dx / 'skills/repo-readme/templates/README.md'
+        destination.unlink()
+        old_workflow = self.dx / 'skills/repo-release/release.yml'
+        old_workflow.write_text('name: My release workflow\n')
+        new_workflow = self.dx / 'skills/repo-release/templates/release.yml'
+        new_workflow.unlink()
+        result = self.run_cmd(['bash', 'sync.sh', 'workspace'])
+        self.assertIn('Local workspace', result.stdout)
+        self.assertEqual(destination.read_text(), 'Custom README template\n')
+        self.assertEqual(new_workflow.read_text(), 'name: My release workflow\n')
+        self.assertFalse(old_workflow.exists())
+        self.assertFalse(personal.exists())
+        self.run_cmd(['bash', 'sync.sh', 'workspace'])
+        self.assertEqual(destination.read_text(), 'Custom README template\n')
+        selected = self.run_cmd(['bash', 'sync.sh', 'template', '--kind', 'readme'])
+        self.assertEqual(selected.stdout.strip(), str(destination))
+
+    def test_template_migration_conflict_keeps_all_originals(self):
+        personal = self.dx / 'templates'
+        personal.mkdir()
+        (personal / 'README.md').write_text('Custom README\n')
+        (personal / 'release-notes.md').write_text('Custom release notes\n')
+        result = self.run_cmd(['bash', 'sync.sh', 'workspace'], check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Conflicting templates', result.stderr)
+        self.assertEqual((personal / 'README.md').read_text(), 'Custom README\n')
+        self.assertEqual((personal / 'release-notes.md').read_text(), 'Custom release notes\n')
+
+    def test_template_migration_archives_redundant_copies(self):
+        legacy = self.dx / 'defaults/templates'
+        legacy.mkdir()
+        (legacy / 'README.md').write_text('Old incomplete default\n')
+        fallback = self.dx / 'skills/repo-readme/template.md'
+        fallback.write_text('Old fallback\n')
+        selected = self.dx / 'skills/repo-readme/templates/README.md'
+        before = selected.read_bytes()
+        self.run_cmd(['bash', 'sync.sh', 'workspace'])
+        archive = self.dx / '.runtime-backup/skill-templates'
+        self.assertEqual((archive / 'defaults/templates/README.md').read_text(), 'Old incomplete default\n')
+        self.assertEqual((archive / 'skills/repo-readme/template.md').read_text(), 'Old fallback\n')
+        self.assertEqual(selected.read_bytes(), before)
+        self.assertFalse(legacy.exists())
+        self.assertFalse(fallback.exists())
+
+    def test_template_archive_conflict_does_not_partially_migrate(self):
+        personal = self.dx / 'templates'
+        personal.mkdir()
+        (personal / 'README.md').write_text('My README\n')
+        (self.dx / 'skills/repo-readme/templates/README.md').unlink()
+        legacy = self.dx / 'defaults/templates'
+        legacy.mkdir()
+        (legacy / 'README.md').write_text('Old default\n')
+        archived = self.dx / '.runtime-backup/skill-templates/defaults/templates'
+        archived.mkdir(parents=True)
+        (archived / 'README.md').write_text('Different previous backup\n')
+        result = self.run_cmd(['bash', 'sync.sh', 'workspace'], check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('archive conflict', result.stderr)
+        self.assertEqual((personal / 'README.md').read_text(), 'My README\n')
+        self.assertEqual((legacy / 'README.md').read_text(), 'Old default\n')
+
+    def test_bootstrap_preserves_legacy_choice_until_explicit_setup(self):
+        workspace = self.base / 'workspace'
+        legacy = workspace / 'templates'
+        legacy.mkdir(parents=True)
+        (legacy / 'README.md').write_text('My old personal template\n')
+        env = self.env.copy()
+        env['MURPIANO_DX_DATA_DIR'] = str(workspace)
+        args = ['bash', str(self.dx / 'sync.sh'), 'start', '--local']
+        subprocess.run(args, env=env, input='', text=True, capture_output=True,
+                       check=True, cwd=self.project)
+        target = workspace / 'skills/repo-readme/templates/README.md'
+        self.assertFalse(target.exists())
+        self.assertEqual((legacy / 'README.md').read_text(), 'My old personal template\n')
+        subprocess.run(['bash', str(self.dx / 'sync.sh'), 'workspace'], env=env,
+                       input='', text=True, capture_output=True, check=True)
+        self.assertEqual(target.read_text(), 'My old personal template\n')
+        self.assertFalse(legacy.exists())
 
     def test_release_template_preserves_generated_changes(self):
         self.git(self.project, 'tag', 'v0.1.0')

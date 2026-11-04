@@ -1,5 +1,3 @@
-> Agent entry point: read [AGENTS.md](https://github.com/murpiano/murpiano-dx/blob/main/AGENTS.md) and stop reading this README. This page is for humans.
-
 ![murpiano Developer Experience](resources/logo.png)
 
 # murpiano-dx
@@ -22,27 +20,9 @@ Existing projects may need the [agent-data migration](#already-have-agent-files-
 [![CI](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml/badge.svg)](https://github.com/murpiano/murpiano-dx/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/murpiano/murpiano-dx?color=informational)](https://github.com/murpiano/murpiano-dx/releases/latest)
 
-## What changes after installation?
+[How it works](#how-it-works) · [Run locally](#run-locally) · [CLI](#cli)
 
-You get a personal folder at `~/.murpiano-dx`. It holds the framework, your rules,
-your templates, and a separate folder of saved agent data for each connected
-project. You can edit these files directly.
-
-After you connect a project, its agent reads the shared rules and keeps project
-notes in this central folder. Connect another project, and it uses the same rules
-with its own notes.
-
-![murpiano-dx in the center, an optional GitHub backup above it, and two independent projects on either side. Each agent reads shared rules and saves its own project data in murpiano-dx.](resources/project-data-flow.svg)
-
-The two lines for each project show two different things: **rules go to the
-agent; saved notes and setup state live in murpiano-dx.** The project keeps its
-own source code and Git history. Each project's notes stay in its own folder.
-
-For example, ask an agent to write a README. It reads your shared README rules
-and template. Ask it to commit a change, and it follows your Git rules. You do
-not need to repeat those rules in every project or every chat.
-
-## What does it help with?
+## What you can do
 
 | Task | What murpiano-dx provides |
 | --- | --- |
@@ -63,7 +43,27 @@ checks pass.
 Saved context means files the agent writes, such as notes and decisions. It does
 not mean every chat message or every tool call is captured automatically.
 
-## First installation
+## How it works
+
+You get a personal folder at `~/.murpiano-dx`. It holds the framework, your rules,
+your templates, and a separate folder of saved agent data for each connected
+project. You can edit these files directly.
+
+After you connect a project, its agent reads the shared rules and keeps project
+notes in this central folder. Connect another project, and it uses the same rules
+with its own notes.
+
+![murpiano-dx in the center, an optional GitHub backup above it, and two independent projects on either side. Each agent reads shared rules and saves its own project data in murpiano-dx.](resources/project-data-flow.svg)
+
+The two lines for each project show two different things: **rules go to the
+agent; saved notes and setup state live in murpiano-dx.** The project keeps its
+own source code and Git history. Each project's notes stay in its own folder.
+
+For example, ask an agent to write a README. It reads your shared README rules
+and template. Ask it to commit a change, and it follows your Git rules. You do
+not need to repeat those rules in every project or every chat.
+
+## Run locally
 
 Requirements: Linux or WSL, Bash, Git, Python 3.11+, and GitHub CLI (`gh`).
 Node.js and npm are needed only if you install the [Kysaro](https://github.com/murpiano/kysaro) Git linter.
@@ -198,7 +198,17 @@ setup. It uses your signed-in GitHub account and the repository name
 murpiano-dx restore git@github.com:OWNER/custom-name.git
 ```
 
-## Where do I change my rules?
+### Development checks
+
+The public repository includes tests and GitHub workflows for maintaining the
+framework. These are excluded from the installed personal copy.
+
+```bash
+python3 -B -m unittest discover -s tests -v
+bash -n install.sh sync.sh murpiano-dx skills/repo-release/release.sh
+```
+
+## Where things live
 
 Edit the files in your personal folder:
 
@@ -206,10 +216,11 @@ Edit the files in your personal folder:
 ~/.murpiano-dx/
 ├── AGENTS.md                  entry point for any coding agent
 ├── rules/                     your shared Git, README, CI, and release rules
-├── templates/                 your README, description, and release templates
 ├── config/machine.json        saved Git identity and GitHub account
 ├── config/backup.json         saved GitHub backup choice
-├── skills/                    step-by-step instructions for agents
+├── skills/                    each skill owns its instructions, rules, and templates
+│   ├── repo-readme/templates/  README and repository-description templates
+│   └── repo-release/templates/ release-notes and workflow templates
 ├── projects/OWNER/REPO/        separate data for each connected project
 │   ├── workflow.json          setup decisions, including the Git linter
 │   ├── files/
@@ -224,11 +235,18 @@ rules and Git-linter settings take precedence over shared defaults.
 
 ### Your templates
 
-Edit `templates/README.md`, `templates/repository-description.md`, or
-`templates/release-notes.md`. The next matching task uses your file automatically;
+Edit `skills/repo-readme/templates/README.md`,
+`skills/repo-readme/templates/repository-description.md`, or
+`skills/repo-release/templates/release-notes.md`. The next matching task uses your file automatically;
 you do not register it or repeat its name to the agent. If that file is missing,
 the framework uses its bundled default. To use an extra file for one task, tell
 the agent which file to read.
+
+Setup migrates the former workspace-level `templates/` files into the owning
+skills without changing their contents. Lookup still honors the old paths until
+you run setup. Conflicting old and new personal templates stop migration and keep
+both files. Redundant defaults and the former README fallback are archived in
+`.runtime-backup/skill-templates/`; they are not active templates.
 
 Automatic release notes use `{{CHANGES}}` for generated changes and optionally
 `{{VERSION}}` and `{{PREVIOUS_VERSION}}`. When setting up or updating releases,
@@ -236,7 +254,7 @@ the agent copies your template to the project's `.github/release-notes.md` so CI
 can read it. Later edits to your personal template apply to the next setup/update;
 already configured CI keeps its committed copy until you ask the agent to update it.
 
-## Commands
+## CLI
 
 Setup adds `murpiano-dx` to `~/.local/bin`. Run project commands from the project
 folder, or pass its path.
@@ -249,20 +267,20 @@ folder, or pass its path.
 | `murpiano-dx start [path]` | Exchange workspace updates and show project state |
 | `murpiano-dx end [path]` | Refresh project links and synchronize workspace data immediately |
 | `murpiano-dx link` | Reconnect known projects under `~/projects` or `PROJECTS_DIR` |
-| `murpiano-dx workspace` | Show the personal folder path |
+| `murpiano-dx workspace` | Prepare the personal workspace and migrate legacy templates |
+| `murpiano-dx template --kind readme` | Show the selected README template path |
+| `murpiano-dx check-readme [path]` | Validate README headings, footer, and placeholders |
 
 Agents use `init --kysaro approved`, `declined`, or `enabled` to record your
 decision and verify the [Kysaro](https://github.com/murpiano/kysaro) Git linter setup. You do not need to manage these states by hand.
 
-Projects currently need a GitHub origin owned by your configured account to
-connect. Your personal folder must remain available for the project links to work.
+## Rough edges
 
-## Developing murpiano-dx
+- Projects need a GitHub origin owned by your configured account to connect.
+- Your personal folder must remain available for project links to work.
+- Only written files are synchronized; chats and unwritten thoughts are not captured.
+- README validation checks structure, footer, and placeholders. Factual accuracy still needs review.
 
-The public repository includes tests and GitHub workflows for maintaining the
-framework. These are excluded from the installed personal copy.
+---
 
-```bash
-python3 -B -m unittest discover -s tests -v
-bash -n install.sh sync.sh murpiano-dx skills/repo-release/release.sh
-```
+<sub>[Bogdan Trotsenko](https://github.com/murpiano) · [murpiano](https://github.com/murpiano) · [Telegram](https://t.me/murpiano)</sub>
