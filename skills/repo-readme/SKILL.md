@@ -5,8 +5,9 @@ description: Use when writing, reviewing, or updating a repository README, GitHu
 
 # Repository documentation
 
-Write for humans in clear English. Keep agent instructions in `AGENTS.md` and
-skills, not in the public README. Product documentation about AI is allowed.
+Write for humans in clear English. Keep detailed agent instructions in `AGENTS.md`
+and skills. Preserve an existing agent entry-point notice as the first README line;
+template corrections must not remove it. Product documentation about AI is allowed.
 
 ## Required content
 
@@ -40,6 +41,8 @@ The selected template is mandatory, not inspiration. Preserve its fixed section
 names and order, static text, footer, and links. Replace placeholders with facts
 verified in the repository. The existing README never overrides the template.
 Apply conditional instructions in the template, such as using CLI instead of API.
+Keep the footer exactly as written, including the MIT link even when the project
+has no local LICENSE file. Do not insert separator dots or wrap it in HTML.
 Depart from the contract only when the user explicitly requests the exception.
 If the selected template differs from the user's stated template, resolve the
 discrepancy before editing; do not silently substitute another template.
