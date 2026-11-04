@@ -8,11 +8,14 @@ description: Use when managing releases, tests, CI, release notes, or release au
 Releases follow successful CI on `main`. The agent manages them only when requested.
 Commit work belongs to `repo-commit`; README authoring belongs to `repo-readme`.
 
-Rules: [rules.md](rules.md). Project files: `release.yml` and `release.sh`.
+Rules: [rules.md](rules.md). Workflow template: `templates/release.yml`.
+Release script: `release.sh`.
 
 Read the user's `rules/releases.md` and resolve the notes template with
 `bash <murpiano-dx>/sync.sh template --kind release`. Read the returned file;
-the user's `templates/release-notes.md` takes precedence over bundled defaults.
+the personal workspace's `skills/repo-release/templates/release-notes.md` takes
+precedence over the distribution's copy. Explicit setup migrates the old
+workspace-level `templates/release-notes.md`; lookup honors it until migration.
 Editing that file is enough; no registration is required. An explicit task template wins.
 For manual notes, follow its structure. For automatic releases, copy the selected
 template to the project's `.github/release-notes.md` during setup or requested updates.
