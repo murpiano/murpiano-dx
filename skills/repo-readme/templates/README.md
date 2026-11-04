@@ -1,4 +1,7 @@
 <!-- Preserve an existing agent entry-point notice as the first line.
+     Default license: MIT. For projects without a license, create LICENSE from
+     this skill's templates/LICENSE and fill its year and verified copyright holder.
+     Preserve existing licenses unless the user explicitly requests a change.
      Keep the cover only when a real asset exists. Translate section names together
      when the project uses another language. -->
 ![<Name>](docs/screenshot.jpg)
