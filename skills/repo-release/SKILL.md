@@ -16,7 +16,10 @@ the user's `templates/release-notes.md` takes precedence over bundled defaults.
 Editing that file is enough; no registration is required. An explicit task template wins.
 For manual notes, follow its structure. For automatic releases, copy the selected
 template to the project's `.github/release-notes.md` during setup or requested updates.
-That copy must contain `{{CHANGES}}`, replaced by generated change sections; it may
+Generated notes use commit subjects plus concrete points from commit bodies. The
+generator removes duplicate points and keeps the latest point when equivalent
+points conflict. Release descriptions must be strictly English; fail generation
+when generated content contains Cyrillic text. That copy must contain `{{CHANGES}}`, replaced by generated change sections; it may
 also use `{{VERSION}}` and `{{PREVIOUS_VERSION}}`. CI uses the committed copy,
 because the personal workspace is not available on GitHub runners. Do not copy
 project notes, machine settings, or secrets into it.
