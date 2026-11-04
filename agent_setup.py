@@ -128,9 +128,6 @@ def configure(root, only=None, previous_root=None):
 def connect_skills(root, folders, previous_root=None):
     for folder in dict.fromkeys(folders):
         folder.mkdir(parents=True, exist_ok=True)
-        retired = folder / 'repo-cleanup'
-        if retired.is_symlink() and retired.resolve() == root / 'skills/repo-cleanup':
-            retired.unlink()
         for skill in sorted((root / 'skills').iterdir()):
             if not (skill / 'SKILL.md').is_file():
                 continue
