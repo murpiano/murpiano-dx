@@ -55,17 +55,18 @@ class ReadmeContract(unittest.TestCase):
         self.assertEqual(CHECKER.check('## CLI\n', template), [])
         self.assertTrue(CHECKER.check('## Configuration\n', template))
 
-    def test_showcase_footer_requires_exact_links_without_separators(self):
-        footer = ('[Bogdan Trotsenko](https://github.com/murpiano) '
-                  '[murpiano](https://github.com/murpiano) '
-                  '[Telegram](https://t.me/murpiano) '
-                  '[MIT](https://github.com/murpiano/my-world/blob/main/LICENSE)')
+    def test_showcase_footer_requires_sub_separators_and_local_license(self):
+        footer = ('<sub>[Bogdan Trotsenko](https://github.com/murpiano) · '
+                  '[murpiano](https://github.com/murpiano) · '
+                  '[Telegram](https://t.me/murpiano) · '
+                  '[MIT](LICENSE)</sub>')
         bundled = (ROOT / 'skills/repo-readme/templates/README.md').read_text()
         self.assertEqual(bundled.strip().splitlines()[-1], footer)
         template = '## Rough edges\n\n---\n\n' + footer + '\n'
         self.assertEqual(CHECKER.check(template, template), [])
-        for wrong in (footer.rsplit(' [MIT]', 1)[0], footer.replace(') [', ') · ['),
-                      '<sub>' + footer + '</sub>'):
+        for wrong in (footer.replace(' · [MIT](LICENSE)', ''), footer.replace(' · ', ' '),
+                      footer.removeprefix('<sub>').removesuffix('</sub>'),
+                      footer.replace('(LICENSE)', '(https://example.com/LICENSE)')):
             self.assertTrue(CHECKER.check(template.replace(footer, wrong), template))
 
     def test_framework_keeps_agent_notice_as_first_line(self):

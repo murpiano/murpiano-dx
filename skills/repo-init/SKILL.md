@@ -30,5 +30,8 @@ development task does not reinitialize the project.
 
 ## Completion
 
+For projects without a license, follow `repo-readme`'s default MIT license setup
+using `skills/repo-readme/templates/LICENSE`. Preserve existing licenses.
+
 The project has a local Git repository, a preserved or approved origin, linked
 project data, and a verified [Kysaro](https://github.com/murpiano/kysaro) installation when the owner approved it.
