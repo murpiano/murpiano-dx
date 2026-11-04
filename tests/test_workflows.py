@@ -248,7 +248,9 @@ class Workflows(unittest.TestCase):
         settings.parent.mkdir()
         settings.write_text('{}\n')
         self.git(self.project, 'add', 'README.md', '.kysaro/settings.json')
-        self.git(self.project, 'commit', '-qm', 'docs: describe product')
+        subprocess.run(['git', 'commit', '-qm', 'docs: describe product'], cwd=self.project,
+                       env={**self.env, 'MURPIANO_ON_MAIN': '1'}, input='', text=True,
+                       capture_output=True, check=True, timeout=25)
         self.migrate('--apply')
         self.assertFalse(readme.is_symlink())
         self.assertFalse(settings.is_symlink())
@@ -629,16 +631,15 @@ class Workflows(unittest.TestCase):
         self.assertTrue(self.git(check, 'config', '--get', 'user.name').stdout.strip())
         self.assertTrue(self.git(check, 'config', '--get', 'user.email').stdout.strip())
 
-    def test_installer_removes_only_owned_retired_skill(self):
+    def test_installer_links_repo_cleanup_like_any_other_skill(self):
         folder = self.home / '.agents/skills'
         folder.mkdir(parents=True)
-        retired = folder / 'repo-cleanup'
-        retired.symlink_to(self.dx / 'skills/repo-cleanup')
         custom = folder / 'repo-commit'
         custom.mkdir()
         (custom / 'mine').write_text('keep')
         self.run_cmd(['bash', 'install.sh'])
-        self.assertFalse(retired.is_symlink())
+        linked = folder / 'repo-cleanup'
+        self.assertEqual(linked.resolve(), self.dx / 'skills/repo-cleanup')
         self.assertEqual((custom / 'mine').read_text(), 'keep')
 
     def test_invalid_instruction_markers_leave_installation_untouched(self):
@@ -709,7 +710,8 @@ fi
         self.assertTrue((self.project / '.agents').is_symlink())
         self.git(self.project, 'add', '-A')
         self.assertEqual(self.git(self.project, 'diff', '--cached', '--name-only').stdout, '')
-        self.assertFalse((self.project / '.git/hooks/pre-commit').exists())
+        self.assertIn('# murpiano-dx: agent-trace pre-commit scan (skills/repo-cleanup)',
+                      (self.project / '.git/hooks/pre-commit').read_text())
 
     def test_project_notes_update_the_store_and_reconnect(self):
         self.sync()
@@ -813,10 +815,18 @@ fi
         path.write_text(text + ('# custom changes\n' if custom else ''))
         return path
 
-    def test_only_owned_unmodified_hook_is_removed(self):
-        hook = self.old_hook()
+    def test_precommit_hook_is_installed(self):
+        hook = self.project / '.git/hooks/pre-commit'
         self.sync()
-        self.assertFalse(hook.exists())
+        text = hook.read_text()
+        self.assertIn('# murpiano-dx: agent-trace pre-commit scan (skills/repo-cleanup)', text)
+        self.assertIn('skills/repo-cleanup/pre-commit-hook.sh', text)
+        self.assertTrue(os.access(hook, os.X_OK))
+        before = hook.read_bytes()
+        self.sync()
+        self.assertEqual(hook.read_bytes(), before)
+
+    def test_hook_with_marker_is_left_as_customized(self):
         hook = self.old_hook(custom=True)
         before = hook.read_bytes()
         self.sync()
