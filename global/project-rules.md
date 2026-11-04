@@ -5,7 +5,8 @@ check project state. If a murpiano-dx SessionStart hook already reported sync,
 use `{{SYNC}} start --local` to avoid a duplicate network exchange. Report sync errors.
 Read task-specific rules from `{{ROOT}}/skills/` and editable overrides in
 `{{DATA_ROOT}}/rules/`: Git — `repo-commit`, README and metadata — `repo-readme`,
-releases and CI — `repo-release`. Resume setup through
+releases and CI — `repo-release`, agent-trace and secret scan before publishing —
+`repo-cleanup` (its pre-commit scan is already installed). Resume setup through
 `repo-init` only when requested; its state is `{{STORE}}/workflow.json`.
 
 Project data is stored in `{{STORE}}`. Keep decisions, verification commands, and

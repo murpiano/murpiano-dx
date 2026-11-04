@@ -11,6 +11,7 @@ This file is the agent entry point for `murpiano-dx`.
    - `skills/repo-readme/SKILL.md` for README and repository metadata;
    - `skills/repo-release/SKILL.md` for releases and CI.
    - `skills/repo-agent-data/SKILL.md` for moving existing agent files out of a project's published tree.
+   - `skills/repo-cleanup/SKILL.md` for scanning or removing agent-development traces and secrets before publishing.
 3. Read the relevant project data under `projects/` only when the task needs it.
 4. Run the checks required by the selected skill.
 

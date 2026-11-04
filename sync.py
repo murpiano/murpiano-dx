@@ -315,20 +315,31 @@ def exclude_agent_files(project):
         path.write_text(updated)
 
 
-def remove_old_hook(project):
+PRECOMMIT_MARKER = '# murpiano-dx: agent-trace pre-commit scan (skills/repo-cleanup)'
+
+
+def install_precommit_hook(project, key):
+    """Install the agent-trace pre-commit scanner for a tracked project.
+
+    Idempotent: skipped if already installed, left alone if the project has
+    its own unrelated pre-commit hook.
+    """
     path = git_path(project, 'hooks') / 'pre-commit'
-    if not path.is_file() or path.is_symlink():
+    if path.exists() or path.is_symlink():
+        if path.is_file() and PRECOMMIT_MARKER in path.read_text():
+            return
+        print(f'{key}: pre-commit hook already exists; not replaced. Agent-trace scan: '
+              f'bash {ACTIVE_ROOT}/skills/repo-cleanup/pre-commit-hook.sh')
         return
-    lines = path.read_text().splitlines()
-    marker = '# murpiano-dx: agent-trace pre-commit scan (skills/repo-cleanup)'
-    if marker not in lines:
-        return
-    if (len(lines) == 3 and lines[0] == '#!/usr/bin/env bash' and lines[1] == marker
-            and lines[2] == f'exec bash "{ACTIVE_ROOT}/skills/repo-cleanup/pre-commit-hook.sh"'):
-        path.unlink()
-        print('Removed the previous murpiano-dx pre-commit hook.')
-    else:
-        print(f'Check the previous repo-cleanup call in {path}: the modified hook was preserved.')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        '#!/usr/bin/env bash\n' + PRECOMMIT_MARKER + '\n'
+        f'exec bash "{ACTIVE_ROOT}/skills/repo-cleanup/pre-commit-hook.sh"\n'
+    )
+    path.chmod(0o755)
+    print(f'{key}: pre-commit hook installed. Every commit is scanned for agent traces and '
+          f'secrets before it is made (skills/repo-cleanup/policy.md); a false positive '
+          f'commits with --no-verify.')
 
 
 def attach(project, key):
@@ -498,7 +509,7 @@ def connect(folder, mode='start', choice=None, quiet=False):
             return
         state = state or {'kysaro': 'pending'}
         exclude_agent_files(project)
-        remove_old_hook(project)
+        install_precommit_hook(project, key)
         attach(project, key)
         if initialize:
             if choice == 'enabled':
