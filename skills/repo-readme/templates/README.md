@@ -1,4 +1,5 @@
-<!-- Keep the cover only when a real asset exists. Translate section names together
+<!-- Preserve an existing agent entry-point notice as the first line.
+     Keep the cover only when a real asset exists. Translate section names together
      when the project uses another language. -->
 ![<Name>](docs/screenshot.jpg)
 
@@ -95,5 +96,4 @@ Base URL: `<url>`
 
 ---
 
-<!-- Public showcase footer. Omit the license link when LICENSE does not exist. -->
-<sub>[Bogdan Trotsenko](https://github.com/murpiano) · [murpiano](https://github.com/murpiano) · [Telegram](https://t.me/murpiano) · [<License>](LICENSE)</sub>
+[Bogdan Trotsenko](https://github.com/murpiano) [murpiano](https://github.com/murpiano) [Telegram](https://t.me/murpiano) [MIT](https://github.com/murpiano/my-world/blob/main/LICENSE)
