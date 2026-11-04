@@ -14,7 +14,10 @@ Use Semantic Versioning. Use `0.x.y` while the framework is experimental; reserv
 ## Release notes
 
 Group user-visible changes under Added, Changed, Fixed, and Removed when useful.
-Mention migrations or breaking behavior explicitly. Do not include agent traces.
+Use commit bodies to add concrete implementation points, then merge equivalent
+points, remove duplicates, and resolve contradictions in favor of the latest
+commit. Release descriptions must be strictly English. Mention migrations or
+breaking behavior explicitly. Do not include agent traces.
 
 ## Automation
 
