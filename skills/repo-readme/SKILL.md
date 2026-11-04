@@ -41,8 +41,8 @@ The selected template is mandatory, not inspiration. Preserve its fixed section
 names and order, static text, footer, and links. Replace placeholders with facts
 verified in the repository. The existing README never overrides the template.
 Apply conditional instructions in the template, such as using CLI instead of API.
-Keep the footer exactly as written, including the MIT link even when the project
-has no local LICENSE file. Do not insert separator dots or wrap it in HTML.
+Keep the footer exactly as written: all four links inside `<sub>`, separated by
+` · `, with the MIT link pointing to `LICENSE`. Do not omit the license link.
 Depart from the contract only when the user explicitly requests the exception.
 If the selected template differs from the user's stated template, resolve the
 discrepancy before editing; do not silently substitute another template.
