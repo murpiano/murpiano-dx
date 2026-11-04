@@ -27,7 +27,7 @@ def headings(text):
     return result
 
 
-def check(readme, template, has_license=True):
+def check(readme, template):
     errors = []
     content = without_comments(readme)
     source = without_comments(template)
@@ -59,8 +59,6 @@ def check(readme, template, has_license=True):
     parts = re.split(r'^---\s*$', source, flags=re.M)
     if len(parts) > 1 and parts[-1].strip():
         footer = parts[-1].strip()
-        if not has_license and 'Omit the license link when LICENSE does not exist' in template:
-            footer = re.sub(r'\s*·\s*\[<License>\]\(LICENSE\)', '', footer)
         pattern = re.escape(footer)
         for placeholder in placeholders:
             pattern = pattern.replace(re.escape(placeholder), r'[^<>\n]+?')
@@ -76,8 +74,7 @@ def main():
     parser.add_argument('--template', type=Path, required=True)
     args = parser.parse_args()
     try:
-        errors = check(args.readme.read_text(), args.template.read_text(),
-                       (args.readme.parent / 'LICENSE').exists())
+        errors = check(args.readme.read_text(), args.template.read_text())
     except OSError as error:
         print(str(error), file=sys.stderr)
         return 1

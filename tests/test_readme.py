@@ -55,10 +55,24 @@ class ReadmeContract(unittest.TestCase):
         self.assertEqual(CHECKER.check('## CLI\n', template), [])
         self.assertTrue(CHECKER.check('## Configuration\n', template))
 
-    def test_optional_license_link(self):
-        template = self.template.replace('---', '---\n<!-- Omit the license link when LICENSE does not exist. -->')
-        readme = self.valid.replace(' · [MIT](LICENSE)', '')
-        self.assertEqual(CHECKER.check(readme, template, has_license=False), [])
+    def test_showcase_footer_requires_exact_links_without_separators(self):
+        footer = ('[Bogdan Trotsenko](https://github.com/murpiano) '
+                  '[murpiano](https://github.com/murpiano) '
+                  '[Telegram](https://t.me/murpiano) '
+                  '[MIT](https://github.com/murpiano/my-world/blob/main/LICENSE)')
+        bundled = (ROOT / 'skills/repo-readme/templates/README.md').read_text()
+        self.assertEqual(bundled.strip().splitlines()[-1], footer)
+        template = '## Rough edges\n\n---\n\n' + footer + '\n'
+        self.assertEqual(CHECKER.check(template, template), [])
+        for wrong in (footer.rsplit(' [MIT]', 1)[0], footer.replace(') [', ') · ['),
+                      '<sub>' + footer + '</sub>'):
+            self.assertTrue(CHECKER.check(template.replace(footer, wrong), template))
+
+    def test_framework_keeps_agent_notice_as_first_line(self):
+        first = (ROOT / 'README.md').read_text().splitlines()[0]
+        self.assertEqual(first, '> Agent entry point: read '
+                         '[AGENTS.md](https://github.com/murpiano/murpiano-dx/blob/main/AGENTS.md) '
+                         'and stop reading this README. This page is for humans.')
 
 
 if __name__ == '__main__':
