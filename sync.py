@@ -11,6 +11,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 from urllib.parse import urlsplit
 
 SOURCE_ROOT = Path(__file__).resolve().parent
@@ -36,6 +37,8 @@ WORKSPACE_FILES = (
 )
 WORKSPACE_DIRS = ('global', 'skills', 'defaults')
 WORKSPACE_MARKER = '.murpiano-dx-workspace'
+VERSION_MARKER = '.murpiano-dx-version'
+GITHUB_REPO = 'murpiano/murpiano-dx'
 RUNTIME_FILES = {'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py',
                  'configure-codex.py', 'agent_setup.py', 'workspace_sync.py', 'session_hook.py'}
 TEMPLATE_LOCATIONS = {
@@ -101,17 +104,27 @@ def copy_missing_tree(source, target, skip=()):
             shutil.copy2(item, destination)
 
 
-def bootstrap_workspace_files(update_runtime=False):
+def git_describe(repo):
+    """Latest v*.*.* tag reachable from repo's HEAD, or '' if not resolvable."""
+    result = subprocess.run(
+        ['git', '-C', str(repo), 'describe', '--tags', '--abbrev=0',
+         '--match', 'v[0-9]*.[0-9]*.[0-9]*'],
+        text=True, capture_output=True, check=False)
+    return result.stdout.strip() if result.returncode == 0 else ''
+
+
+def bootstrap_workspace_files(update_runtime=False, source_root=None):
     """Copy the distributable framework into the user's local workspace."""
     global ACTIVE_ROOT
+    source_root = source_root or SOURCE_ROOT
     if update_runtime:
         migrate_skill_templates()
-    if DATA_ROOT.resolve() == SOURCE_ROOT.resolve():
-        ACTIVE_ROOT = SOURCE_ROOT
+    if DATA_ROOT.resolve() == source_root.resolve():
+        ACTIVE_ROOT = source_root
         return
     DATA_ROOT.mkdir(parents=True, exist_ok=True)
     for name in WORKSPACE_FILES:
-        source = SOURCE_ROOT / name
+        source = source_root / name
         destination = DATA_ROOT / name
         if source.is_file() and (not destination.exists() or
                                  (update_runtime and name in RUNTIME_FILES)):
@@ -130,32 +143,38 @@ def bootstrap_workspace_files(update_runtime=False):
     if (DATA_ROOT / 'skills/repo-release/release.yml').is_file():
         legacy_templates.add(DATA_ROOT / 'skills/repo-release/templates/release.yml')
     for name in WORKSPACE_DIRS:
-        copy_missing_tree(SOURCE_ROOT / name, DATA_ROOT / name, skip=legacy_templates)
+        copy_missing_tree(source_root / name, DATA_ROOT / name, skip=legacy_templates)
     workspace_ignore = DATA_ROOT / '.gitignore'
     if not workspace_ignore.exists():
         workspace_ignore.write_text('__pycache__/\n*.pyc\n')
     marker = DATA_ROOT / WORKSPACE_MARKER
     if not marker.exists():
         marker.write_text('Local murpiano-dx workspace.\n')
+    version = git_describe(source_root)
+    if version:
+        (DATA_ROOT / VERSION_MARKER).write_text(version + '\n')
     ACTIVE_ROOT = DATA_ROOT
 
 
-def update_workspace():
-    """Refresh an existing local workspace from this framework checkout.
+def update_workspace(source_root=None):
+    """Refresh an existing local workspace from a murpiano-dx checkout.
 
     Unlike bootstrap_workspace_files on a first install (additive only), this
     overwrites the framework-owned runtime files and global/ templates
-    unconditionally, so a maintainer's changes to murpiano-dx reach an
-    already-provisioned workspace. skills/ and defaults/ stay additive
-    (copy_missing_tree never overwrites a file that already exists there),
-    so personal additions and already-restored skills are preserved.
+    unconditionally, so a change to murpiano-dx reaches an already-provisioned
+    workspace. skills/ and defaults/ stay additive (copy_missing_tree never
+    overwrites a file that already exists there), so personal additions and
+    already-restored skills are preserved. source_root defaults to this
+    checkout; pass a fetched release checkout to update from a GitHub tag
+    instead (see fetch_release_checkout).
     """
-    if DATA_ROOT.resolve() == SOURCE_ROOT.resolve():
+    source_root = source_root or SOURCE_ROOT
+    if DATA_ROOT.resolve() == source_root.resolve():
         raise RuntimeError(
             'Run update from a murpiano-dx checkout with MURPIANO_DX_DATA_DIR '
             'pointing at the workspace to refresh, not from inside the workspace itself.')
-    bootstrap_workspace_files(update_runtime=True)
-    for item in (SOURCE_ROOT / 'global').iterdir():
+    bootstrap_workspace_files(update_runtime=True, source_root=source_root)
+    for item in (source_root / 'global').iterdir():
         if not item.is_file():
             continue
         destination = DATA_ROOT / 'global' / item.name
@@ -163,6 +182,92 @@ def update_workspace():
         if not destination.exists() or destination.read_bytes() != item.read_bytes():
             shutil.copy2(item, destination)
             print(f'Updated global/{item.name}')
+
+
+def semver_tuple(tag):
+    """(major, minor, patch) from a 'v1.2.3'-style tag; non-digits stop each part."""
+    parts = []
+    for part in tag.lstrip('v').split('.')[:3]:
+        digits = ''
+        for char in part:
+            if not char.isdigit():
+                break
+            digits += char
+        parts.append(int(digits) if digits else 0)
+    parts += [0] * (3 - len(parts))
+    return tuple(parts)
+
+
+def latest_github_release():
+    """{'tag_name', 'body', 'html_url'} for the repo's latest release, or None.
+
+    A network or parsing failure returns None; callers treat this path as
+    best-effort and never let it block or fail a session.
+    """
+    import urllib.request
+    url = os.environ.get('MURPIANO_DX_RELEASE_API',
+                         f'https://api.github.com/repos/{GITHUB_REPO}/releases/latest')
+    try:
+        with urllib.request.urlopen(url, timeout=3) as response:
+            data = json.loads(response.read())
+        return {'tag_name': data['tag_name'], 'body': data.get('body') or '',
+                'html_url': data.get('html_url', '')}
+    except (OSError, ValueError, KeyError):
+        return None
+
+
+def resolve_release_tag(tag):
+    """Pass an explicit tag through; resolve 'latest' via the GitHub API."""
+    if tag != 'latest':
+        return tag
+    release = latest_github_release()
+    if release is None:
+        raise RuntimeError(f'Could not resolve the latest release of {GITHUB_REPO}.')
+    return release['tag_name']
+
+
+@contextmanager
+def fetch_release_checkout(tag):
+    """A shallow clone of this repo at `tag`, removed when the block exits."""
+    tag = resolve_release_tag(tag)
+    remote = os.environ.get('MURPIANO_DX_REMOTE', f'https://github.com/{GITHUB_REPO}.git')
+    with tempfile.TemporaryDirectory(prefix='murpiano-dx-fetch-') as tmp:
+        result = subprocess.run(
+            ['git', 'clone', '--quiet', '--depth', '1', '--branch', tag, remote, tmp],
+            text=True, capture_output=True, check=False)
+        if result.returncode:
+            raise RuntimeError(f'Could not fetch {GITHUB_REPO}@{tag}: '
+                               f'{result.stderr.strip() or "git clone failed"}')
+        yield Path(tmp)
+
+
+def check_for_update():
+    """A one-line notice for the agent when a newer release exists, else None.
+
+    Best-effort: without a recorded local version, or on any network/parsing
+    failure, returns None silently. Never raises.
+    """
+    version_file = DATA_ROOT / VERSION_MARKER
+    if not version_file.is_file():
+        return None
+    current = version_file.read_text().strip()
+    if not current:
+        return None
+    release = latest_github_release()
+    if release is None:
+        return None
+    latest = release['tag_name']
+    if semver_tuple(latest) <= semver_tuple(current):
+        return None
+    notes = release['body'].strip()
+    summary = notes[:400] + ('…' if len(notes) > 400 else '')
+    return (
+        f'murpiano-dx {latest} is available (this workspace is on {current}). '
+        'Tell the user what changed and ask whether to update before continuing; '
+        f'do not update without asking. Summary:\n{summary}\n'
+        f'Full notes: {release["html_url"]}\n'
+        f'To update: bash sync.sh update --fetch {latest}'
+    )
 
 
 def ensure_workspace(update_runtime=False):
@@ -559,9 +664,14 @@ def main():
     parser.add_argument('--local', action='store_true', help='Check project state without network sync (start only)')
     parser.add_argument('--kysaro', choices=['approved', 'declined', 'enabled'],
                         help='Record the owner decision or verify completed setup (init only)')
+    parser.add_argument('--fetch', metavar='TAG',
+                        help='With update: fetch TAG ("latest" or "vX.Y.Z") from GitHub '
+                             'instead of using this checkout as the source')
     args = parser.parse_args()
     if args.template and args.mode != 'check-readme':
         parser.error('--template is only available with check-readme')
+    if args.fetch and args.mode != 'update':
+        parser.error('--fetch is only available with update')
     if args.mode == 'check-readme':
         template = args.template or select_template('readme')
         checker = SOURCE_ROOT / 'skills/repo-readme/scripts/check_readme.py'
@@ -575,7 +685,11 @@ def main():
         print(select_template(args.kind))
         return
     if args.mode == 'update':
-        update_workspace()
+        if args.fetch:
+            with fetch_release_checkout(args.fetch) as fetched:
+                update_workspace(source_root=fetched)
+        else:
+            update_workspace()
         print(f'Local workspace updated: {DATA_ROOT}')
         return
     ensure_workspace(update_runtime=(args.mode == 'workspace'))
@@ -584,6 +698,9 @@ def main():
         ensure_agent_entrypoint()
     initialize_workspace_repo()
     if args.mode == 'start' and not args.local:
+        notice = check_for_update()
+        if notice:
+            print(notice)
         try:
             sync_workspace()
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:

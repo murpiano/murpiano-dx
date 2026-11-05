@@ -391,6 +391,39 @@ class Workflows(unittest.TestCase):
         claude = self.home / '.claude/CLAUDE.md'
         self.assertNotIn('murpiano-dx-personal', claude.read_text())
 
+    def test_unknown_agent_is_connected_via_a_personal_profile_entry(self):
+        self.fake_agent('claude')
+        gemini = self.home / '.gemini'
+        gemini.mkdir()
+        rules = self.dx / 'rules'
+        rules.mkdir(exist_ok=True)
+        (rules / 'agent-profiles.json').write_text(json.dumps([{
+            'command': 'gemini', 'label': 'Gemini CLI', 'env_var': 'GEMINI_HOME',
+            'default_dir': str(gemini), 'filename': 'GEMINI.md',
+        }]))
+        (rules / 'personal-agent-rules.md').write_text('Shared house rule.\n')
+        result = self.run_cmd(['bash', 'install.sh'])
+        self.assertIn('Gemini CLI connected:', result.stdout)
+        entry = gemini / 'GEMINI.md'
+        claude = self.home / '.claude/CLAUDE.md'
+        self.assertIn('Shared house rule.', entry.read_text())
+        self.assertIn('murpiano-dx projects', entry.read_text())
+        self.assertEqual(entry.read_text(), claude.read_text())
+
+    def test_personal_profile_overrides_a_shipped_default(self):
+        custom_codex = self.base / 'custom codex home'
+        rules = self.dx / 'rules'
+        rules.mkdir(exist_ok=True)
+        (rules / 'agent-profiles.json').write_text(json.dumps([{
+            'command': 'codex', 'label': 'Codex (custom)', 'env_var': 'CODEX_HOME',
+            'default_dir': str(custom_codex), 'filename': 'AGENTS.md',
+        }]))
+        self.fake_agent('codex')
+        result = self.run_cmd(['bash', 'install.sh'])
+        self.assertIn('Codex (custom) connected:', result.stdout)
+        self.assertTrue((custom_codex / 'AGENTS.md').is_file())
+        self.assertFalse((self.home / '.codex/AGENTS.md').exists())
+
     def test_setup_installs_session_hooks_and_preserves_custom_settings(self):
         for agent, filename in [('codex', 'hooks.json'), ('claude', 'settings.json')]:
             profile = self.home / ('.' + agent)
@@ -655,6 +688,96 @@ class Workflows(unittest.TestCase):
                                 cwd=workspace, env=env, text=True, capture_output=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('not from inside the workspace itself', result.stderr)
+
+    def dx_module(self):
+        spec = importlib.util.spec_from_file_location('dx_sync_update', self.dx / 'sync.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_semver_tuple_orders_versions(self):
+        module = self.dx_module()
+        self.assertEqual(module.semver_tuple('v1.2.3'), (1, 2, 3))
+        self.assertEqual(module.semver_tuple('v1.2.3-rc1'), (1, 2, 3))
+        self.assertLess(module.semver_tuple('v1.9.9'), module.semver_tuple('v2.0.0'))
+        self.assertEqual(module.semver_tuple('v1'), (1, 0, 0))
+
+    def build_workspace_and_version(self, version):
+        workspace = self.base / 'workspace'
+        env = self.env.copy()
+        env.update(MURPIANO_DX_DATA_DIR=str(workspace), GIT_NAME='Workspace User',
+                   GIT_EMAIL='workspace@example.invalid', GITHUB_OWNER='owner',
+                   XDG_BIN_HOME=str(self.base / 'bin'))
+        subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        (workspace / '.murpiano-dx-version').write_text(version + '\n')
+        return workspace, env
+
+    def fake_release(self, tag_name, body='Fixed a thing.'):
+        path = self.base / 'release.json'
+        path.write_text(json.dumps({'tag_name': tag_name, 'body': body,
+                                    'html_url': f'https://example.invalid/{tag_name}'}))
+        return f'file://{path}'
+
+    def test_check_for_update_notices_a_newer_release(self):
+        workspace, env = self.build_workspace_and_version('v1.0.0')
+        env['MURPIANO_DX_RELEASE_API'] = self.fake_release('v2.0.0', 'Fixed a thing.')
+        result = subprocess.run(['bash', str(workspace / 'sync.sh'), 'start'],
+                                cwd=workspace, env=env, text=True, capture_output=True, check=True)
+        self.assertIn('v2.0.0 is available', result.stdout)
+        self.assertIn('this workspace is on v1.0.0', result.stdout)
+        self.assertIn('Fixed a thing.', result.stdout)
+        self.assertIn('sync.sh update --fetch v2.0.0', result.stdout)
+
+    def test_check_for_update_is_silent_when_already_current(self):
+        workspace, env = self.build_workspace_and_version('v2.0.0')
+        env['MURPIANO_DX_RELEASE_API'] = self.fake_release('v2.0.0')
+        result = subprocess.run(['bash', str(workspace / 'sync.sh'), 'start'],
+                                cwd=workspace, env=env, text=True, capture_output=True, check=True)
+        self.assertNotIn('is available', result.stdout)
+
+    def test_check_for_update_is_silent_without_a_recorded_version(self):
+        workspace = self.base / 'workspace'
+        env = self.env.copy()
+        env.update(MURPIANO_DX_DATA_DIR=str(workspace), GIT_NAME='Workspace User',
+                   GIT_EMAIL='workspace@example.invalid', GITHUB_OWNER='owner',
+                   XDG_BIN_HOME=str(self.base / 'bin'))
+        subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        self.assertFalse((workspace / '.murpiano-dx-version').exists())
+        env['MURPIANO_DX_RELEASE_API'] = 'https://127.0.0.1:1/unreachable'
+        result = subprocess.run(['bash', str(workspace / 'sync.sh'), 'start'],
+                                cwd=workspace, env=env, text=True, capture_output=True, check=True)
+        self.assertNotIn('is available', result.stdout)
+
+    def build_tagged_remote(self, tag):
+        remote = self.base / 'upstream'
+        shutil.copytree(self.dx, remote)
+        (remote / 'global/agent-rules.md').write_text('Rules from the fetched release.\n')
+        self.repo(remote)
+        self.git(remote, 'tag', tag)
+        return remote
+
+    def test_update_with_explicit_fetch_tag_refreshes_from_a_remote(self):
+        workspace, env = self.build_workspace_and_version('v1.0.0')
+        remote = self.build_tagged_remote('v9.9.9')
+        env['MURPIANO_DX_REMOTE'] = str(remote)
+        result = subprocess.run(['python3', str(self.dx / 'sync.py'), 'update', '--fetch', 'v9.9.9'],
+                                cwd=self.dx, env=env, text=True, capture_output=True, check=True)
+        self.assertIn('Local workspace updated', result.stdout)
+        self.assertEqual((workspace / 'global/agent-rules.md').read_text(),
+                         'Rules from the fetched release.\n')
+        self.assertEqual((workspace / '.murpiano-dx-version').read_text().strip(), 'v9.9.9')
+
+    def test_update_with_fetch_latest_resolves_tag_through_the_release_api(self):
+        workspace, env = self.build_workspace_and_version('v1.0.0')
+        remote = self.build_tagged_remote('v9.9.9')
+        env['MURPIANO_DX_REMOTE'] = str(remote)
+        env['MURPIANO_DX_RELEASE_API'] = self.fake_release('v9.9.9')
+        result = subprocess.run(['python3', str(self.dx / 'sync.py'), 'update', '--fetch', 'latest'],
+                                cwd=self.dx, env=env, text=True, capture_output=True, check=True)
+        self.assertIn('Local workspace updated', result.stdout)
+        self.assertEqual((workspace / '.murpiano-dx-version').read_text().strip(), 'v9.9.9')
 
     def test_setup_upgrades_old_runtime_without_overwriting_personal_rules(self):
         workspace = self.base / 'old workspace'
