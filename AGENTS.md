@@ -40,13 +40,17 @@ the `murpiano-dx` block). Edit that one file and re-run `install.sh` (or `sync.s
 plus `install.sh`) to propagate it; do not hand-edit the generated markers in each agent's
 file.
 
-Two more optional, machine-portable files under `<workspace>/rules/` restore agent
-settings on `install.sh`, the same way the instructions above restore agent content:
-- `personal-claude-settings.json`: a JSON object merged into Claude Code's
-  `settings.json` (e.g. `enabledPlugins`, `modelSettings`). Existing keys such as
-  `hooks` and `permissions` are preserved; only the keys named here are added or
-  overwritten.
-- `personal-codex-config.toml`: raw TOML merged into Codex's `config.toml` under its
-  own `# >>> murpiano-dx-settings` markers, alongside the rest of that file.
-Secrets (API keys, the release token) never belong in either file or anywhere under
-`rules/`; they are not part of what `install.sh` restores.
+The optional `<workspace>/rules/personal-claude-settings.json` restores Claude Code
+settings on `install.sh` the same way: a JSON object deep-merged into the real
+`settings.json` (e.g. `enabledPlugins`, `modelSettings`). Existing keys such as `hooks`
+and `permissions` are preserved; only the keys named here are added or overwritten.
+
+Codex's `config.toml` has no equivalent. It is TOML, not JSON or Markdown: a
+marker-delimited text block would redefine tables already in the file (`[features]`,
+`[mcp_servers...]`, ...), which TOML forbids — tried once, it produced a file that would
+not parse. Restoring Codex settings (`model_reasoning_effort`, `[mcp_servers.context7]`,
+...) after a fresh install stays a manual, documented step; do not reintroduce a
+text-merge for this file without a real TOML-aware merge.
+
+Secrets (API keys, the release token) never belong in `personal-claude-settings.json` or
+anywhere under `rules/`; they are not part of what `install.sh` restores.

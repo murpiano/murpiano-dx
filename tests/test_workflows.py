@@ -419,13 +419,11 @@ class Workflows(unittest.TestCase):
             self.assertEqual(path.read_bytes(), before)
         self.assertEqual(codex_config.read_text(), '[features]\nhooks = false\n')
 
-    def test_personal_claude_settings_and_codex_config_are_merged(self):
+    def test_personal_claude_settings_are_merged_without_touching_other_keys(self):
         for agent, filename in [('codex', 'hooks.json'), ('claude', 'settings.json')]:
             profile = self.home / ('.' + agent)
             profile.mkdir()
             (profile / filename).write_text('{}')
-        codex_config = self.home / '.codex/config.toml'
-        codex_config.write_text('[features]\nhooks = false\n')
         claude_settings = self.home / '.claude/settings.json'
         claude_settings.write_text(json.dumps({'mySetting': 'keep'}))
         rules = self.dx / 'rules'
@@ -434,7 +432,6 @@ class Workflows(unittest.TestCase):
             'enabledPlugins': {'superpowers@anthropic-plugin-directory': True},
             'modelSettings': {'claude-sonnet-5': {'effortLevel': 'high'}},
         }))
-        (rules / 'personal-codex-config.toml').write_text('model_reasoning_effort = "low"\n')
         self.run_cmd(['bash', 'install.sh'])
         settings = json.loads(claude_settings.read_text())
         self.assertEqual(settings['mySetting'], 'keep')
@@ -442,16 +439,9 @@ class Workflows(unittest.TestCase):
                          {'superpowers@anthropic-plugin-directory': True})
         self.assertEqual(settings['modelSettings']['claude-sonnet-5']['effortLevel'], 'high')
         self.assertIn('SessionStart', settings['hooks'])
-        config_text = codex_config.read_text()
-        self.assertIn('[features]\nhooks = false\n', config_text)
-        self.assertIn('# >>> murpiano-dx-settings', config_text)
-        self.assertIn('model_reasoning_effort = "low"', config_text)
         first_settings = claude_settings.read_bytes()
-        first_config = codex_config.read_bytes()
         self.run_cmd(['bash', 'install.sh'])
         self.assertEqual(claude_settings.read_bytes(), first_settings)
-        self.assertEqual(codex_config.read_bytes(), first_config)
-        self.assertEqual(config_text.count('# >>> murpiano-dx-settings'), 1)
 
     def test_setup_repoints_source_skills_to_personal_workspace(self):
         folder = self.home / '.agents/skills'
