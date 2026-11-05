@@ -32,6 +32,26 @@ provisioned local workspace with `MURPIANO_DX_DATA_DIR=<workspace> bash sync.sh 
 run from this checkout. It force-updates the runtime files and `global/` templates;
 `skills/` and `defaults/` stay additive (existing files there are never overwritten).
 
+Any workspace — not only this maintainer checkout — is told about a newer release on
+its own. Every `sync.sh start` compares the workspace's recorded version
+(`<workspace>/.murpiano-dx-version`, written by `install.sh`/`sync.sh update`) against
+the latest GitHub release of `murpiano/murpiano-dx`. When a newer one exists, the
+command's own output carries a notice: the new version, a short summary of what
+changed, a link to the full release notes, and the exact update command. On seeing
+that notice, explain it to the user in your own words and ask whether to update before
+continuing — never run the update without asking. The notice itself says how:
+`bash sync.sh update --fetch <tag>` (or `--fetch latest`) clones that release from
+GitHub into a temporary directory and updates the workspace from it — no local
+`murpiano-dx` checkout is needed for this path.
+
+Agents this framework talks to are listed in `global/agent-profiles.json` (command, label,
+env var, default instructions directory, filename). It currently ships Codex and Claude
+Code, the two verified here. An optional `<workspace>/rules/agent-profiles.json`, same
+array shape, adds another agent (if it reads a plain-text global instructions file at
+session start) or overrides a shipped entry by reusing its `command` value. Do not add a
+speculative entry for an agent you have not verified actually reads a file at the path
+given; when unsure, say so and leave it to the user to confirm and add.
+
 The optional `<workspace>/rules/personal-agent-rules.md` is the single source for a
 user's own cross-agent instructions (language, tone, house rules). When present, its
 content is merged identically into every connected agent's instruction file under its
@@ -54,3 +74,30 @@ text-merge for this file without a real TOML-aware merge.
 
 Secrets (API keys, the release token) never belong in `personal-claude-settings.json` or
 anywhere under `rules/`; they are not part of what `install.sh` restores.
+
+## Restoring on a new machine
+
+Walk the user through this in order; do not skip a step just because it is manual.
+
+1. Automatic: `bash install.sh --restore [url]` clones the personal workspace (the
+   `rules/`, `global/`, memory, and project data described above) and runs `install.sh`
+   on it. This alone restores the framework, the per-project instructions and
+   pre-commit scan for every project the user reconnects, the shared
+   `personal-agent-rules.md` content in every detected agent, and anything named in
+   `personal-claude-settings.json`.
+2. Manual, but the data survives: `rules/personal-codex-config-reference.toml`, if
+   present, is never applied automatically (see above). Read it, read the new machine's
+   real `~/.codex/config.toml`, and for each value the reference has that the real file
+   is missing or differs on, propose the exact edit and apply it only after the user
+   confirms — one value at a time, not a bulk paste.
+3. Manual, nothing to restore from: the release token
+   (`~/.config/murpiano-dx/release-token`) is a secret and is never stored anywhere this
+   framework can read on restore. Ask whether the user wants releases working on this
+   machine; if so, run `bash install.sh --release-token` and let them paste it there.
+4. Manual: project repositories themselves. List the projects under
+   `<workspace>/projects/` and ask the user which ones they want on this machine; each
+   is a separate `git clone` of its own origin, then a normal connect (`sync.sh start`
+   or `init`) picks its instructions and pre-commit scan back up.
+5. If something the user expected to carry over did not — a setting, a file, a
+   skill — do not silently drop it: say what did not transfer and why, and record a
+   decision with the user about where it should live so the next restore covers it.

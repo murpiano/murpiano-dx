@@ -43,11 +43,37 @@ def merge_json_text(path, text, delta):
     return json.dumps(settings, indent=2) + '\n'
 
 
-def agent_profiles(home):
-    return (
-        ('codex', 'Codex', 'CODEX_HOME', home / '.codex', 'AGENTS.md'),
-        ('claude', 'Claude Code', 'CLAUDE_CONFIG_DIR', home / '.claude', 'CLAUDE.md'),
-    )
+AGENT_PROFILES = Path('global/agent-profiles.json')
+PERSONAL_AGENT_PROFILES = Path('rules/agent-profiles.json')
+PROFILE_FIELDS = ('command', 'label', 'env_var', 'default_dir', 'filename')
+
+
+def agent_profiles(root, data):
+    """Known coding-agent profiles: command, label, env var, default home dir, filename.
+
+    global/agent-profiles.json ships the defaults (Codex, Claude). An optional
+    <workspace>/rules/agent-profiles.json adds more entries, or overrides a
+    default with the same "command" -- so an agent this framework does not
+    yet ship a profile for can be added without a code change, as long as it
+    reads a plain-text global instructions file at session start.
+    """
+    profiles = {}
+    for path in (root / AGENT_PROFILES, data / PERSONAL_AGENT_PROFILES):
+        if not path.is_file():
+            continue
+        try:
+            entries = json.loads(path.read_text())
+        except ValueError as error:
+            raise RuntimeError(f'Invalid {path}: {error}') from error
+        if not isinstance(entries, list):
+            raise RuntimeError(f'{path} must contain a JSON array')
+        for entry in entries:
+            if not isinstance(entry, dict) or not set(PROFILE_FIELDS) <= entry.keys():
+                raise RuntimeError(f'{path}: each entry needs {list(PROFILE_FIELDS)}')
+            profiles[entry['command']] = entry
+    return [(entry['command'], entry['label'], entry['env_var'],
+             Path(entry['default_dir']).expanduser(), entry['filename'])
+            for entry in profiles.values()]
 
 
 def instruction_plan(path, blocks):
@@ -134,7 +160,7 @@ def configure(root, only=None, previous_root=None):
     plans = []
     hook_plans = []
     folders = [home / '.agents/skills']
-    for command, label, variable, default, filename in agent_profiles(home):
+    for command, label, variable, default, filename in agent_profiles(root, data):
         configured = os.environ.get(variable)
         profile = Path(configured).expanduser() if configured else default
         if only is not None:
