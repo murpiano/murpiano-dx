@@ -43,3 +43,13 @@ Do not put passwords or access tokens in notes. Publishing
 murpiano-dx itself follows the same repo-commit rules as project code.
 The user can also commit/push the personal workspace with ordinary Git commands
 or ask an agent to do so. Hooks never replace user hooks or bypass their trust review.
+
+When you and the user agree on a lasting cross-agent preference during a session —
+language, tone, a house rule, anything meant to hold regardless of which agent is
+running — write it into `{{DATA_ROOT}}/rules/personal-agent-rules.md` yourself (create
+the file if it does not exist yet) and run `bash {{ROOT}}/install.sh` to merge it into
+every connected agent's instructions. Do not just remember it for this session or
+assume another agent will pick it up on its own; nothing currently prompts you to do
+this, so do it without being asked. Propose the exact text and the command first if the
+preference is still being worked out, but once it is settled, do not leave it
+unrecorded.
