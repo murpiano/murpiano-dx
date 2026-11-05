@@ -472,6 +472,42 @@ def install_precommit_hook(project, key):
           f'commits with --no-verify.')
 
 
+COMMITMSG_MARKER = '# murpiano-dx: agent-trace commit-msg scan (skills/repo-cleanup)'
+
+
+def install_commitmsg_hook(project, key):
+    """Wrap an existing commit-msg hook with an agent-trace scan of the message text.
+
+    pre-commit-hook.sh cannot see the commit message (git finalizes it only
+    after pre-commit runs); this is the one check that belongs on commit-msg
+    instead. Only ever wraps an ALREADY-present hook -- kysaro's own (see
+    skills/repo-init/kysaro.md) or a custom one -- never creates one from a
+    blank project, so install order relative to kysaro's own setup never
+    matters: whichever sets up commit-msg first, this wraps it on the next
+    connect. Idempotent: skipped if already wrapped. Also skipped if the
+    existing hook is not executable -- that is a setup gap to report
+    (kysaro_gaps), not one to silently fix by making it active.
+    """
+    path = git_path(project, 'hooks') / 'commit-msg'
+    if not path.is_file() or path.is_symlink() or not os.access(path, os.X_OK):
+        return
+    text = path.read_text()
+    if COMMITMSG_MARKER in text:
+        return
+    original = path.with_name('commit-msg.murpiano-dx-original')
+    if not original.exists():
+        shutil.copy2(path, original)
+        original.chmod(0o755)
+    path.write_text(
+        '#!/usr/bin/env bash\n' + COMMITMSG_MARKER + '\n'
+        f'"{original}" "$1" || exit 1\n'
+        f'exec bash "{ACTIVE_ROOT}/skills/repo-cleanup/commit-msg-hook.sh" "$1"\n'
+    )
+    path.chmod(0o755)
+    print(f'{key}: commit-msg hook wrapped with an agent-trace scan of the message text '
+          f'(skills/repo-cleanup/policy.md); the previous hook still runs first.')
+
+
 def attach(project, key):
     files = STORE / key / 'files'
     files.mkdir(parents=True, exist_ok=True)
@@ -530,7 +566,12 @@ def kysaro_gaps(project):
             gaps.append(f'{name} settings')
     hooks = git_path(project, 'hooks')
     active = hooks / 'commit-msg'
-    hooked = active.is_file() and os.access(active, os.X_OK) and 'kysaro' in active.read_text()
+    original = active.with_name('commit-msg.murpiano-dx-original')
+    # install_commitmsg_hook wraps commit-msg behind our own text; 'kysaro' then
+    # lives in the preserved original, not the active file.
+    active_text = (active.read_text() if active.is_file() else '') + (
+        original.read_text() if original.is_file() else '')
+    hooked = active.is_file() and os.access(active, os.X_OK) and 'kysaro' in active_text
     if hooks.name == '_' and hooks.parent.name == '.husky':
         user_hook = hooks.parent / 'commit-msg'
         hooked = (active.is_file() and os.access(active, os.X_OK) and
@@ -640,6 +681,7 @@ def connect(folder, mode='start', choice=None, quiet=False):
         state = state or {'kysaro': 'pending'}
         exclude_agent_files(project)
         install_precommit_hook(project, key)
+        install_commitmsg_hook(project, key)
         attach(project, key)
         if initialize:
             if choice == 'enabled':
