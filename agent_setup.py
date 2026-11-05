@@ -9,6 +9,42 @@ import sys
 
 BEGIN = '<!-- >>> murpiano-dx -->'
 END = '<!-- <<< murpiano-dx -->'
+PERSONAL_BEGIN = '<!-- >>> murpiano-dx-personal -->'
+PERSONAL_END = '<!-- <<< murpiano-dx-personal -->'
+PERSONAL_RULES = Path('rules/personal-agent-rules.md')
+PERSONAL_CLAUDE_SETTINGS = Path('rules/personal-claude-settings.json')
+PERSONAL_CODEX_CONFIG = Path('rules/personal-codex-config.toml')
+SETTINGS_BEGIN = '# >>> murpiano-dx-settings'
+SETTINGS_END = '# <<< murpiano-dx-settings'
+
+
+def merge_settings_delta(target, delta):
+    """Deep-merge delta into target in place: dicts merge, other values overwrite."""
+    for key, value in delta.items():
+        if isinstance(value, dict) and isinstance(target.get(key), dict):
+            merge_settings_delta(target[key], value)
+        else:
+            target[key] = value
+
+
+def merge_json_text(path, text, delta):
+    """Merge a personal settings delta (dict) into already-planned JSON text.
+
+    Operates on in-memory text (not disk) so it can chain after another plan
+    (e.g. hook_plan) without re-reading a stale copy of the file. Preserves
+    every other key already present; only the keys named in delta are added
+    or overwritten.
+    """
+    try:
+        settings = json.loads(text) if text else {}
+        if not isinstance(settings, dict):
+            raise ValueError('expected a JSON object')
+        merge_settings_delta(settings, delta)
+    except (ValueError, TypeError) as error:
+        raise RuntimeError(f'Invalid settings: {path}: {error}; file left untouched') from error
+    if text and json.loads(text) == settings:
+        return text
+    return json.dumps(settings, indent=2) + '\n'
 
 
 def agent_profiles(home):
@@ -18,23 +54,33 @@ def agent_profiles(home):
     )
 
 
-def instruction_plan(path, block):
-    # Preserve linked Windows/WSL instruction files and all text outside our block.
+def instruction_plan(path, blocks):
+    """Merge one or more independent managed blocks into an instruction file.
+
+    Each block is (begin, end, content). A block whose content is None is
+    skipped (feature not in use). Every other block is validated and placed
+    on its own markers, preserving all text outside every pair, including
+    text belonging to a different block.
+    """
+    # Preserve linked Windows/WSL instruction files and all text outside our blocks.
     if path.is_symlink():
         path = path.resolve(strict=True)
     text = path.read_text() if path.exists() else ''
-    if (text.count(BEGIN) != text.count(END) or text.count(BEGIN) > 1 or
-            (BEGIN in text and text.index(BEGIN) > text.index(END))):
-        raise RuntimeError(f'Invalid murpiano-dx instruction markers: {path}; file left untouched')
-    managed = BEGIN + '\n' + block.rstrip() + '\n' + END
-    if BEGIN in text:
-        start = text.index(BEGIN)
-        finish = text.index(END) + len(END)
-        updated = text[:start] + managed + text[finish:]
-    else:
-        separator = '' if not text or text.endswith('\n\n') else ('\n' if text.endswith('\n') else '\n\n')
-        updated = text + separator + managed + '\n'
-    return path, updated
+    for begin, end, block in blocks:
+        if block is None:
+            continue
+        if (text.count(begin) != text.count(end) or text.count(begin) > 1 or
+                (begin in text and text.index(begin) > text.index(end))):
+            raise RuntimeError(f'Invalid murpiano-dx instruction markers: {path}; file left untouched')
+        managed = begin + '\n' + block.rstrip() + '\n' + end
+        if begin in text:
+            start = text.index(begin)
+            finish = text.index(end) + len(end)
+            text = text[:start] + managed + text[finish:]
+        else:
+            separator = '' if not text or text.endswith('\n\n') else ('\n' if text.endswith('\n') else '\n\n')
+            text = text + separator + managed + '\n'
+    return path, text
 
 
 def hook_plan(path, root):
@@ -78,8 +124,22 @@ def configure(root, only=None, previous_root=None):
     for token, value in [('{{ROOT}}', str(root)), ('{{DATA_ROOT}}', str(data)),
                          ('{{SYNC}}', 'bash ' + shlex.quote(str(root / 'sync.sh')))]:
         block = block.replace(token, value)
+    personal_path = data / PERSONAL_RULES
+    personal_block = personal_path.read_text() if personal_path.is_file() else None
+    claude_settings_path = data / PERSONAL_CLAUDE_SETTINGS
+    claude_settings_delta = None
+    if claude_settings_path.is_file():
+        try:
+            claude_settings_delta = json.loads(claude_settings_path.read_text())
+        except ValueError as error:
+            raise RuntimeError(f'Invalid {claude_settings_path}: {error}') from error
+        if not isinstance(claude_settings_delta, dict):
+            raise RuntimeError(f'{claude_settings_path} must contain a JSON object')
+    codex_config_path = data / PERSONAL_CODEX_CONFIG
+    codex_config_block = codex_config_path.read_text() if codex_config_path.is_file() else None
     plans = []
     hook_plans = []
+    settings_plans = []
     folders = [home / '.agents/skills']
     for command, label, variable, default, filename in agent_profiles(home):
         configured = os.environ.get(variable)
@@ -97,10 +157,18 @@ def configure(root, only=None, previous_root=None):
             if override.is_file() and override.stat().st_size:
                 path = override
         # Validate every detected adapter before modifying any global instructions.
-        target, updated = instruction_plan(path, block)
+        target, updated = instruction_plan(
+            path, [(PERSONAL_BEGIN, PERSONAL_END, personal_block), (BEGIN, END, block)])
         plans.append((label, target, updated))
         hook_file = profile / ('hooks.json' if command == 'codex' else 'settings.json')
         hook_plans.append((label, *hook_plan(hook_file, root)))
+        if command == 'claude' and claude_settings_delta is not None:
+            hooked_label, hooked_path, hooked_text = hook_plans[-1]
+            hook_plans[-1] = (hooked_label, hooked_path,
+                              merge_json_text(hooked_path, hooked_text, claude_settings_delta))
+        elif command == 'codex' and codex_config_block is not None:
+            settings_plans.append((label, *instruction_plan(
+                profile / 'config.toml', [(SETTINGS_BEGIN, SETTINGS_END, codex_config_block)])))
         if command == 'claude':
             folders.append(profile / 'skills')
         elif str(target).startswith('/mnt/'):
@@ -119,6 +187,11 @@ def configure(root, only=None, previous_root=None):
         if label == 'Codex':
             print('Review and trust new hooks once in Codex /hooks (or Settings > Hooks). '
                   'Existing hook trust and disabled-hook preferences are preserved.')
+    for label, target, updated in settings_plans:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if not target.exists() or target.read_text() != updated:
+            target.write_text(updated)
+        print(f'{label} personal config merged: {target}')
     retire_legacy_guard(home)
     print(f'Agent entry point: {root / "AGENTS.md"}')
     if not plans:
