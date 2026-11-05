@@ -1,0 +1,16 @@
+[
+  {
+    "command": "codex",
+    "label": "Codex",
+    "env_var": "CODEX_HOME",
+    "default_dir": "~/.codex",
+    "filename": "AGENTS.md"
+  },
+  {
+    "command": "claude",
+    "label": "Claude Code",
+    "env_var": "CLAUDE_CONFIG_DIR",
+    "default_dir": "~/.claude",
+    "filename": "CLAUDE.md"
+  }
+]
