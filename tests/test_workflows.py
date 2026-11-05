@@ -360,6 +360,37 @@ class Workflows(unittest.TestCase):
         self.assertEqual(claude.read_bytes(), first)
         self.assertEqual(claude.read_text().count('<!-- >>> murpiano-dx -->'), 1)
 
+    def test_personal_rules_file_is_identical_across_agents_and_editable(self):
+        self.fake_agent('codex')
+        self.fake_agent('claude')
+        personal = self.dx / 'rules/personal-agent-rules.md'
+        personal.parent.mkdir(exist_ok=True)
+        personal.write_text('Speak Russian. Keep it short.\n')
+        self.run_cmd(['bash', 'install.sh'])
+        codex = self.home / '.codex/AGENTS.md'
+        claude = self.home / '.claude/CLAUDE.md'
+        for path in (codex, claude):
+            text = path.read_text()
+            self.assertIn('<!-- >>> murpiano-dx-personal -->', text)
+            self.assertIn('Speak Russian. Keep it short.', text)
+            self.assertEqual(text.count('<!-- >>> murpiano-dx-personal -->'), 1)
+        self.assertEqual(codex.read_text(), claude.read_text())
+        # Editing the one source and re-running updates both, without duplicating markers.
+        personal.write_text('Speak Russian. Be terse. Caveman mode.\n')
+        self.run_cmd(['bash', 'install.sh'])
+        for path in (codex, claude):
+            text = path.read_text()
+            self.assertIn('Caveman mode.', text)
+            self.assertNotIn('Keep it short.', text)
+            self.assertEqual(text.count('<!-- >>> murpiano-dx-personal -->'), 1)
+        self.assertEqual(codex.read_text(), claude.read_text())
+
+    def test_missing_personal_rules_file_leaves_instructions_unaffected(self):
+        self.fake_agent('claude')
+        self.run_cmd(['bash', 'install.sh'])
+        claude = self.home / '.claude/CLAUDE.md'
+        self.assertNotIn('murpiano-dx-personal', claude.read_text())
+
     def test_setup_installs_session_hooks_and_preserves_custom_settings(self):
         for agent, filename in [('codex', 'hooks.json'), ('claude', 'settings.json')]:
             profile = self.home / ('.' + agent)
@@ -387,6 +418,40 @@ class Workflows(unittest.TestCase):
         for path, before in first.items():
             self.assertEqual(path.read_bytes(), before)
         self.assertEqual(codex_config.read_text(), '[features]\nhooks = false\n')
+
+    def test_personal_claude_settings_and_codex_config_are_merged(self):
+        for agent, filename in [('codex', 'hooks.json'), ('claude', 'settings.json')]:
+            profile = self.home / ('.' + agent)
+            profile.mkdir()
+            (profile / filename).write_text('{}')
+        codex_config = self.home / '.codex/config.toml'
+        codex_config.write_text('[features]\nhooks = false\n')
+        claude_settings = self.home / '.claude/settings.json'
+        claude_settings.write_text(json.dumps({'mySetting': 'keep'}))
+        rules = self.dx / 'rules'
+        rules.mkdir(exist_ok=True)
+        (rules / 'personal-claude-settings.json').write_text(json.dumps({
+            'enabledPlugins': {'superpowers@anthropic-plugin-directory': True},
+            'modelSettings': {'claude-sonnet-5': {'effortLevel': 'high'}},
+        }))
+        (rules / 'personal-codex-config.toml').write_text('model_reasoning_effort = "low"\n')
+        self.run_cmd(['bash', 'install.sh'])
+        settings = json.loads(claude_settings.read_text())
+        self.assertEqual(settings['mySetting'], 'keep')
+        self.assertEqual(settings['enabledPlugins'],
+                         {'superpowers@anthropic-plugin-directory': True})
+        self.assertEqual(settings['modelSettings']['claude-sonnet-5']['effortLevel'], 'high')
+        self.assertIn('SessionStart', settings['hooks'])
+        config_text = codex_config.read_text()
+        self.assertIn('[features]\nhooks = false\n', config_text)
+        self.assertIn('# >>> murpiano-dx-settings', config_text)
+        self.assertIn('model_reasoning_effort = "low"', config_text)
+        first_settings = claude_settings.read_bytes()
+        first_config = codex_config.read_bytes()
+        self.run_cmd(['bash', 'install.sh'])
+        self.assertEqual(claude_settings.read_bytes(), first_settings)
+        self.assertEqual(codex_config.read_bytes(), first_config)
+        self.assertEqual(config_text.count('# >>> murpiano-dx-settings'), 1)
 
     def test_setup_repoints_source_skills_to_personal_workspace(self):
         folder = self.home / '.agents/skills'
@@ -561,6 +626,45 @@ class Workflows(unittest.TestCase):
                        text=True, capture_output=True, check=True)
         self.assertEqual(custom_rule.read_text(), 'custom rule\n')
         self.assertEqual(entry.read_text(), 'My own agent entry point\n')
+
+    def test_update_mode_refreshes_runtime_and_templates_but_not_skills(self):
+        workspace = self.base / 'workspace'
+        env = self.env.copy()
+        env.update(MURPIANO_DX_DATA_DIR=str(workspace), GIT_NAME='Workspace User',
+                   GIT_EMAIL='workspace@example.invalid', GITHUB_OWNER='owner',
+                   XDG_BIN_HOME=str(self.base / 'bin'))
+        subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        custom_skill = workspace / 'skills/my-skill/SKILL.md'
+        custom_skill.parent.mkdir()
+        custom_skill.write_text('custom\n')
+        # Simulate a framework change in the source checkout (self.dx).
+        (self.dx / 'global/agent-rules.md').write_text('Updated rules.\n')
+        (self.dx / 'sync.py').write_text(
+            (self.dx / 'sync.py').read_text() + '\n# marker: newer framework\n')
+        env.pop('GIT_NAME', None)
+        env.pop('GIT_EMAIL', None)
+        env.pop('GITHUB_OWNER', None)
+        result = subprocess.run(['python3', str(self.dx / 'sync.py'), 'update'],
+                                cwd=self.dx, env=env, text=True, capture_output=True, check=True)
+        self.assertIn('Local workspace updated', result.stdout)
+        self.assertEqual((workspace / 'global/agent-rules.md').read_text(), 'Updated rules.\n')
+        self.assertEqual((workspace / 'sync.py').read_text(), (self.dx / 'sync.py').read_text())
+        self.assertEqual(custom_skill.read_text(), 'custom\n')
+
+    def test_update_mode_refuses_to_run_inside_the_workspace_itself(self):
+        workspace = self.base / 'workspace'
+        env = self.env.copy()
+        env.update(MURPIANO_DX_DATA_DIR=str(workspace), GIT_NAME='Workspace User',
+                   GIT_EMAIL='workspace@example.invalid', GITHUB_OWNER='owner',
+                   XDG_BIN_HOME=str(self.base / 'bin'))
+        subprocess.run(['bash', str(self.dx / 'install.sh')], env=env,
+                       text=True, capture_output=True, check=True)
+        env['MURPIANO_DX_DATA_DIR'] = str(workspace)
+        result = subprocess.run(['python3', str(workspace / 'sync.py'), 'update'],
+                                cwd=workspace, env=env, text=True, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('not from inside the workspace itself', result.stderr)
 
     def test_setup_upgrades_old_runtime_without_overwriting_personal_rules(self):
         workspace = self.base / 'old workspace'

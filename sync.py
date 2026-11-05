@@ -140,6 +140,31 @@ def bootstrap_workspace_files(update_runtime=False):
     ACTIVE_ROOT = DATA_ROOT
 
 
+def update_workspace():
+    """Refresh an existing local workspace from this framework checkout.
+
+    Unlike bootstrap_workspace_files on a first install (additive only), this
+    overwrites the framework-owned runtime files and global/ templates
+    unconditionally, so a maintainer's changes to murpiano-dx reach an
+    already-provisioned workspace. skills/ and defaults/ stay additive
+    (copy_missing_tree never overwrites a file that already exists there),
+    so personal additions and already-restored skills are preserved.
+    """
+    if DATA_ROOT.resolve() == SOURCE_ROOT.resolve():
+        raise RuntimeError(
+            'Run update from a murpiano-dx checkout with MURPIANO_DX_DATA_DIR '
+            'pointing at the workspace to refresh, not from inside the workspace itself.')
+    bootstrap_workspace_files(update_runtime=True)
+    for item in (SOURCE_ROOT / 'global').iterdir():
+        if not item.is_file():
+            continue
+        destination = DATA_ROOT / 'global' / item.name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if not destination.exists() or destination.read_bytes() != item.read_bytes():
+            shutil.copy2(item, destination)
+            print(f'Updated global/{item.name}')
+
+
 def ensure_workspace(update_runtime=False):
     """Create the editable local workspace without overwriting user files."""
     bootstrap_workspace_files(update_runtime=update_runtime)
@@ -527,7 +552,7 @@ def connect(folder, mode='start', choice=None, quiet=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['init', 'start', 'end', 'link', 'workspace', 'template', 'check-readme'], nargs='?', default='start')
+    parser.add_argument('mode', choices=['init', 'start', 'end', 'link', 'workspace', 'update', 'template', 'check-readme'], nargs='?', default='start')
     parser.add_argument('project', type=Path, nargs='?', default=Path.cwd())
     parser.add_argument('--kind', choices=['readme', 'release', 'description'])
     parser.add_argument('--template', type=Path, help='Explicit README template (check-readme only)')
@@ -548,6 +573,10 @@ def main():
         if not args.kind:
             parser.error('template requires --kind readme, release, or description')
         print(select_template(args.kind))
+        return
+    if args.mode == 'update':
+        update_workspace()
+        print(f'Local workspace updated: {DATA_ROOT}')
         return
     ensure_workspace(update_runtime=(args.mode == 'workspace'))
     load_machine_config()
