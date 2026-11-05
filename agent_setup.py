@@ -13,10 +13,6 @@ PERSONAL_BEGIN = '<!-- >>> murpiano-dx-personal -->'
 PERSONAL_END = '<!-- <<< murpiano-dx-personal -->'
 PERSONAL_RULES = Path('rules/personal-agent-rules.md')
 PERSONAL_CLAUDE_SETTINGS = Path('rules/personal-claude-settings.json')
-PERSONAL_CODEX_CONFIG = Path('rules/personal-codex-config.toml')
-SETTINGS_BEGIN = '# >>> murpiano-dx-settings'
-SETTINGS_END = '# <<< murpiano-dx-settings'
-
 
 def merge_settings_delta(target, delta):
     """Deep-merge delta into target in place: dicts merge, other values overwrite."""
@@ -135,11 +131,8 @@ def configure(root, only=None, previous_root=None):
             raise RuntimeError(f'Invalid {claude_settings_path}: {error}') from error
         if not isinstance(claude_settings_delta, dict):
             raise RuntimeError(f'{claude_settings_path} must contain a JSON object')
-    codex_config_path = data / PERSONAL_CODEX_CONFIG
-    codex_config_block = codex_config_path.read_text() if codex_config_path.is_file() else None
     plans = []
     hook_plans = []
-    settings_plans = []
     folders = [home / '.agents/skills']
     for command, label, variable, default, filename in agent_profiles(home):
         configured = os.environ.get(variable)
@@ -166,9 +159,6 @@ def configure(root, only=None, previous_root=None):
             hooked_label, hooked_path, hooked_text = hook_plans[-1]
             hook_plans[-1] = (hooked_label, hooked_path,
                               merge_json_text(hooked_path, hooked_text, claude_settings_delta))
-        elif command == 'codex' and codex_config_block is not None:
-            settings_plans.append((label, *instruction_plan(
-                profile / 'config.toml', [(SETTINGS_BEGIN, SETTINGS_END, codex_config_block)])))
         if command == 'claude':
             folders.append(profile / 'skills')
         elif str(target).startswith('/mnt/'):
@@ -187,11 +177,6 @@ def configure(root, only=None, previous_root=None):
         if label == 'Codex':
             print('Review and trust new hooks once in Codex /hooks (or Settings > Hooks). '
                   'Existing hook trust and disabled-hook preferences are preserved.')
-    for label, target, updated in settings_plans:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if not target.exists() or target.read_text() != updated:
-            target.write_text(updated)
-        print(f'{label} personal config merged: {target}')
     retire_legacy_guard(home)
     print(f'Agent entry point: {root / "AGENTS.md"}')
     if not plans:
