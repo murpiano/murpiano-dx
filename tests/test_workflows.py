@@ -1055,6 +1055,48 @@ fi
         self.sync()
         self.assertEqual(hook.read_text(), '#!/bin/sh\nexit 0\n')
 
+    def test_commitmsg_hook_wraps_existing_hook_and_scans_the_message(self):
+        hook = self.project / '.git/hooks/commit-msg'
+        hook.write_text('#!/bin/sh\nexit 0\n')
+        hook.chmod(0o755)
+        self.sync()
+        text = hook.read_text()
+        self.assertIn('# murpiano-dx: agent-trace commit-msg scan (skills/repo-cleanup)', text)
+        original = self.project / '.git/hooks/commit-msg.murpiano-dx-original'
+        self.assertEqual(original.read_text(), '#!/bin/sh\nexit 0\n')
+        (self.project / 'file.txt').write_text('x\n')
+        self.git(self.project, 'add', 'file.txt')
+        env = {**self.env, 'MURPIANO_ON_MAIN': '1'}
+        blocked = subprocess.run(
+            ['git', 'commit', '-m', 'feat: thing\n\nCo-Authored-By: Claude <noreply@anthropic.com>'],
+            cwd=self.project, env=env, text=True, capture_output=True)
+        self.assertNotEqual(blocked.returncode, 0)
+        self.assertIn('agent-trace mention', blocked.stderr)
+        clean = subprocess.run(['git', 'commit', '-m', 'feat: thing'], cwd=self.project,
+                               env=env, text=True, capture_output=True)
+        self.assertEqual(clean.returncode, 0, clean.stderr)
+
+    def test_commitmsg_hook_is_not_created_without_an_existing_hook(self):
+        self.sync()
+        self.assertFalse((self.project / '.git/hooks/commit-msg').exists())
+
+    def test_commitmsg_hook_leaves_a_nonexecutable_hook_as_a_reportable_gap(self):
+        hook = self.project / '.git/hooks/commit-msg'
+        hook.write_text('#!/bin/sh\nexit 0\n')
+        hook.chmod(0o644)
+        self.sync()
+        self.assertEqual(hook.read_text(), '#!/bin/sh\nexit 0\n')
+        self.assertFalse(os.access(hook, os.X_OK))
+
+    def test_commitmsg_hook_wrap_is_idempotent(self):
+        hook = self.project / '.git/hooks/commit-msg'
+        hook.write_text('#!/bin/sh\nexit 0\n')
+        hook.chmod(0o755)
+        self.sync()
+        first = hook.read_bytes()
+        self.sync()
+        self.assertEqual(hook.read_bytes(), first)
+
     def test_store_lock_failure_is_reported_accurately(self):
         (self.dx / 'projects/.sync.lock').mkdir()
         result = self.sync(check=False)
