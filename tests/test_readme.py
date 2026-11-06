@@ -56,18 +56,46 @@ class ReadmeContract(unittest.TestCase):
         self.assertTrue(CHECKER.check('## Configuration\n', template))
 
     def test_showcase_footer_requires_sub_separators_and_local_license(self):
-        footer = ('<sub>[Bogdan Trotsenko](https://github.com/murpiano) · '
-                  '[murpiano](https://github.com/murpiano) · '
-                  '[Telegram](https://t.me/murpiano) · '
-                  '[MIT](LICENSE)</sub>')
+        footer = ('<sub>[<Your name or handle>](<your-profile-url>) · '
+                  '[<Your org, if any>](<your-org-url>) · '
+                  '[<Contact>](<contact-url>) · '
+                  '[<License>](LICENSE)</sub>')
         bundled = (ROOT / 'skills/repo-readme/templates/README.md').read_text()
         self.assertEqual(bundled.strip().splitlines()[-1], footer)
         template = '## Rough edges\n\n---\n\n' + footer + '\n'
-        self.assertEqual(CHECKER.check(template, template), [])
-        for wrong in (footer.replace(' · [MIT](LICENSE)', ''), footer.replace(' · ', ' '),
-                      footer.removeprefix('<sub>').removesuffix('</sub>'),
-                      footer.replace('(LICENSE)', '(https://example.com/LICENSE)')):
-            self.assertTrue(CHECKER.check(template.replace(footer, wrong), template))
+        filled = template.replace('<Your name or handle>', 'Jane').replace(
+            '<your-profile-url>', 'https://example.com/jane').replace(
+            '<Your org, if any>', 'Acme').replace('<your-org-url>', 'https://example.com').replace(
+            '<Contact>', 'Contact').replace('<contact-url>', 'https://example.com/contact').replace(
+            '<License>', 'MIT')
+        self.assertEqual(CHECKER.check(filled, template), [])
+        filled_footer = filled.strip().splitlines()[-1]
+        for wrong in (filled_footer.replace(' · [MIT](LICENSE)', ''), filled_footer.replace(' · ', ' '),
+                      filled_footer.removeprefix('<sub>').removesuffix('</sub>'),
+                      filled_footer.replace('(LICENSE)', '(https://example.com/LICENSE)')):
+            self.assertTrue(CHECKER.check(filled.replace(filled_footer, wrong), template))
+
+    def test_bundled_distribution_template_has_no_real_identity(self):
+        bundled = (ROOT / 'skills/repo-readme/templates/README.md').read_text()
+        for leaked in ('Bogdan', 'murpiano', 't.me/murpiano'):
+            self.assertNotIn(leaked, bundled)
+
+    def test_kind_tagged_section_is_optional_without_a_kind_and_required_with_it(self):
+        template = ('## Install\n<!-- kind: app, npm-package. Drop for personal-brand. -->\n\n'
+                    '## Rough edges\n\n---\n\n<sub>text</sub>\n')
+        without_section = '## Rough edges\n\n---\n\n<sub>text</sub>\n'
+        self.assertEqual(CHECKER.check(without_section, template), [])
+        self.assertEqual(CHECKER.check(without_section, template, kind='personal-brand'), [])
+        self.assertTrue(CHECKER.check(without_section, template, kind='app'))
+        self.assertEqual(CHECKER.check(template, template, kind='npm-package'), [])
+
+    def test_kind_rename_choice_is_accepted_as_an_alternate_heading(self):
+        template = ('## Run locally\n<!-- kind: app, npm-package. npm-package: rename to '
+                    '"## Install". -->\n\n## Rough edges\n\n---\n\n<sub>text</sub>\n')
+        renamed = '## Install\n\n## Rough edges\n\n---\n\n<sub>text</sub>\n'
+        self.assertEqual(CHECKER.check(renamed, template, kind='npm-package'), [])
+        unrelated_heading = '## Something else\n\n## Rough edges\n\n---\n\n<sub>text</sub>\n'
+        self.assertTrue(CHECKER.check(unrelated_heading, template, kind='app'))
 
     def test_framework_keeps_agent_notice_as_first_line(self):
         first = (ROOT / 'README.md').read_text().splitlines()[0]
