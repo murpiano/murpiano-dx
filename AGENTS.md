@@ -12,6 +12,10 @@ This file is the agent entry point for `murpiano-dx`.
    - `skills/repo-release/SKILL.md` for releases and CI.
    - `skills/repo-agent-data/SKILL.md` for moving existing agent files out of a project's published tree.
    - `skills/repo-cleanup/SKILL.md` for scanning or removing agent-development traces and secrets before publishing.
+   - For anything else — starting a new application, or any domain-architecture
+     question (frontend, and later backend, mobile, etc.) — start from
+     `skills/GRAPH.md`, the framework's overview graph, rather than guessing
+     which skill applies; it links onward to the right domain.
 3. Read the relevant project data under `projects/` only when the task needs it.
 4. Run the checks required by the selected skill.
 
@@ -24,6 +28,20 @@ This file is the agent entry point for `murpiano-dx`.
 - Do not add agent attribution to commits, pull requests, or product files.
 
 After changing workflow rules or project memory, run `bash sync.sh end`.
+
+## Delegation model
+
+The user orchestrates; the agent does the work and owns keeping this
+framework's knowledge current. Full rules: [skills/DELEGATION-MODEL.md](skills/DELEGATION-MODEL.md)
+— state settled conventions instead of re-asking, guide new work step by
+step, land every substantive discussion back into a skill before the task
+ends, keep the concept → implementation → guided-setup chain explicit per
+domain, and maintain `skills/GRAPH.md` mechanically as skills gain children.
+Open framework-level work (not any one project's) lives in
+[skills/BACKLOG.md](skills/BACKLOG.md) — check it before starting
+unrelated new framework work, and run
+[skills/framework-lint](skills/framework-lint/SKILL.md) after a
+structural change.
 
 ## Maintaining this framework
 
