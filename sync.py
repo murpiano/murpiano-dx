@@ -703,6 +703,8 @@ def main():
     parser.add_argument('project', type=Path, nargs='?', default=Path.cwd())
     parser.add_argument('--kind', choices=['readme', 'release', 'description'])
     parser.add_argument('--template', type=Path, help='Explicit README template (check-readme only)')
+    parser.add_argument('--project-kind', choices=['app', 'framework', 'npm-package', 'personal-brand'],
+                        help='Project kind for check-readme: sections tagged for other kinds become optional')
     parser.add_argument('--local', action='store_true', help='Check project state without network sync (start only)')
     parser.add_argument('--kysaro', choices=['approved', 'declined', 'enabled'],
                         help='Record the owner decision or verify completed setup (init only)')
@@ -712,13 +714,18 @@ def main():
     args = parser.parse_args()
     if args.template and args.mode != 'check-readme':
         parser.error('--template is only available with check-readme')
+    if args.project_kind and args.mode != 'check-readme':
+        parser.error('--project-kind is only available with check-readme')
     if args.fetch and args.mode != 'update':
         parser.error('--fetch is only available with update')
     if args.mode == 'check-readme':
         template = args.template or select_template('readme')
         checker = SOURCE_ROOT / 'skills/repo-readme/scripts/check_readme.py'
-        sys.exit(subprocess.call([sys.executable, str(checker),
-                                  str(args.project / 'README.md'), '--template', str(template)]))
+        command = [sys.executable, str(checker), str(args.project / 'README.md'),
+                   '--template', str(template)]
+        if args.project_kind:
+            command += ['--kind', args.project_kind]
+        sys.exit(subprocess.call(command))
     if args.local and args.mode != 'start':
         parser.error('--local is only available with start')
     if args.mode == 'template':

@@ -5,6 +5,8 @@ description: Use when writing, reviewing, or updating a repository README, GitHu
 
 # Repository documentation
 
+Governs `project-profile.md` fields: Identity → Project kind.
+
 Write for humans in clear English. Keep detailed agent instructions in `AGENTS.md`
 and skills. Preserve an existing agent entry-point notice as the first README line;
 template corrections must not remove it. Product documentation about AI is allowed.
@@ -43,22 +45,47 @@ Use [rules.md](rules.md) for details. Never overwrite user templates during an u
 Explicit setup migrates old workspace-level `templates/` files into this skill;
 until then, template lookup still honors the old personal paths.
 
+## Project kind
+
+Before editing, decide the project kind: `app`, `framework`, `npm-package`, or
+`personal-brand` (a descriptive, non-code page — personal site, portfolio, bio).
+Ask the user only if the repository does not make it obvious.
+
+A section in the template is tagged `kind: ...` in the comment right after its
+heading. Keep the section, following its rename note if any, only for the kinds
+it lists; delete the heading and its comment entirely for a kind not listed. An
+untagged section is universal — keep it for every kind. The checker enforces this
+when given `--project-kind`; without it, every tagged section is treated as
+optional, so always pass the kind once it is known.
+
 ## Template contract
 
 The selected template is mandatory, not inspiration. Preserve its fixed section
 names and order, static text, footer, and links. Replace placeholders with facts
 verified in the repository. The existing README never overrides the template.
-Apply conditional instructions in the template, such as using CLI instead of API.
-Keep the footer exactly as written: all four links inside `<sub>`, separated by
-` · `, with the MIT link pointing to `LICENSE`. Do not omit the license link.
+Apply conditional instructions in the template, such as using CLI instead of API,
+or dropping a section for the chosen kind. Keep the footer exactly as written:
+all four links inside `<sub>`, separated by ` · `, with the license link pointing
+to `LICENSE`. Do not omit the license link, except for a `personal-brand` page
+that genuinely has no `LICENSE` file — confirm that with the user before dropping it.
 Depart from the contract only when the user explicitly requests the exception.
 If the selected template differs from the user's stated template, resolve the
 discrepancy before editing; do not silently substitute another template.
 
+The distribution template in this skill ships with placeholder footer links
+(`<Your name or handle>`, `<your-profile-url>`, ...). It never carries a real
+identity — that binding belongs in the user's own `rules/readme.md`-adjacent
+template override (`<workspace>/skills/repo-readme/templates/README.md`), which
+`select_template` already prefers over this one. Do not hardcode a real name,
+profile, or contact link into this skill's own `templates/README.md`; if the
+user wants their identity bound by default, point them at their personal
+workspace override instead of editing the distribution copy.
+
 Before completing a README change or committing, opening a PR, or publishing it,
-run `bash <murpiano-dx>/sync.sh check-readme <project>` and fix every failure.
-Use `--template <path>` when the user explicitly selected another template.
-Also review fixed prose, commands, links, and conditional sections manually: the
-checker validates structure, footer, and remaining placeholders, not factual accuracy.
-Report the selected template path and the validation result. Never claim template
-compliance when validation fails.
+run `bash <murpiano-dx>/sync.sh check-readme <project> --project-kind <kind>` and
+fix every failure. Use `--template <path>` when the user explicitly selected
+another template. Also review fixed prose, commands, links, and conditional
+sections manually: the checker validates structure, footer, and remaining
+placeholders, not factual accuracy. Report the selected template path, the
+chosen project kind, and the validation result. Never claim template compliance
+when validation fails.
