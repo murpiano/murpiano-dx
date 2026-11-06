@@ -1,0 +1,28 @@
+:root {
+  /* dark (default) — replace these hex values with the project's real palette */
+  --bg: #04060d;
+  --accent: #ffc86b;
+  --accent-2: #8fb8ff;
+  --text: #e8ecf6;
+  --muted: #7f89a3;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --font-family-base: 'Space Grotesk', -apple-system, 'Segoe UI', helvetica, arial, sans-serif;
+  --font-family-display: 'Fraunces Variable', 'Fraunces', georgia, serif;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* light override — list only the tokens that actually change; an absent
+   token keeps its dark value, which is correct for theme-invariant colors */
+:root[data-theme='light'] {
+  --bg: #f4f6fb;
+  --accent: #b8860b;
+  --accent-2: #3b5bb8;
+  --text: #11131a;
+  --muted: #5b6478;
+}

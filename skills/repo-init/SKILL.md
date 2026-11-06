@@ -5,6 +5,8 @@ description: Initialize a project with murpiano-dx on request, offer a GitHub or
 
 # Project initialization
 
+Governs `project-profile.md` fields: Identity → Repository, Visibility.
+
 Run this skill only when the owner asks to initialize or repair a project. A normal
 development task does not reinitialize the project.
 
@@ -27,6 +29,41 @@ development task does not reinitialize the project.
 8. If existing tracked instructions or other agent metadata remain, report them.
    Use `repo-agent-data` when the owner asks to migrate them for publication.
    Local Git exclusions alone do not untrack already committed files.
+
+## Adopting an existing project's own conventions
+
+A project connected here is not always empty — it may already have a team,
+a chosen stack, and established conventions that predate this framework.
+Those conventions outrank this framework's own defaults for that project;
+see `skills/DELEGATION-MODEL.md` → project-level overrides.
+
+For a project with existing code (not a fresh scaffold), before applying
+any framework default (e.g. a `frontend-styling-concept` implementation):
+
+1. Scan for stack/convention signals already in the repository: dependency
+   manifests (`package.json`, `pyproject.toml`, ...), lint/format configs
+   (`.eslintrc*`, `.prettierrc*`, `pyproject.toml` tool sections, ...),
+   existing styling approach (Tailwind config, `*.module.css` vs global
+   SCSS, a CSS-in-JS library in dependencies), commit message conventions
+   (recent `git log`, any commit-msg hook), and CI configuration.
+2. Fill `skills/project-profile/templates/project-profile.md` from these
+   signals, marking each detected row per its own "Provenance" section.
+3. Report the findings and ask the owner to confirm each one that would
+   otherwise be a framework default decision (e.g. "this repo already uses
+   Tailwind — treat that as the project's styling implementation instead
+   of the framework's CSS Modules default?"). Do not silently assume a
+   detected pattern is the team's deliberate choice — confirm it.
+4. Save the confirmed profile as `.agents/project-profile.md` in this
+   project's own data (under `{{STORE}}`, per `global/project-rules.md`),
+   not in the framework's own skill files — see
+   `skills/project-profile/SKILL.md`. A future session on this project
+   reads this file first and applies it instead of asking again; a
+   different project is unaffected.
+5. If a detected convention has no matching framework skill at all (e.g.
+   a styling implementation this framework hasn't written up yet), follow
+   `skills/DELEGATION-MODEL.md`'s tiering — propose drafting that
+   implementation skill from what this project already does, rather than
+   overriding silently or ignoring it.
 
 ## Completion
 
