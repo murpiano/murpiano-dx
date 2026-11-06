@@ -5,6 +5,11 @@ description: Use when a repository is about to be pushed or published, or when i
 
 # Очистка от следов агентов
 
+Governs `project-profile.md` fields: Git workflow → Pre-commit hooks.
+
+(This skill owns only the secret/agent-trace scan hook; a project's own
+lint/format pre-commit hooks are a separate concern.)
+
 Найти и убрать следы агентной разработки из всего, что видит посетитель репозитория.
 Даты коммитов, содержимое файлов и структура merge-коммитов сохраняются.
 

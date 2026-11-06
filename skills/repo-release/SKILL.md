@@ -5,6 +5,8 @@ description: Use when managing releases, tests, CI, release notes, or release au
 
 # Releases
 
+Governs `project-profile.md` fields: Infrastructure & delivery → Release process.
+
 Releases follow successful CI on `main`. The agent manages them only when requested.
 Commit work belongs to `repo-commit`; README authoring belongs to `repo-readme`.
 
