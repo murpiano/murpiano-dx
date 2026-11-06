@@ -5,6 +5,9 @@ description: Follow murpiano-dx Git rules for task branches, Conventional Commit
 
 # Git workflow
 
+Governs `project-profile.md` fields: Git workflow → Commit convention,
+PR requirements, Merge strategy.
+
 Use this skill for branches, commits, pull requests, and merges. Read only the
 relevant section of [rules.md](rules.md). Project rules and `.kysaro/settings/`
 take precedence.
