@@ -16,12 +16,12 @@ it live only in a conversation; remove it once it's actually done
   components themselves, testing conventions, accessibility specifics
   beyond the constraint row in `project-profile.md`. Treat the domain as
   open, not settled, until these are discussed.
-- **Dogfood on a real project before adding more.** `cloudpix-platform`
-  (the `my-world` app) was the original source for the styling patterns
-  here — run the new `repo-init` "adopting existing conventions" flow on
-  it for real, fill its `project-profile.md`, and see what the written
-  rules get wrong or miss. Higher priority than inventing further rules
-  from imagination.
+- **Dogfood on a real project before adding more.** `my-world`
+  (`/home/bvtrots/projects/my-world`, formerly `cloudpix-platform`) was
+  the original source for the styling patterns here — run the new
+  `repo-init` "adopting existing conventions" flow on it for real, fill
+  its `project-profile.md`, and see what the written rules get wrong or
+  miss. Higher priority than inventing further rules from imagination.
 - **Backend domain** — do not pre-build; start it (concept →
   implementation → setup, per `DELEGATION-MODEL.md`) only once a real
   backend project is connected or created.
