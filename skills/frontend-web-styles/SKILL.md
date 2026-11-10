@@ -103,6 +103,14 @@ omitting the attribute uses the dark default. Never hardcode a color,
 spacing, or font value inside a `.module.css` file — reference the
 token (`var(--accent)`).
 
+Naming — semantic by default, a spacing scale on an 8px base grid (4px
+sub-grid for tight spacing only), thematic names only as a stated
+exception: full rule and external basis in `frontend-styling-concept` →
+"Token naming convention" / "Basis". `templates/tokens.css` already
+includes the `--space-4`…`--space-64` scale; add project colors
+alongside the existing `--bg`/`--accent`/`--accent-2`/`--text`/`--muted`
+placeholders rather than inventing new role names for the same roles.
+
 ## Breakpoints — written by hand, no abstraction layer
 
 Plain CSS has no mixins. Do not reach for Sass just to get one. Use the
@@ -133,6 +141,70 @@ For fluid type sizing, `clamp()` is native CSS — no Sass function needed:
   font-size: clamp(1rem, 0.6rem + 1.5vw, 3rem);
 }
 ```
+
+## Raw markup injected via `dangerouslySetInnerHTML` keeps its own class names
+
+An SVG (or other markup) inlined as a raw string — `dangerouslySetInnerHTML`,
+`?raw` imports — never goes through the CSS Modules transform, so its
+class names stay exactly as written in that file, unhashed. A selector
+for one of them in your `.module.css` must be wrapped in `:global()`
+(`:global(.cz-f) { ... }`), not written as a plain local class — a
+plain `.cz-f` would hash to a name the injected markup never has, and
+the rule would silently never match. Find these class names by reading
+the raw asset file directly, not by guessing from the component code.
+
+## Sharing one module between sibling components
+
+Most components get their own `.module.css`. A genuinely shared set of
+primitives (a form's field/button/row vocabulary, used by many sibling
+components with no single natural owner) is the one case where several
+files legitimately import the *same* module — don't force a shared
+vocabulary into one file's exclusive styles just to keep the "one file
+per component" rule literal. Prefer exposing it as small components
+(`Field`, `Btn`, `Row`, ...) from whichever file owns the module, so
+consumers write `<Btn variant="main">` instead of a raw
+`className={styles.btn}` — this keeps the CSS Modules import itself
+confined to one file, and gives every consumer a typed API instead of
+guessing a class name.
+
+## A CSS Modules import under `exactOptionalPropertyTypes`
+
+`vite/client`'s type for a `.module.css` import is a bare index
+signature (`{ readonly [key: string]: string }`). Under
+`noUncheckedIndexedAccess`, dot access through it (`styles.foo`) types
+as `string | undefined`, not `string`. If a component you write re-wraps
+a class name into an *optional* prop (e.g. `Acts({ className }: {
+className?: string })`), passing `styles.foo` there fails under
+`exactOptionalPropertyTypes` (`TS2375`) — the fix is declaring that prop
+as `className?: string | undefined`, explicitly, not just `className?:
+string`. Only matters for your own components' optional props; a
+built-in element's `className` already includes `undefined` in its type
+and needs no change.
+
+## A style class is not a JS hook — check this before deleting any old file
+
+CSS Modules turns a class name into a build-time hash
+(`Header_brand__a1b2c`), so any `document.querySelector('.foo')` or
+`element.querySelector('.foo')` that assumed a literal class name
+breaks silently (no build error — it just stops finding the element).
+This has turned up in nearly every file migrated so far — self-queries
+inside the same component (`PlaceField`'s own dropdown list, a
+lightbox slide's own "current" lookup), and cross-file ones (`Splash.tsx`
+querying the header's `.header__brand`/`.header__burger`; the lightbox
+querying `.archive` — a *different feature's* root class — to tell
+whether a photo tile sits inside the open archive overlay).
+
+Before deleting an old `.scss` file (not just editing the one component
+being migrated), run `grep -rn "querySelector\|\.closest(" src` once for
+the whole project and check every hit's selector string against the
+classes you are removing — a match anywhere in the codebase, not only
+in the file you're touching, is a real breakage. Fix each one with a
+`data-*` attribute for the JS lookup, separate from the style class —
+styling and element-identity are different concerns and stay on
+different attributes. A self-referential query inside one component
+(an element looking up its own child by class) is usually better fixed
+with a direct `ref` instead of a `data-*` attribute, since the lookup
+never needs to cross a component boundary.
 
 ## Checks before calling styling done
 

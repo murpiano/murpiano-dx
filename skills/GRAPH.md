@@ -14,6 +14,13 @@ flowchart TD
     stack -. fills/reads .-> profile
     repo -. fills/reads .-> profile
     frontend -. details .-> frontendGraph["frontend-styling-concept/GRAPH.md"]
+    structure[frontend-component-structure]
+    testing[frontend-testing]
+    a11y[frontend-accessibility]
+    security[frontend-security]
+    perf[frontend-performance]
+    resilience[frontend-resilience]
+    knowledge[knowledge-refresh]
 ```
 
 ## Nodes
@@ -30,6 +37,23 @@ flowchart TD
 - **`frontend-styling-concept`** — domain: cross-platform styling
   architecture. Has children → see
   [frontend-styling-concept/GRAPH.md](frontend-styling-concept/GRAPH.md).
+- **`frontend-component-structure`** — domain: how a feature's files are
+  organized and exposed (public-API barrel per feature folder, what
+  stays internal) — independent of styling tech or platform.
+- **`frontend-testing`** — domain: what gets a unit test vs an
+  end-to-end test, and test-naming style — independent of styling tech
+  or platform.
+- **`frontend-accessibility`** — domain: keyboard, screen-reader
+  semantics, focus management, color contrast, motion, alt text,
+  target size — default target WCAG 2.2 AA.
+- **`frontend-security`** — domain: the frontend-rendering XSS
+  boundary — when raw HTML (`dangerouslySetInnerHTML`, a user-derived
+  URL) needs sanitizing vs. when a static/trusted source is fine as-is.
+- **`frontend-performance`** — domain: bundle size, Core Web Vitals
+  (LCP/INP/CLS), and code-splitting — when a heavy feature needs
+  lazy-loading and what "fast enough" numerically means.
+- **`frontend-resilience`** — domain: error boundaries, loading
+  states, empty states — three distinct UI states, kept separate.
 - **`repo-*` lifecycle group** — not a domain-architecture chain, a
   parallel category: repository lifecycle skills, each independent and
   triggered by its own task (not by `stack-selection`):
@@ -41,6 +65,10 @@ flowchart TD
   itself for broken links, orphaned skills, and `project-profile.md`
   "Governs" mismatches. Run after any change to the framework's own
   structure, not tied to `stack-selection` or any project.
+- **`knowledge-refresh`** — not a domain, a meta-utility: re-checks a
+  skill's dated `## Basis (checked ...)` external-justification section,
+  one topic or a full sweep, user-triggered. Implements
+  `DELEGATION-MODEL.md` → "External justification freshness."
 
 No other domain exists yet (backend, mobile-native, desktop-native, ...).
 Add a node here only when real work starts a new one — see `AGENTS.md` →

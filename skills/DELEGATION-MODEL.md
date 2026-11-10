@@ -140,3 +140,51 @@ task work.
     per the "land every substantive discussion back in the framework"
     rule above; don't let a correction live only in the conversation that
     prompted it.
+- **Migrating an existing project onto a framework default — alias,
+  don't big-bang.** Moving a real project from its own override to this
+  framework's default (e.g. SCSS+BEM → CSS Modules) touches many files;
+  doing it as one atomic change risks breaking everything unmigrated at
+  once, and stalls if interrupted partway.
+  - Migrate one unit at a time (one component, one feature), the same
+    size as whatever this framework's implementation skill already
+    treats as the colocation unit.
+  - When the new unit needs something the old shared resource still
+    provides to not-yet-migrated units (e.g. a renamed design token),
+    add it as a **backward-compatible alias** in the new resource
+    pointing at the new name/shape — do not delete the old resource
+    until nothing references it anymore. Mark each alias with a comment
+    naming what it is and that it's temporary.
+  - Track the migration itself as a `skills/BACKLOG.md` entry: what's
+    migrated, what's left, and an explicit final step — "remove the
+    aliases/legacy file once every unit is migrated and verified." A
+    migration is not done while an alias from it still exists; don't
+    let that cleanup step get silently forgotten once the visible work
+    stops.
+  - This is the general shape; the current concrete case is my-world's
+    SCSS → CSS Modules move (see `skills/BACKLOG.md`).
+- **External justification freshness.** A convention justified by "the
+  industry does X" needs an actual, dated external check — not the
+  agent's own unaided reasoning, and not a justification that quietly
+  goes stale.
+  - When a decision rests on external best practice (not a forced or
+    trivial choice), record it in the governing skill as its own
+    `## Basis (checked YYYY-MM-DD)` section: the sources (as links) and a
+    one-line summary of what each says, same shape as
+    `frontend-styling-concept`'s "Basis" section.
+  - Before deciding a new question in the same area, find the governing
+    skill (via `skills/GRAPH.md`'s routing) and check its `Basis` date:
+    - **Dated within the current month** — apply it directly, telling
+      the user what's being applied and its date; do not re-research
+      from scratch.
+    - **Missing, or older than about a month** — say so to the user,
+      then research it fresh (current sources, not memory) before
+      deciding, and write or update the `Basis` section with the new
+      date and sources.
+  - This sits underneath, not instead of, "never adopt a package/pattern
+    unilaterally" above — the freshness check decides *what's current*;
+    the user still confirms the resulting choice.
+  - `skills/knowledge-refresh/SKILL.md` runs this check systematically:
+    for one named topic, or as a full sweep across every skill's `Basis`
+    section. Both modes are user-triggered, not an autonomous schedule —
+    see that skill for what "stale" means in the sweep and what it does
+    with the results.

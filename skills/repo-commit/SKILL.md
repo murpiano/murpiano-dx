@@ -21,6 +21,10 @@ take precedence.
 4. Create a Conventional Commit. [Kysaro](https://github.com/murpiano/kysaro) validates the exact project format.
 5. Push the branch and open a PR with a useful title and body when requested.
 6. Wait for required checks. Merge only when checks pass and the user authorizes it.
+7. After a merge (or whenever a task branch's work is otherwise finished),
+   ask the user whether to delete that specific branch — locally and on the
+   remote. State which branch you mean; don't assume the answer carries to
+   other branches, and don't delete without asking each time.
 
 ## Commit messages
 

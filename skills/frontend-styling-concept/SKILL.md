@@ -38,6 +38,65 @@ These four rules are the contract. What changes per platform is only
 *how* each rule is mechanically satisfied — because the render engines
 are not compatible with each other.
 
+## Token naming convention (rule 1, in detail)
+
+Rule 1 says tokens have one source of truth; this says how to *name*
+them, independent of which platform/technology expresses them (CSS
+custom property, SCSS `$variable`, Tailwind `theme.extend`, a JS/TS
+token module for React Native — the names below apply to all of them):
+
+- **Default to semantic (role) names** — `--bg`, `--accent`,
+  `--text-muted` — not thematic/decorative names (`--sky`, `--lamp`,
+  `--star`). A role's name stays correct even if the value behind it
+  changes (a new theme, a rebrand); a decorative name ties the token to
+  one metaphor and has to be renamed or reinterpreted later.
+- **Thematic names are a stated exception, not a default.** Choose them
+  only when the project has a fixed, deliberate visual identity with no
+  planned theming (a personal/art project built around one specific
+  metaphor) — state this as the project's own reason, the same way any
+  other non-default choice in this framework is settled once and not
+  re-asked later.
+- **Spacing/radius/size scales: name the token by its value, on an 8px
+  base grid with a 4px sub-grid for tight spacing only** (icon/label
+  gaps, badge padding, compact controls) — e.g. `--space-4`,
+  `--space-8`, `--space-12`, `--space-16`, `--space-24`, `--space-32`.
+  Name tokens after the resulting value, not an arbitrary index
+  (Tailwind's `space-3` = 12px needs a lookup; `--space-12` doesn't).
+  Values between steps get rounded to the nearest step, not given their
+  own one-off token.
+
+## Basis (checked 2026-11-07)
+
+External sources, not just this framework's own reasoning — see "External
+justification freshness" in `skills/DELEGATION-MODEL.md` for how to reuse
+or refresh this:
+
+- Two-layer *primitive → semantic* naming, and semantic winning for
+  theming/stability, is common practice across design systems:
+  [UX Collective](https://uxdesign.cc/naming-design-tokens-9454818ed7cb),
+  [Red Hat Design System](https://github.com/RedHat-UX/red-hat-design-system/wiki/Semantic-Token-Names),
+  [Door3](https://www.door3.com/blog/naming-design-tokens-guide).
+- Value-named spacing tokens over an index or t-shirt scale: Mark
+  Dalgleish (Braid design system) argues a predictable step
+  (`--space-8`) has no disadvantage over a t-shirt name, which is
+  indirection when designers don't think in those categories —
+  [gist](https://gist.github.com/markdalgleish/c7c293dd5fe96620558e7b1d793ac07a).
+- 8px base grid with a 4px sub-grid for tight spacing is the more common
+  default (Material Design's 8dp base, Workday Canvas's 8pt grid,
+  Tailwind's 4-based scale used as the sub-grid) than a flat 4px-only
+  scale: [Mantlr spacing cheat sheet](https://mantlr.com/blog/spacing-system-cheat-sheet),
+  [Workday Canvas](https://canvas.workday.com/tokens/space).
+
+These sources are practitioner/vendor writeups, not a settled W3C
+standard — treat this as current common practice, re-checked per the
+freshness rule, not an immutable law.
+
+Noticed while dogfooding `frontend-web-styles` on a real project
+(`my-world`, see `skills/BACKLOG.md`): it had colors centralized but
+thematically named, and no spacing scale at all. The dogfood surfaced
+the gap; the external sources above are what actually settled the
+convention.
+
 ## Mechanism per platform
 
 | Platform | Isolation mechanism | Style authoring | Token consumption | Baseline reset | Global application point |
