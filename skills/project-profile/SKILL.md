@@ -97,6 +97,19 @@ else in this framework (`skills/DELEGATION-MODEL.md`).
 - A detected-but-unconfirmed value (see the template's "Provenance"
   section) is not settled; confirm it with the owner before relying on
   it elsewhere.
+- **Absence of a signal is not the same as a decision.** "No i18n
+  library in `package.json`" tells you the project doesn't have
+  multi-language support *yet* — it does not tell you whether the
+  owner ever considered needing one. Writing "no" into a field from
+  silence, without surfacing the question, turns an unopened question
+  into a false settled fact; the owner can't correct what they were
+  never asked. The template marks a short list of fields this way
+  (**"ask explicitly"**) — for those, `repo-init`'s scan step must put
+  the question to the owner directly even when nothing was detected,
+  and record their actual answer (including a real "no, don't need
+  it") as the confirmed value, not an inferred one. Don't expand this
+  list casually — it's for decisions that are easy to silently skip
+  and expensive to discover missing later, not every blank row.
 - When a project's stack changes (a new backend added, a styling
   approach migrated), update the profile in the same change — it should
   never silently drift out of date.

@@ -20,6 +20,7 @@ flowchart TD
     security[frontend-security]
     perf[frontend-performance]
     resilience[frontend-resilience]
+    i18n[frontend-i18n]
     knowledge[knowledge-refresh]
 ```
 
@@ -54,6 +55,10 @@ flowchart TD
   lazy-loading and what "fast enough" numerically means.
 - **`frontend-resilience`** — domain: error boundaries, loading
   states, empty states — three distinct UI states, kept separate.
+- **`frontend-i18n`** — domain: whether a project needs more than one
+  UI language, and once it does, library choice (react-i18next
+  default), string extraction, pluralization, locale-aware
+  formatting.
 - **`repo-*` lifecycle group** — not a domain-architecture chain, a
   parallel category: repository lifecycle skills, each independent and
   triggered by its own task (not by `stack-selection`):

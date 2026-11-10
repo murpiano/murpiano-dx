@@ -53,6 +53,10 @@ any framework default (e.g. a `frontend-styling-concept` implementation):
    Tailwind — treat that as the project's styling implementation instead
    of the framework's CSS Modules default?"). Do not silently assume a
    detected pattern is the team's deliberate choice — confirm it.
+   For every field the profile template marks **"ask explicitly"** (e.g.
+   i18n/l10n), ask the question directly even when nothing was detected —
+   an absent library means "not built yet," not "the owner decided
+   against it." Record their actual answer, including a real "no."
 4. Save the confirmed profile as `.agents/project-profile.md` in this
    project's own data (under `{{STORE}}`, per `global/project-rules.md`),
    not in the framework's own skill files — see

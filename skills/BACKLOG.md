@@ -112,3 +112,18 @@ it live only in a conversation; remove it once it's actually done
   `frontend-resilience` are now written, graphed, and dogfooded on
   `my-world` alongside `frontend-component-structure`/`testing`/
   `accessibility` from the earlier pass.
+- Found and fixed a real process gap, not a skill gap: `repo-init`'s
+  scan was treating "no i18n library detected" as a settled "no"
+  without ever asking the owner — a near-miss this session, caught
+  only because i18n came up in conversation by chance. Added a
+  general principle to `project-profile/SKILL.md` ("absence of a
+  signal is not a decision") plus an "ask explicitly" marker on the
+  profile template's i18n row, and updated `repo-init` to actually ask
+  for every field marked that way, recording a real "no" as a
+  confirmed answer instead of an inferred one. Asked `my-world`'s
+  owner directly: the real answer was "yes" (Russian + English) — the
+  opposite of what the unconfirmed detected value said. Added
+  `frontend-i18n` (default react-i18next, reasoned against Lingui and
+  react-intl) to cover the implementation once it starts. The "ask
+  explicitly" list is meant to stay short and curated, not grow to
+  cover every blank row — see that skill's own caution.
