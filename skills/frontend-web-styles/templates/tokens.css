@@ -6,6 +6,21 @@
   --text: #e8ecf6;
   --muted: #7f89a3;
 
+  /* Spacing — 8px base grid; 4px and 12px are the sub-grid, for tight
+     spacing only (icon/label gaps, badge padding, compact controls).
+     Token named after its own value (not an arbitrary index). Extend
+     the top end if the project needs it; don't insert an off-grid
+     value between two steps. */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   --font-family-base: 'Space Grotesk', -apple-system, 'Segoe UI', helvetica, arial, sans-serif;

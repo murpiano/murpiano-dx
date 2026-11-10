@@ -62,6 +62,11 @@ the user before moving to the next rather than dumping the whole
 scaffold at once. This keeps the walkthrough legible instead of a wall
 of generated files the user never reviewed.
 
+Give each feature folder created here the shape
+`frontend-component-structure` describes (one `index.ts` public-API
+barrel per feature folder, not per component) from the start — easier
+than retrofitting it once other code already imports a deep path.
+
 ## Step 4 — record anything new
 
 If this project introduces a decision worth keeping for next time (a new
