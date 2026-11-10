@@ -110,7 +110,7 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 |---|---|---|
 | Performance budget | | `frontend-performance` |
 | Accessibility target | WCAG 2.2 AA (framework default) / AAA / none stated | `frontend-accessibility` |
-| i18n / l10n | yes — languages: _ / no | |
+| i18n / l10n (ask explicitly — see project-profile/SKILL.md) | yes — languages: _ / no | `frontend-i18n` |
 | Security / compliance | GDPR / SOC2 / none stated | |
 | Frontend rendering (XSS) | any raw-HTML rendering (`dangerouslySetInnerHTML`, user-derived URLs) audited / none in use | `frontend-security` |
 | Error/loading/empty states | has an app-root error boundary: yes / no — loading and empty states: pattern described | `frontend-resilience` |
