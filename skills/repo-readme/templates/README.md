@@ -95,9 +95,14 @@ src/
 <1-2 sentences on the rule that organises the tree and where tests live.>
 
 ## API
-<!-- kind: app, framework, npm-package. CLI tool: rename to "## CLI" and show the
-     help output. Library or npm-package: rename to "## Usage" and show 1-3 code
-     examples. Drop for personal-brand. -->
+<!-- kind: framework, npm-package. Optional for app — required only when the app
+     exposes a real external interface (an HTTP API, a CLI). CLI tool: rename to
+     "## CLI" and show the help output. Library or npm-package: rename to
+     "## Usage" and show 1-3 code examples. App with no network API (e.g. a
+     desktop app whose UI talks to its own backend process over IPC, not a real
+     external interface): drop this heading entirely and fold the content into
+     a subsection under "How it works" instead — it's internal architecture,
+     not a public API. Drop for personal-brand. -->
 
 Base URL: `<url>`
 
