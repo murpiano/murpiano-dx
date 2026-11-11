@@ -34,9 +34,15 @@ Keep examples runnable. Do not claim automation that is not configured.
 
 ## Metadata and badges
 
-Use a concise GitHub description and only relevant topics. The CI badge requires a
-working `.github/workflows/ci.yml`. The Release badge requires a public repository
-and at least one published release. Remove stale badges.
+The GitHub description states user value or primary workflow, in the template's
+own words (`templates/repository-description.md`) — never a stack/library listing;
+that belongs in topics, not restated in prose. GitHub always displays topics
+alphabetically regardless of the order they're added in — don't try to order
+them; pick a small, relevant mix of what it does (e.g. `clipboard-manager`,
+`travel`) and what it's built with (language, framework, notable library,
+platform/OS if relevant), only topics a user would actually search by. The CI
+badge requires a working `.github/workflows/ci.yml`. The Release badge requires
+a public repository and at least one published release. Remove stale badges.
 
 ## Review
 
