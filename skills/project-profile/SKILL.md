@@ -118,3 +118,33 @@ else in this framework (`skills/DELEGATION-MODEL.md`).
   Modules) is exactly the project-level override described in
   `skills/DELEGATION-MODEL.md` — the profile is where that override is
   recorded.
+
+## Concurrent edits
+
+Two sessions (or two people) can end up editing the same project's
+`project-profile.md` inside the same `sync.sh start`/`end` window. What
+happens depends on *what* overlapped, not just *that* it overlapped —
+`sync_workspace()` runs a real `git merge` over the personal workspace
+repo (`workspace_sync.py`), so this is an ordinary text-merge, not a
+table-aware one:
+
+- **Different rows, or a row plus its own `decisions/<field-slug>.md`**
+  merge cleanly on their own — each row is one line, each field's
+  decision file is its own path, so non-overlapping edits never
+  conflict regardless of how close together in time they happened.
+- **The same row (or the same decision file) edited by both** is a real
+  Git conflict. `sync_workspace()` does not resolve it for you: on
+  `merge --no-edit` failure it aborts the merge, raises, and leaves
+  *both* commits intact and unmerged — "Workspace remote changes could
+  not be merged... Resolve the conflict, then automatic sync will
+  retry." Do not pick a side to make the error go away. Read both
+  versions, find out from the owner (or the other session's own record,
+  if it left one) which is now true, write the resolved value with its
+  own `decisions/<field-slug>.md` entry if the two versions disagreed
+  for a real reason, then resolve the Git conflict and re-run sync.
+- A detected-but-unconfirmed value (previous bullet) is especially
+  exposed here: two sessions independently "confirming" the same blank
+  field from two different guesses in the same window is the concurrent
+  version of the single-session problem above — the fix is the same,
+  surface it and ask, don't silently keep whichever commit happened to
+  sync first.
