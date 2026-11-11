@@ -13,13 +13,6 @@ it live only in a conversation; remove it once it's actually done
   written. Fine solo; for a team sharing this framework, decide whether
   framework-structure changes need a review step (PR-style) before they
   apply to everyone's sessions.
-- **Concurrent edits to one project's `project-profile.md`.** Two
-  sessions (or two people) editing the same project's profile/decisions
-  at once — `sync.sh`'s existing merge-conflict handling (both sides
-  kept, conflict reported) applies at the file level, but there's no
-  profile-specific guidance yet (e.g. which section is safe to edit
-  concurrently).
-
 - **Raise `copycat`'s audit gate from `critical` to `high` once Electron
   is upgraded.** `copycat` still ships Electron 32; its 7 remaining
   `npm audit` findings are all Electron's own advisories, fixed only by
@@ -177,3 +170,14 @@ it live only in a conversation; remove it once it's actually done
   rewriting published `master` history is out of bounds here. Pre-check
   merge messages by eye for the 72-char body-line rule too, don't trust
   `--type merge` alone.
+- Wrote the concurrent-edits guidance for `project-profile.md`
+  (`project-profile/SKILL.md` → "Concurrent edits"): `sync_workspace()`
+  runs a real `git merge` over the workspace repo, so edits to
+  different rows or different `decisions/<field-slug>.md` files merge
+  cleanly on their own (each is its own line/file); only a same-row or
+  same-decision-file edit by two sessions in the same sync window is a
+  real conflict, and `workspace_sync.py` already aborts and preserves
+  both commits unmerged rather than guessing — the new guidance says
+  not to resolve that by picking a side, but to surface it and ask,
+  same as the single-session "absence of a signal is not a decision"
+  rule above.
