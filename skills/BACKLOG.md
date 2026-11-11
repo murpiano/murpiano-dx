@@ -20,11 +20,19 @@ it live only in a conversation; remove it once it's actually done
   profile-specific guidance yet (e.g. which section is safe to edit
   concurrently).
 
-- **Dogfood `repo-dependency-security` on `my-world` and `copycat`.** The
-  skill (Dependabot alerts + `npm audit --audit-level=high` CI gate,
-  dated `Basis`) is written and graphed; neither real project has
-  Dependabot or an audit gate yet. Apply it to both, record the decision
-  in each `project-profile.md`, then move this entry to Done.
+- **Raise `copycat`'s audit gate from `critical` to `high` once Electron
+  is upgraded.** `copycat` still ships Electron 32; its 7 remaining
+  `npm audit` findings are all Electron's own advisories, fixed only by
+  a major Electron 32 → 45 upgrade that needs real manual testing of the
+  packaged Windows app (can't be verified in a sandbox). Until that
+  lands, `copycat`'s CI `security` job intentionally stays at
+  `--audit-level=critical`, not the framework default of `high` — see
+  `.agents/2026-11-11-dependency-security.md` in `copycat`'s workspace
+  data.
+- **Give `copycat` a `project-profile.md`.** It's connected to the
+  framework (`AGENTS.md`, dated `.agents/` notes) but was never adopted
+  via `repo-init`, so it has no profile table — the dependency-security
+  decision above had to go into a dated note instead of a governed row.
 
 ## Done
 
@@ -133,3 +141,39 @@ it live only in a conversation; remove it once it's actually done
   react-intl) to cover the implementation once it starts. The "ask
   explicitly" list is meant to stay short and curated, not grow to
   cover every blank row — see that skill's own caution.
+- Added `repo-dependency-security` (Dependabot alerts + an
+  `npm audit --audit-level=high` CI gate, dated `Basis` on
+  Dependabot/Renovate/audit-ci). Dogfooded on both real projects, with
+  different outcomes that taught the framework something real: on
+  `my-world`, `npm audit fix` cleared every high/critical finding
+  (devDependency-only chain), so the gate landed at the framework
+  default (`high`) immediately. On `copycat`, 29 findings included
+  Electron's own CVEs — Electron is a devDependency in `package.json`
+  but is the actual runtime shipped to users, and fixing those needs a
+  major Electron 32 → 45 upgrade that must be manually tested on a
+  packaged Windows build (can't be verified in this sandbox). Rather
+  than force that upgrade through to make the gate pass, the gate
+  landed at `--audit-level=critical` for now (tracked above to raise
+  once Electron is current) — the one genuinely critical finding (a
+  `tar` vulnerability reachable only through `electron-builder`'s own
+  build-time dependency chain) was still cleared via a scoped
+  `package.json` `overrides` entry, verified not to break the dev
+  build before committing. A first attempt to override `tar` globally
+  appeared to crash `node-gyp`/`cacache` — turned out to be this
+  sandbox running Node 24 instead of the project's required Node 22,
+  not the override; re-verified clean on the correct Node version
+  before concluding anything. Also caught and fixed, mid-task, that a
+  feature branch had been cut from a stale local `main`/`master` (no
+  `git pull` first) which would have silently reverted an already-merged
+  feature on merge — rebased before pushing. `copycat`'s own
+  `kysaro.yml` was separately pinned to Node 24 and had been failing on
+  `master` since PR #67 for the same native-build reason; fixed
+  alongside this work since it was directly in the way. One own mistake
+  not fixed: the squash-merge commit for `copycat`'s PR exceeded
+  kysaro's line-length rule despite passing a local `kysaro -m --type
+  merge` pre-check — a real discrepancy between that pre-check and the
+  actual `kysaro ci` rule, now one more failing check on `copycat`'s
+  `master` (joining four pre-existing ones); not rewritten since
+  rewriting published `master` history is out of bounds here. Pre-check
+  merge messages by eye for the 72-char body-line rule too, don't trust
+  `--type merge` alone.
