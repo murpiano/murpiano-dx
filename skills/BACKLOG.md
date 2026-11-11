@@ -20,6 +20,12 @@ it live only in a conversation; remove it once it's actually done
   profile-specific guidance yet (e.g. which section is safe to edit
   concurrently).
 
+- **Dogfood `repo-dependency-security` on `my-world` and `copycat`.** The
+  skill (Dependabot alerts + `npm audit --audit-level=high` CI gate,
+  dated `Basis`) is written and graphed; neither real project has
+  Dependabot or an audit gate yet. Apply it to both, record the decision
+  in each `project-profile.md`, then move this entry to Done.
+
 ## Done
 
 - Cross-platform styling concept + web implementation + guided setup

@@ -90,6 +90,7 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 | Secrets management | `.env` files / secrets manager (name it) / platform env vars | |
 | Monitoring / logging | Sentry / Datadog / none | |
 | Release process | semantic versioning / calendar-based / none — changelog: auto / manual | `repo-release` |
+| Dependency scanning (ask explicitly — see project-profile/SKILL.md) | Dependabot / Renovate / none — CI audit gate: yes (`--audit-level=_`) / no | `repo-dependency-security` |
 
 ## 6. Git workflow
 
