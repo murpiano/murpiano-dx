@@ -8,6 +8,19 @@ it live only in a conversation; remove it once it's actually done
 - **Backend domain** — do not pre-build; start it (concept →
   implementation → setup, per `DELEGATION-MODEL.md`) only once a real
   backend project is connected or created.
+- **Six frontend rows in `project-profile.md` have no governing skill
+  yet**: design system / shared components, component dev/doc workshop
+  (Storybook or equivalent), theming/dark mode, motion/animation
+  approach, forms & validation, routing/navigation (section 3, added
+  2026-11-12 after an audit found them missing — see that section's own
+  note). Unlike the backend domain above, these are *not* waiting on a
+  new project — every dogfooded project so far has needed all of them;
+  build them the same way the earlier frontend domains were built
+  (concept → implementation → dogfood on `my-world`), one at a time,
+  user-sequenced. Three more rows (SEO/discoverability, analytics,
+  feature flags, section 7) are genuinely app-type-conditional, marked
+  "ask explicitly" so `repo-init` asks rather than infers "no" — these
+  stay unbuilt until a project's real answer is "yes."
 - **Team review process for framework changes.** Right now any change to
   `skills/`/`DELEGATION-MODEL.md`/etc. is just agreed in conversation and
   written. Fine solo; for a team sharing this framework, decide whether
@@ -181,3 +194,24 @@ it live only in a conversation; remove it once it's actually done
   not to resolve that by picking a side, but to surface it and ask,
   same as the single-session "absence of a signal is not a decision"
   rule above.
+- Audited whether the frontend domain was actually complete, after the
+  owner asked twice in a row and got "yes, that's everything" wrong
+  both times (i18n, then design system/Storybook) — a real, repeated
+  process failure worth fixing structurally, not just answering better
+  next time. First attempt at the fix was wrong too: wrote a second,
+  separate `FRONTEND-CHECKLIST.md` table — the owner caught it
+  immediately ("у нас же уже есть таблица... это два источника
+  истины?"). `project-profile.md` is already that one table; the real
+  fix was adding the missing concerns there as new rows with empty
+  "Governed by" (same pattern as the no-backend-skill-yet note in
+  section 4), not inventing a parallel document. Found via general
+  frontend/design-system literature
+  ([design system maturity models](https://atomize.tools/blog/design-system-maturity/),
+  [component API versioning](https://www.pathtoproject.com/blog/20260505-component-api-versioning-for-enterprise-design-systems.md),
+  [Storybook vs. Ladle/Histoire, 2026](https://www.techinterview.org/post/3233475411/frontend-component-documentation-storybook-2026/),
+  [Next.js production checklist](https://nextjs.org/docs/app/guides/production-checklist),
+  [frontendchecklist.io](https://frontendchecklist.io/checklists/launch-checklist)):
+  six universal rows added to section 3 (design system, component
+  workshop, theming, motion, forms & validation, routing — see the open
+  item above) and three conditional "ask explicitly" rows added to
+  section 7 (SEO, analytics, feature flags).
