@@ -6,6 +6,15 @@ whenever something changes. Read this before asking the owner something
 it already answers; a question this table has a value for is a question
 already settled, not one to re-ask.
 
+The section order below (Identity → Application type & platforms →
+Frontend → Backend → Infrastructure & delivery → Git workflow →
+Constraints) is the confirmation order, not just a filing order — a
+bigger, earlier decision constrains the smaller ones that come after
+it, so `repo-init` and `stack-selection` walk every project's table
+top to bottom, section by section, row by row, in this same order
+every time. See `repo-init/SKILL.md` → "Adopting an existing project's
+own conventions" for the full rule.
+
 Leave an inapplicable section's rows as `—`; don't delete the section —
 a later change (e.g. adding a backend to a frontend-only app) fills it
 in instead of re-deriving the table's shape from scratch.
@@ -46,24 +55,28 @@ trigger, not cosmetics" before editing a governed row's value.
 
 *(leave every row `—` if this project has no frontend)*
 
+Rows go stack → app architecture → UI/design system → feature patterns
+→ dev/verification tooling — each tier builds on the one before it, so
+confirm them in this order every time (see `repo-init`'s own rule).
+
 | Field | Value | Governed by |
 |---|---|---|
 | Language | JavaScript / TypeScript | |
 | UI framework | React / Vue / Svelte / Angular / vanilla | |
 | Meta-framework | Next.js / Nuxt / Remix / Astro / none | |
-| Styling approach | CSS Modules / Tailwind / SCSS+BEM / CSS-in-JS (Emotion, styled-components) / vanilla-extract | `frontend-styling-concept` |
-| State management | Redux / Zustand / Context API / MobX / Recoil / none | |
-| Data fetching | REST client / GraphQL client (Apollo, urql) / tRPC / server actions | |
 | Bundler | Vite / Webpack / Turbopack / esbuild / Parcel | |
 | Package manager | npm / pnpm / yarn / bun | |
-| Unit/component tests | Vitest / Jest / none | |
-| E2E tests | Playwright / Cypress / none | |
+| Routing / navigation | library (name it) / client-state only, no router / none (single view) | |
+| State management | Redux / Zustand / Context API / MobX / Recoil / none | |
+| Data fetching | REST client / GraphQL client (Apollo, urql) / tRPC / server actions | |
 | Design system / shared components | none — feature-local only / shared component library (name its location) | |
-| Component dev/doc workshop | Storybook / Ladle / none | |
+| Styling approach | CSS Modules / Tailwind / SCSS+BEM / CSS-in-JS (Emotion, styled-components) / vanilla-extract | `frontend-styling-concept` |
 | Theming / dark mode | none / light+dark / multi-brand | |
 | Motion/animation approach | CSS transitions only / library (name it) / none stated | |
 | Forms & validation | none built yet / client-only / client+server — library (name it) or hand-rolled | |
-| Routing / navigation | library (name it) / client-state only, no router / none (single view) | |
+| Component dev/doc workshop | Storybook / Ladle / none | |
+| Unit/component tests | Vitest / Jest / none | |
+| E2E tests | Playwright / Cypress / none | |
 
 No skill governs design system, component workshop, theming, motion,
 forms & validation, or routing yet (see `skills/BACKLOG.md`) — these
