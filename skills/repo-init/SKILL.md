@@ -48,15 +48,33 @@ any framework default (e.g. a `frontend-styling-concept` implementation):
    (recent `git log`, any commit-msg hook), and CI configuration.
 2. Fill `skills/project-profile/templates/project-profile.md` from these
    signals, marking each detected row per its own "Provenance" section.
-3. Report the findings and ask the owner to confirm each one that would
-   otherwise be a framework default decision (e.g. "this repo already uses
-   Tailwind — treat that as the project's styling implementation instead
-   of the framework's CSS Modules default?"). Do not silently assume a
-   detected pattern is the team's deliberate choice — confirm it.
+3. Report the findings and confirm them **in the table's own order** —
+   section by section, row by row, top to bottom, exactly as the
+   template lists them (Identity → Application type & platforms →
+   Frontend → Backend → Infrastructure & delivery → Git workflow →
+   Constraints & non-functional requirements; same discipline inside
+   each section). This is not a stylistic preference: the template's
+   row order is itself the dependency order (an architecture decision
+   like "Primary platform" or a frontend's "UI framework" sits before
+   the smaller choices that follow from it, like "Package manager" or
+   "E2E tests") — asking out of order, or skipping around between
+   sections and circling back, breaks that logic and makes two
+   adoptions of similar projects feel arbitrarily different. Confirm a
+   whole section before moving to the next; within a section, go row by
+   row, never jumping ahead to a later row before the current one is
+   settled. For a row that would otherwise be a framework default
+   decision (e.g. "this repo already uses Tailwind — treat that as the
+   project's styling implementation instead of the framework's CSS
+   Modules default?"), do not silently assume a detected pattern is the
+   team's deliberate choice — confirm it, in its place in the order,
+   not pulled forward or deferred.
    For every field the profile template marks **"ask explicitly"** (e.g.
    i18n/l10n), ask the question directly even when nothing was detected —
    an absent library means "not built yet," not "the owner decided
-   against it." Record their actual answer, including a real "no."
+   against it." Record their actual answer, including a real "no." An
+   "ask explicitly" row is confirmed in its own place in the order, the
+   same as any other row — it does not jump to the front or get batched
+   separately just because it needs asking rather than confirming.
 4. Save the confirmed profile as `.agents/project-profile.md` in this
    project's own data (under `{{STORE}}`, per `global/project-rules.md`),
    not in the framework's own skill files — see
