@@ -58,6 +58,17 @@ trigger, not cosmetics" before editing a governed row's value.
 | Package manager | npm / pnpm / yarn / bun | |
 | Unit/component tests | Vitest / Jest / none | |
 | E2E tests | Playwright / Cypress / none | |
+| Design system / shared components | none — feature-local only / shared component library (name its location) | |
+| Component dev/doc workshop | Storybook / Ladle / none | |
+| Theming / dark mode | none / light+dark / multi-brand | |
+| Motion/animation approach | CSS transitions only / library (name it) / none stated | |
+| Forms & validation | none built yet / client-only / client+server — library (name it) or hand-rolled | |
+| Routing / navigation | library (name it) / client-state only, no router / none (single view) | |
+
+No skill governs design system, component workshop, theming, motion,
+forms & validation, or routing yet (see `skills/BACKLOG.md`) — these
+rows are plain information until each is written, same as every other
+ungoverned row.
 
 ## 4. Backend
 
@@ -116,6 +127,9 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 | Frontend rendering (XSS) | any raw-HTML rendering (`dangerouslySetInnerHTML`, user-derived URLs) audited / none in use | `frontend-security` |
 | Error/loading/empty states | has an app-root error boundary: yes / no — loading and empty states: pattern described | `frontend-resilience` |
 | Browser/device support matrix | | |
+| SEO / discoverability (ask explicitly — see project-profile/SKILL.md) | public pages meant to be indexed/shared: yes — meta tags present: _ / no | |
+| Analytics / product telemetry (ask explicitly — see project-profile/SKILL.md) | yes — tool: _ / no | |
+| Feature flags / experimentation (ask explicitly — see project-profile/SKILL.md) | yes — tool: _ / no | |
 
 ## Provenance
 
