@@ -16,7 +16,7 @@ it live only in a conversation; remove it once it's actually done
   - [ ] Theming / dark mode
   - [ ] Motion/animation approach
   - [ ] Forms & validation
-  - [ ] Routing / navigation
+  - [x] Routing / navigation — `frontend-routing` (2026-11-13)
   - [ ] Auth / session handling (frontend) — distinct from section 4's
         backend "Auth" row; the client-side pattern (login-redirect,
         protected routes, where the session token lives), added
