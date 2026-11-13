@@ -39,6 +39,34 @@ Renovate is the upgrade when Dependabot's config is genuinely too limited
 scheduling control) — not a default swap. Switching is a real decision;
 record it as one, don't do it unilaterally (`DELEGATION-MODEL.md`).
 
+## Dependency *license* compliance — a separate concern from vulnerability scanning
+
+Everything above checks whether a dependency is *safe* to run; it says
+nothing about whether it's *legally* safe to ship. A dependency's own
+license can carry real legal risk independent of any vulnerability:
+
+- **Copyleft (GPL, AGPL)** — some licenses require derivative works to
+  also be open-sourced under the same terms. Pulling a GPL-licensed
+  package into closed-source product code can create a real obligation
+  to open the whole thing — AGPL specifically extends this to network
+  use (a SaaS built on AGPL-licensed code). This is the same family of
+  license risk `repo-readme`'s own License row names from the other
+  side (choosing what *your* code is licensed as) — this section is
+  about what a *dependency* imposes on you.
+- **Permissive (MIT, Apache 2.0, BSD)** — no such obligation; the normal,
+  low-risk case for the vast majority of npm packages.
+
+**Default: no automated license scanning for a solo/personal project** —
+the risk is real but low-probability for code nobody else redistributes.
+**Add `license-checker` (or FOSSA for a more complete/paid setup) as a
+CI step the moment any of these becomes true**: the project is sold or
+redistributed to others, a company's legal team will review it, or the
+project is open source under a permissive license and a contributor
+could unknowingly pull in a copyleft dependency that contaminates it.
+Block the build on a disallowed license (GPL/AGPL by default) the same
+way the `npm audit` gate blocks on a high-severity vulnerability — this
+is a policy decision like any other, not a one-off manual check.
+
 ## Allowlisting a finding
 
 Suppress by advisory ID, not by dependency path — a path-based ignore

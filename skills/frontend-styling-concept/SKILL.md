@@ -153,6 +153,19 @@ happens:
    across both, generated or hand-copied from one canonical source —
    never let the web and native palettes drift independently.
 
+## Design handoff (build-trigger, not default-on)
+
+No formal designer-handoff pipeline is this skill's default — a
+solo JS/TS developer doing their own visual design (per
+`frontend-design`) has no separate "design tool" source of truth to
+sync; the token file described above already *is* the single source.
+Add a Figma-based handoff only once a dedicated designer (not the same
+person writing the code) is actually on the project: Figma Variables
+exported to match this skill's token names 1:1 (via Tokens Studio or an
+equivalent plugin) — the token file stays the source of truth either
+way, Figma becomes a second place that must stay in sync with it, not a
+replacement for it.
+
 ## What this skill does not cover
 
 Component-level naming, CSS Modules file layout, the global reset, dark/

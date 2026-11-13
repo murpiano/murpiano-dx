@@ -9,7 +9,8 @@ Governs `project-profile.md` fields: Infrastructure & delivery → Hosting /
 deploy target, Database hosting, Environments, Secrets management,
 Constraints & non-functional requirements → Primary market / user
 jurisdiction (ask explicitly — see project-profile/SKILL.md), Security /
-compliance (ask explicitly — see project-profile/SKILL.md).
+compliance (ask explicitly — see project-profile/SKILL.md), Infrastructure
+& delivery → Uptime monitoring / status page.
 
 Scope: these rows look like "just describe your project" fields, but each
 one has a real, bounded set of 2026 options with known tradeoffs. Reaching
@@ -211,12 +212,32 @@ before asking, not just read the acronym back:
   explicitly" default to only naming GDPR/SOC2/HIPAA and silently skip
   152-ФЗ for a Russian-market product.
 
+## Uptime monitoring / status page (build-trigger, not default-on)
+
+Distinct from `frontend-monitoring`'s Sentry row — Sentry tells you a
+request *inside* the app threw an error; uptime monitoring tells you the
+app stopped responding at all (the process crashed, the host is down,
+DNS broke), which Sentry can't see since nothing inside the app ran to
+report it.
+
+| Option | Pick it when |
+|---|---|
+| **None** | **Default** — a solo/small project with no users depending on continuous availability yet |
+| **Better Uptime / UptimeRobot** (external ping monitoring, optional public status page) | Real users depend on the service being up, and the owner wants to know *before* a user reports it — add this once that's true, plus an optional public status page once enough users exist that "is it down for everyone" is a question worth answering without a support message |
+
+**On-call/alerting** (PagerDuty, or routing Sentry/uptime alerts to a
+phone) is the same trigger one step further — add it once downtime has
+a real cost and someone needs to be woken up for it, not before. For a
+solo project, routing alerts to email/Slack is enough until that's true.
+
 ## What this skill does not cover
 
 Containerization/orchestration itself (`repo-containerization`). The CI
 pipeline that deploys to these environments (`repo-ci`). Dependency
-vulnerability scanning (`repo-dependency-security`). The commit-message/
-secret-scanning pre-commit hook (`repo-cleanup`).
+vulnerability scanning and dependency license compliance
+(`repo-dependency-security`). The commit-message/secret-scanning
+pre-commit hook (`repo-cleanup`). Error reporting for errors that
+actually occur inside a running request (`frontend-monitoring`).
 
 ## Basis (checked 2026-11-13)
 

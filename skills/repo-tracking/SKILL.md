@@ -27,6 +27,16 @@ with Jira — every source on this is consistent that it's the wrong
 default for anything smaller than an organization with existing Jira
 process needs.
 
+## Issue templates (GitHub Issues, team-size trigger)
+
+Same reasoning as `repo-commit`'s PR-template/CODEOWNERS section: a
+bug-report/feature-request issue template (`.github/ISSUE_TEMPLATE/`)
+solves the problem of a *reporter who isn't the maintainer* writing a
+usable report — it's wasted structure when the only person filing issues
+is the same person who'd triage them. Skip it solo; add it once someone
+other than the maintainer starts filing issues (a team, or real external
+users/contributors on a public repo).
+
 ## Linking work to code
 
 Regardless of which option: a commit or PR that implements a tracked

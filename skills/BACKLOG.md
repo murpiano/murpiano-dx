@@ -5,11 +5,6 @@ from `skills/DELEGATION-MODEL.md`. Move an item here instead of letting
 it live only in a conversation; remove it once it's actually done
 (mention the skill/file that resolved it, don't just delete silently).
 
-- **Team review process for framework changes.** Right now any change to
-  `skills/`/`DELEGATION-MODEL.md`/etc. is just agreed in conversation and
-  written. Fine solo; for a team sharing this framework, decide whether
-  framework-structure changes need a review step (PR-style) before they
-  apply to everyone's sessions.
 - **Raise `copycat`'s audit gate from `critical` to `high` once Electron
   is upgraded.** `copycat` still ships Electron 32; its 7 remaining
   `npm audit` findings are all Electron's own advisories, fixed only by
@@ -25,6 +20,48 @@ it live only in a conversation; remove it once it's actually done
   decision above had to go into a dated note instead of a governed row.
 
 ## Done
+
+- **Closed every remaining item from the "surfaced but deliberately not
+  built yet" list, plus the framework-level review-process question —
+  the owner asked to go through the whole backlog before starting any
+  real project.**
+  - PR template + `CODEOWNERS` (`repo-commit`) and GitHub Issue
+    templates (`repo-tracking`): both a team-size build-trigger, same
+    pattern as Docker — skip solo, add once a second reviewer/reporter
+    exists.
+  - Dependency *license* compliance (`repo-dependency-security`, new
+    section): `license-checker`/FOSSA once the project is sold,
+    redistributed, or under legal review — distinct from that skill's
+    existing vulnerability-scanning job.
+  - API documentation (`backend-stack-selection`, new row): none by
+    default (tRPC's shared types already are the documentation for the
+    one client that matters), OpenAPI/Swagger once a non-TS/third-party
+    client needs to read the API without the types.
+  - Search (`backend-stack-selection`, new ask-explicitly row): none by
+    default, PostgreSQL full-text search once a real search feature
+    exists (not just filtering), Meilisearch/Algolia only once Postgres
+    FTS's relevance/typo-tolerance is measured and found wanting.
+  - Uptime monitoring / status page (`repo-hosting`, new row) and
+    on-call/alerting (same section, no separate row — routing, not a
+    technology choice): none by default, distinct from
+    `frontend-monitoring`'s Sentry row (in-request errors) — this one
+    is "the app stopped responding at all."
+  - Design handoff (`frontend-styling-concept`): no formal pipeline by
+    default (the token file is already the single source for a
+    solo developer doing their own design); Figma Variables synced to
+    the same token names once a dedicated designer is actually on the
+    project.
+  - Team review process for framework changes (`DELEGATION-MODEL.md`):
+    resolved as a stated default with a named trigger (direct-to-`main`
+    solo; a required-review PR step the moment a second person starts
+    making or relying on framework changes) rather than left open.
+  **Noted, not fixed**: the two remaining Open items below are about the
+  `copycat` project specifically, not the framework — this file's own
+  header says "not any one project," so they arguably belong in
+  `copycat`'s own `.agents/` notes instead of here. Left as-is rather
+  than moved, since that edit touches a different project's workspace
+  data outside this session's scope; flagging it so it isn't mistaken
+  for a framework gap next time this file is read end to end.
 
 - Cross-platform styling concept + web implementation + guided setup
   (`frontend-styling-concept`, `frontend-web-styles`,

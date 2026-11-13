@@ -258,3 +258,16 @@ task work.
     section. Both modes are user-triggered, not an autonomous schedule —
     see that skill for what "stale" means in the sweep and what it does
     with the results.
+- **Review process for framework changes itself — a build-trigger, not a
+  permanent answer.** Right now, every change to `skills/` is agreed in
+  conversation and written directly to `main` — fine for a solo
+  maintainer, where the "review" already happened in the conversation
+  that produced the change. **Add a real review step (a PR with required
+  review before merge, applying `repo-commit`'s own PR-requirements row
+  to this repository specifically) the moment a second person starts
+  making or relying on framework changes** — a team sharing this
+  framework needs to see a change before it silently alters every
+  session's behavior, the same reasoning `repo-commit`'s team-size
+  trigger already uses for PR templates/CODEOWNERS. Until that's true,
+  direct-to-`main` stays correct; this is a decided default with a
+  named trigger, not an open question.

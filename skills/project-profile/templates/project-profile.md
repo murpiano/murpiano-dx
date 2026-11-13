@@ -106,6 +106,8 @@ mechanism a custom backend implements.
 | Background jobs / queue | none / cron / message queue (name it) | `backend-stack-selection` |
 | Transactional email | Resend / Postmark / SES / SendGrid / none | `backend-stack-selection` |
 | File / object storage | Cloudflare R2 / S3 / Supabase Storage / none | `backend-stack-selection` |
+| API documentation | OpenAPI/Swagger / none (types are the docs) | `backend-stack-selection` |
+| Search (ask explicitly — see project-profile/SKILL.md) | none / PostgreSQL full-text / Meilisearch / Algolia | `backend-stack-selection` |
 | Unit tests (backend) | Vitest / none | `backend-testing` |
 | Integration/API tests (backend) | `createCaller()` through the real router / Supertest / none | `backend-testing` |
 
@@ -122,6 +124,7 @@ mechanism a custom backend implements.
 | Environments | dev / staging / production (adjust) | `repo-hosting` |
 | Secrets management | `.env` files / secrets manager (name it) / platform env vars | `repo-hosting` |
 | Monitoring / logging | Sentry / Datadog / none | `frontend-monitoring` |
+| Uptime monitoring / status page | Better Uptime / UptimeRobot / none | `repo-hosting` |
 | Release process | semantic versioning / calendar-based / none — changelog: auto / manual | `repo-release` |
 | Dependency scanning (ask explicitly — see project-profile/SKILL.md) | Dependabot / Renovate / none — CI audit gate: yes (`--audit-level=_`) / no | `repo-dependency-security` |
 

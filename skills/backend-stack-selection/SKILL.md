@@ -8,7 +8,8 @@ description: Use when a project needs a custom backend — deciding language, we
 Governs `project-profile.md` fields: Backend → Language, Framework, API
 style, Architecture pattern, Database, ORM / query layer, Request
 validation (API boundary), Auth, Background jobs / queue, Transactional
-email, File / object storage.
+email, File / object storage, API documentation, Search (ask explicitly
+— see project-profile/SKILL.md).
 
 Scope: `stack-selection` decides a project needs a backend at all and
 routes here. This skill is the backend's own tier-0 — same role
@@ -238,6 +239,40 @@ disk is not a default to reach for.
 **Default: Cloudflare R2**, using the S3-compatible SDK so switching to
 real S3 later (for a WORM/compliance need) is a config change, not a
 rewrite.
+
+## API documentation (build-trigger, not default-on)
+
+With tRPC as this stack's default API style, the types themselves
+already are the documentation for the one client that matters (the
+project's own frontend) — a human-readable spec adds nothing there.
+
+| Option | Pick it when |
+|---|---|
+| **None** | **Default** — tRPC + shared TypeScript types already give the frontend full autocomplete/type-checking on every procedure; a separate doc describes what the compiler already enforces |
+| **OpenAPI/Swagger** (`@fastify/swagger` + `trpc-openapi` or a REST fallback) | A non-TypeScript or third-party client needs to read the API without access to the TS types — the same trigger as switching the API-style row itself toward REST |
+
+**Default: none.** Add OpenAPI generation the moment a real external/
+non-TS consumer exists — the same "ask when there's a real client, not
+before" reasoning as the API-style row above, not separate scaffolding
+to add speculatively.
+
+## Search (ask explicitly — see `project-profile/SKILL.md`)
+
+Not every project needs this row at all — ask explicitly whether the
+product has a real search feature (not just filtering/sorting a list,
+which plain SQL `WHERE`/`ORDER BY` already handles).
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **None** | Nothing to add | — | **Default** — most CRUD apps have no real search need, only filtering, which is just a query, not a search feature |
+| **PostgreSQL full-text search** (`tsvector`/`tsquery`, or `pg_trgm` for fuzzy/typo-tolerant matching) | No new infrastructure — runs on the Postgres already in this stack | Weaker relevance ranking and typo tolerance than a dedicated search engine at real scale | A real search feature exists, data already lives in Postgres, and scale/relevance needs are modest — the default once search is needed at all |
+| **Meilisearch** (self-hosted) or **Algolia** (managed) | Purpose-built relevance ranking, typo tolerance, faceting, fast at scale | A second system to sync data into and keep in sync with Postgres | Postgres FTS's relevance/typo-tolerance genuinely isn't good enough — a measured gap, not assumed upfront |
+
+**Default: none until a real search feature is stated; PostgreSQL
+full-text search once it is** — avoid adding a second search
+infrastructure before Postgres's own capability has actually been
+tried and found wanting, same reasoning as every other build-trigger
+row in this skill.
 
 ## Next: scaffolding it
 
