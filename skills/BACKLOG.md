@@ -13,8 +13,8 @@ it live only in a conversation; remove it once it's actually done
   coverage, not a sequence (owner's own framing, 2026-11-12/13):
   - [x] Design system / shared components — `frontend-design-system` (2026-11-13)
   - [x] Component dev/doc workshop (Storybook or equivalent) — `frontend-component-workshop` (2026-11-13)
-  - [ ] Theming / dark mode
-  - [ ] Motion/animation approach
+  - [x] Theming / dark mode — `frontend-theming` (2026-11-13)
+  - [x] Motion/animation approach — `frontend-motion` (2026-11-13)
   - [ ] Forms & validation
   - [x] Routing / navigation — `frontend-routing` (2026-11-13)
   - [ ] Auth / session handling (frontend) — distinct from section 4's
