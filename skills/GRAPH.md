@@ -21,6 +21,7 @@ flowchart TD
     perf[frontend-performance]
     resilience[frontend-resilience]
     i18n[frontend-i18n]
+    routing[frontend-routing]
     knowledge[knowledge-refresh]
 ```
 
@@ -59,6 +60,11 @@ flowchart TD
   UI language, and once it does, library choice (react-i18next
   default), string extraction, pluralization, locale-aware
   formatting.
+- **`frontend-routing`** — domain: whether a project needs a router
+  library at all (vs. client-state-only navigation), library choice
+  when it does (React Router default for a plain SPA), and the
+  route-change side effects every router needs (title, focus, scroll,
+  per-route code-splitting).
 - **`repo-*` lifecycle group** — not a domain-architecture chain, a
   parallel category: repository lifecycle skills, each independent and
   triggered by its own task (not by `stack-selection`):

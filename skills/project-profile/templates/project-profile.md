@@ -66,7 +66,7 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | Meta-framework | Next.js / Nuxt / Remix / Astro / none | |
 | Bundler | Vite / Webpack / Turbopack / esbuild / Parcel | |
 | Package manager | npm / pnpm / yarn / bun | |
-| Routing / navigation | library (name it) / client-state only, no router / none (single view) | |
+| Routing / navigation | library (name it) / client-state only, no router / none (single view) | `frontend-routing` |
 | Auth / session handling (frontend) | none — no accounts / login-redirect flow, protected routes, session storage (name the approach) | |
 | State management | Redux / Zustand / Context API / MobX / Recoil / none | |
 | Data fetching | REST client / GraphQL client (Apollo, urql) / tRPC / server actions | |
@@ -80,7 +80,7 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | E2E tests | Playwright / Cypress / none | |
 
 No skill governs design system, component workshop, theming, motion,
-forms & validation, routing, or frontend auth/session handling yet (see
+forms & validation, or frontend auth/session handling yet (see
 `skills/BACKLOG.md`) — these rows are plain information until each is
 written, same as every other ungoverned row. The frontend "Auth /
 session handling" row above is distinct from section 4's backend "Auth"
