@@ -62,15 +62,15 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | Field | Value | Governed by |
 |---|---|---|
 | Language | JavaScript / TypeScript | `stack-selection` |
-| UI framework | React / Vue / Svelte / Angular / vanilla | |
-| Meta-framework | Next.js / Nuxt / Remix / Astro / none | |
+| UI framework | React / Vue / Svelte / Angular / vanilla | `frontend-stack-selection` |
+| Meta-framework | Next.js / Nuxt / Remix / Astro / none | `frontend-stack-selection` |
 | Module structure | public-API barrel per feature folder (framework default) / other | `frontend-component-structure` |
-| Bundler | Vite / Webpack / Turbopack / esbuild / Parcel | |
-| Package manager | npm / pnpm / yarn / bun | |
+| Bundler | Vite / Webpack / Turbopack / esbuild / Parcel | `frontend-stack-selection` |
+| Package manager | npm / pnpm / yarn / bun | `frontend-stack-selection` |
 | Routing / navigation | library (name it) / client-state only, no router / none (single view) | `frontend-routing` |
 | Auth / session handling (frontend) | none — no accounts / login-redirect flow, protected routes, session storage (name the approach) | `frontend-auth` |
-| State management | Redux / Zustand / Context API / MobX / Recoil / none | |
-| Data fetching | REST client / GraphQL client (Apollo, urql) / tRPC / server actions | |
+| State management | Redux / Zustand / Context API / MobX / Recoil / none | `frontend-stack-selection` |
+| Data fetching | REST client / GraphQL client (Apollo, urql) / tRPC / server actions | `frontend-stack-selection` |
 | Design system / shared components | none — feature-local only / shared component library (name its location) | `frontend-design-system` |
 | Styling approach | CSS Modules / Tailwind / SCSS+BEM / CSS-in-JS (Emotion, styled-components) / vanilla-extract | `frontend-styling-concept` |
 | Theming / dark mode | none / light+dark / multi-brand | `frontend-theming` |
@@ -113,9 +113,9 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 | Orchestration | none / docker-compose / Kubernetes | `repo-containerization` |
 | CI/CD provider | GitHub Actions / GitLab CI / CircleCI / Jenkins / none | `repo-ci` |
 | CI pipeline stages | e.g. lint → test → build → deploy | `repo-ci` |
-| Hosting / deploy target | Vercel / Netlify / AWS / GCP / Azure / self-hosted / on-prem | |
-| Environments | dev / staging / production (adjust) | |
-| Secrets management | `.env` files / secrets manager (name it) / platform env vars | |
+| Hosting / deploy target | Vercel / Netlify / AWS / GCP / Azure / self-hosted / on-prem | `repo-hosting` |
+| Environments | dev / staging / production (adjust) | `repo-hosting` |
+| Secrets management | `.env` files / secrets manager (name it) / platform env vars | `repo-hosting` |
 | Monitoring / logging | Sentry / Datadog / none | `frontend-monitoring` |
 | Release process | semantic versioning / calendar-based / none — changelog: auto / manual | `repo-release` |
 | Dependency scanning (ask explicitly — see project-profile/SKILL.md) | Dependabot / Renovate / none — CI audit gate: yes (`--audit-level=_`) / no | `repo-dependency-security` |
@@ -140,7 +140,7 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 | Performance budget | | `frontend-performance` |
 | Accessibility target | WCAG 2.2 AA (framework default) / AAA / none stated | `frontend-accessibility` |
 | i18n / l10n (ask explicitly — see project-profile/SKILL.md) | yes — languages: _ / no | `frontend-i18n` |
-| Security / compliance | GDPR / SOC2 / none stated | |
+| Security / compliance (ask explicitly — see project-profile/SKILL.md) | GDPR / SOC2 / HIPAA / none stated | `repo-hosting` |
 | Frontend rendering (XSS) | any raw-HTML rendering (`dangerouslySetInnerHTML`, user-derived URLs) audited / none in use | `frontend-security` |
 | Error/loading/empty states | has an app-root error boundary: yes / no — loading and empty states: pattern described | `frontend-resilience` |
 | Browser/device support matrix | | |

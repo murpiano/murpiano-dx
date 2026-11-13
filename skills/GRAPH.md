@@ -8,8 +8,9 @@ has more than one direct child).
 ```mermaid
 flowchart TD
     profile[project-profile<br/>the one project-wide table]
-    stack[stack-selection<br/>entry point: new application] --> frontend[frontend-styling-concept]
+    stack[stack-selection<br/>entry point: new application] --> frontendstack[frontend-stack-selection] --> frontend[frontend-styling-concept]
     repo[repo-* lifecycle group]
+    hosting[repo-hosting]
 
     stack -. fills/reads .-> profile
     repo -. fills/reads .-> profile
@@ -45,6 +46,13 @@ flowchart TD
 - **`stack-selection`** — entry point for any brand-new application:
   app type → language/technology → routes into the matching domain's
   guided-setup skill. Read first when starting new work from scratch.
+- **`frontend-stack-selection`** — domain: the option matrix for UI
+  framework, meta-framework, bundler, package manager, state management,
+  and data fetching — each a bounded, real-world option set with a
+  reasoned default (React/Vite-or-Next.js-Turbopack/pnpm/Zustand/
+  TanStack-Query), not an open question deferred to the owner. Runs right
+  after `stack-selection` picks the platform/language, before
+  `frontend-styling-concept`.
 - **`frontend-styling-concept`** — domain: cross-platform styling
   architecture. Has children → see
   [frontend-styling-concept/GRAPH.md](frontend-styling-concept/GRAPH.md).
@@ -116,7 +124,7 @@ flowchart TD
   triggered by its own task (not by `stack-selection`):
   `repo-init`, `repo-commit`, `repo-readme`, `repo-release`,
   `repo-dependency-security`, `repo-lint-format`, `repo-ci`,
-  `repo-containerization`, `repo-cleanup`, `repo-agent-data`. No shared concept tier between them;
+  `repo-containerization`, `repo-hosting`, `repo-cleanup`, `repo-agent-data`. No shared concept tier between them;
   no `GRAPH.md` needed for this group unless one of them later grows
   children of its own.
 - **`framework-lint`** — not a domain, a meta-utility: checks `skills/`

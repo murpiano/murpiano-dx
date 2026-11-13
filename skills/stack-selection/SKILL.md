@@ -61,8 +61,11 @@ language/framework into the profile's "Frontend" or "Backend" section.
 
 ## Step 3 — hand off
 
-- Browser / Electron / Tauri → go to `frontend-styling-concept` (the
-  architecture) and from there `frontend-project-setup` (the scaffold).
+- Browser / Electron / Tauri → go to `frontend-stack-selection` first (UI
+  framework, meta-framework, bundler, package manager, state management,
+  data fetching — each a real option matrix with a recommendation, not an
+  open question), then `frontend-styling-concept` (the architecture) and
+  from there `frontend-project-setup` (the scaffold).
 - Any row with no domain skill yet (native desktop, native/cross-platform
   mobile, backend) → say so explicitly. Propose drafting that domain's
   concept → implementation → guided-setup trio together, the same shape
