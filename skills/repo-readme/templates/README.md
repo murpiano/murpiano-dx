@@ -7,6 +7,9 @@
 
      Project kind drives which sections below are kept: app, framework, npm-package,
      or personal-brand (a descriptive, non-code page). Pick one kind before editing.
+     project-profile.md also allows library, landing page, and internal tool —
+     map those to the closest of the four per SKILL.md's "Project kind" section
+     (library -> npm-package, landing page -> personal-brand, internal tool -> app).
      A section tagged "kind: a, b" is required for those kinds and optional for the
      rest — delete it, along with its comment, for a kind it does not list. An
      untagged section is universal: keep it for every kind. Run

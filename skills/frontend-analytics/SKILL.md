@@ -13,6 +13,13 @@ Scope: a project that genuinely needs to know how it's being used.
 question to answer yet — don't add telemetry speculatively just because
 it's cheap to drop in.
 
+**Ask about this row explicitly, even when no analytics script is
+detected.** No tracking snippet in the code today doesn't tell you
+whether the owner ever considered needing usage data — put the
+question to them directly per `project-profile/SKILL.md`'s "ask
+explicitly" rule, and record a real, stated "no" as the confirmed
+answer rather than inferring it from the absence of a script.
+
 ## Default: a privacy-first, cookie-less tool over Google Analytics
 
 **Plausible** (or an equivalent cookie-less, no-personal-data tool —

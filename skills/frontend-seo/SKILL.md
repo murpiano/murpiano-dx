@@ -15,6 +15,15 @@ behind a login wall — records "no" here and that's a real, final
 answer; search engines and link-preview bots never see an
 authenticated view, so none of this skill applies to it.
 
+**Ask about this row explicitly, even when the project looks fully
+authenticated/internal.** Detecting "no public routes in the code
+today" is not the same fact as "the owner decided this never needs to
+be publicly findable" — a landing page or a public marketing page can
+be added later without anyone revisiting this row. Put the question to
+the owner directly per `project-profile/SKILL.md`'s "ask explicitly"
+rule, and record their actual "no" as the confirmed answer, not an
+inferred one.
+
 ## The rendering problem comes before the meta tags
 
 Metadata injected into the DOM after the JavaScript bundle hydrates can

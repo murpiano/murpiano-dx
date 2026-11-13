@@ -23,3 +23,15 @@ Wait for required CI and [Kysaro](https://github.com/murpiano/kysaro) checks bef
 
 Merge only after checks pass and the user authorizes publication. Keep `main`
 buildable and delete merged task branches when the hosting platform allows it.
+
+### Merge strategy
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **Squash** | One commit per PR on `main` — a clean, readable history where each commit is a complete, reviewed unit of work; matches a task branch's own many small work-in-progress commits collapsing into the one thing that actually shipped | Loses the individual commits' own history (rarely needed once squashed, since the PR description already has the summary) | **Default** — matches this framework's own GitHub-flow default (short-lived task branches, one coherent change per PR) |
+| **Merge commit** | Preserves every individual commit plus an explicit merge point | Noisier history — every task branch's work-in-progress commits stay visible on `main` forever | A team that specifically wants per-commit history preserved (e.g. commits are independently meaningful, not just WIP checkpoints) |
+| **Rebase** | Linear history with no merge commits at all, individual commits preserved | Rewrites commit hashes — risky on a shared branch, requires force-push discipline | A team fully comfortable with rebase workflows and wanting a linear history without squashing away individual commits |
+
+**Default: squash.** This is what the Workflow section above already
+does in practice; stated here as the named default rather than only
+implied by the steps.
