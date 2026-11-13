@@ -11,7 +11,7 @@ model, above *Concept* — see [../GRAPH.md](../GRAPH.md) for where it sits
 among the framework's other domains.
 
 Governs `project-profile.md` fields: Application type & platforms →
-Primary platform.
+Primary platform, Frontend → Language.
 
 ## The governing rule here too
 

@@ -9,6 +9,8 @@ Scope: what gets a unit test, what gets an end-to-end test, and how a
 test is named. Not a testing-library tutorial — this settles the
 framework's own default so it isn't re-decided per project.
 
+Governs `project-profile.md` fields: Frontend → Unit/component tests, E2E tests.
+
 ## The default: extract logic, test the function; cover behavior with e2e
 
 Don't render a component in isolation (no React Testing Library /

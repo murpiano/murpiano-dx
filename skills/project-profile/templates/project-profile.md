@@ -61,9 +61,10 @@ confirm them in this order every time (see `repo-init`'s own rule).
 
 | Field | Value | Governed by |
 |---|---|---|
-| Language | JavaScript / TypeScript | |
+| Language | JavaScript / TypeScript | `stack-selection` |
 | UI framework | React / Vue / Svelte / Angular / vanilla | |
 | Meta-framework | Next.js / Nuxt / Remix / Astro / none | |
+| Module structure | public-API barrel per feature folder (framework default) / other | `frontend-component-structure` |
 | Bundler | Vite / Webpack / Turbopack / esbuild / Parcel | |
 | Package manager | npm / pnpm / yarn / bun | |
 | Routing / navigation | library (name it) / client-state only, no router / none (single view) | `frontend-routing` |
@@ -76,8 +77,8 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | Motion/animation approach | CSS transitions only / library (name it) / none stated | `frontend-motion` |
 | Forms & validation | none built yet / client-only / client+server — library (name it) or hand-rolled | `frontend-forms` |
 | Component dev/doc workshop | Storybook / Ladle / none | `frontend-component-workshop` |
-| Unit/component tests | Vitest / Jest / none | |
-| E2E tests | Playwright / Cypress / none | |
+| Unit/component tests | Vitest / Jest / none | `frontend-testing` |
+| E2E tests | Playwright / Cypress / none | `frontend-testing` |
 
 The frontend "Auth / session handling" row above is distinct from
 section 4's backend "Auth" row: this one is the client-side pattern
@@ -123,13 +124,13 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 
 | Field | Value | Governed by |
 |---|---|---|
-| Branching model | trunk-based / GitHub flow / Git flow | |
+| Branching model | trunk-based / GitHub flow / Git flow | `repo-commit` |
 | Commit convention | Conventional Commits (enforced by Kysaro / commitlint) / freeform | `repo-commit` |
 | PR requirements | required reviewers: _ / none — required checks: | `repo-commit` |
 | Merge strategy | squash / merge commit / rebase | `repo-commit` |
 | Linter(s) | ESLint / Ruff / golangci-lint / ... | `repo-lint-format` |
 | Formatter | Prettier / Black / gofmt / ... | `repo-lint-format` |
-| Type checking | TypeScript strict / mypy / none | |
+| Type checking | TypeScript strict / mypy / none | `repo-lint-format` |
 | Pre-commit hooks | Husky / pre-commit / none | `repo-cleanup` (secret/agent-trace scan hook) + `repo-lint-format` (lint/format hook) |
 
 ## 7. Constraints & non-functional requirements

@@ -78,10 +78,23 @@ def check_orphan_skills(skills_root, errors):
                        f'— unreachable from the overview')
 
 
+SECTION_HEADING_RE = re.compile(r'^##\s+\d+\.\s*(.+?)\s*$')
+
+
 def parse_profile_table(profile_md_text):
-    """field name -> set of skill names from its "Governed by" column."""
+    """(section, field name) -> set of skill names from its "Governed by" column.
+
+    Section-scoped because the same field name appears in more than one
+    section (e.g. "Language" in both Frontend and Backend) — a flat
+    field-name key would silently merge two unrelated rows.
+    """
     rows = {}
+    section = None
     for line in profile_md_text.splitlines():
+        heading = SECTION_HEADING_RE.match(line)
+        if heading:
+            section = heading.group(1)
+            continue
         m = TABLE_ROW_RE.match(line)
         if not m:
             continue
@@ -94,23 +107,36 @@ def parse_profile_table(profile_md_text):
         governed = cells[2]
         names = set(BACKTICK_RE.findall(governed))
         if names:
-            rows[field] = names
+            rows[(section, field)] = names
     return rows
 
 
 def parse_governs_claims(skills_root):
-    """field name -> set of skill names claiming to govern it, from SKILL.md text."""
+    """(section, field name) -> set of skill names claiming to govern it.
+
+    A claim like "Git workflow → Branching model, Commit convention" names
+    the section once and lists several fields under it; a part with its own
+    "→" (e.g. "..., Frontend → Language") switches the current section for
+    every part after it. Section-scoped for the same reason the table side
+    is — "Language" means something different in Frontend vs. Backend.
+    """
     claimed = {}
     for skill_dir in skill_dirs(skills_root):
         text = (skill_dir / 'SKILL.md').read_text()
         match = GOVERNS_RE.search(text)
         if not match:
             continue
+        section = None
         for part in re.split(r',| and ', match.group(1)):
-            field = part.split('→')[-1]
+            part = re.sub(r'\s+', ' ', part)
+            if '→' in part:
+                section, field = part.rsplit('→', 1)
+                section = section.strip().rstrip('.').strip()
+            else:
+                field = part
             field = field.strip().rstrip('.').strip()
             if field:
-                claimed.setdefault(field, set()).add(skill_dir.name)
+                claimed.setdefault((section, field), set()).add(skill_dir.name)
     return claimed
 
 
@@ -121,20 +147,22 @@ def check_governs(skills_root, errors):
     table = parse_profile_table(profile_md.read_text())
     claimed = parse_governs_claims(skills_root)
 
-    for field, skills in claimed.items():
-        table_skills = table.get(field, set())
+    for (section, field), skills in claimed.items():
+        label = f'{section} → {field}' if section else field
+        table_skills = table.get((section, field), set())
         if not table_skills:
-            errors.append(f'project-profile.md: field {field!r} is claimed by '
+            errors.append(f'project-profile.md: field {label!r} is claimed by '
                            f'{sorted(skills)} but has no "Governed by" entry in the table')
         elif not (skills & table_skills):
-            errors.append(f'project-profile.md: field {field!r} is "Governed by" '
+            errors.append(f'project-profile.md: field {label!r} is "Governed by" '
                            f'{sorted(table_skills)} in the table but claimed by '
                            f'{sorted(skills)} instead — these should name each other')
-    for field, table_skills in table.items():
+    for (section, field), table_skills in table.items():
+        label = f'{section} → {field}' if section else field
         for skill in table_skills:
-            if skill not in claimed.get(field, set()):
+            if skill not in claimed.get((section, field), set()):
                 errors.append(f'{skill}/SKILL.md: project-profile.md marks it as governing '
-                               f'{field!r}, but this skill has no matching "Governs" line '
+                               f'{label!r}, but this skill has no matching "Governs" line '
                                f'naming that field')
 
 
