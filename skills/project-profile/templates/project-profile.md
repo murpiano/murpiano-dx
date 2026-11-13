@@ -108,10 +108,10 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 
 | Field | Value | Governed by |
 |---|---|---|
-| Containerization | Docker / none | |
-| Orchestration | none / docker-compose / Kubernetes | |
-| CI/CD provider | GitHub Actions / GitLab CI / CircleCI / Jenkins / none | |
-| CI pipeline stages | e.g. lint → test → build → deploy | |
+| Containerization | Docker / none | `repo-containerization` |
+| Orchestration | none / docker-compose / Kubernetes | `repo-containerization` |
+| CI/CD provider | GitHub Actions / GitLab CI / CircleCI / Jenkins / none | `repo-ci` |
+| CI pipeline stages | e.g. lint → test → build → deploy | `repo-ci` |
 | Hosting / deploy target | Vercel / Netlify / AWS / GCP / Azure / self-hosted / on-prem | |
 | Environments | dev / staging / production (adjust) | |
 | Secrets management | `.env` files / secrets manager (name it) / platform env vars | |
@@ -127,10 +127,10 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 | Commit convention | Conventional Commits (enforced by Kysaro / commitlint) / freeform | `repo-commit` |
 | PR requirements | required reviewers: _ / none — required checks: | `repo-commit` |
 | Merge strategy | squash / merge commit / rebase | `repo-commit` |
-| Linter(s) | ESLint / Ruff / golangci-lint / ... | |
-| Formatter | Prettier / Black / gofmt / ... | |
+| Linter(s) | ESLint / Ruff / golangci-lint / ... | `repo-lint-format` |
+| Formatter | Prettier / Black / gofmt / ... | `repo-lint-format` |
 | Type checking | TypeScript strict / mypy / none | |
-| Pre-commit hooks | Husky / pre-commit / none | `repo-cleanup` (secret/agent-trace scan hook only — a project's own lint/format hooks are separate) |
+| Pre-commit hooks | Husky / pre-commit / none | `repo-cleanup` (secret/agent-trace scan hook) + `repo-lint-format` (lint/format hook) |
 
 ## 7. Constraints & non-functional requirements
 
