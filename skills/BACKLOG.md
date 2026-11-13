@@ -8,28 +8,11 @@ it live only in a conversation; remove it once it's actually done
 - **Backend domain** — do not pre-build; start it (concept →
   implementation → setup, per `DELEGATION-MODEL.md`) only once a real
   backend project is connected or created.
-- **Seven frontend rows in `project-profile.md` have no governing skill
-  yet** — build all of them, order doesn't matter, the goal is full
-  coverage, not a sequence (owner's own framing, 2026-11-12/13):
-  - [x] Design system / shared components — `frontend-design-system` (2026-11-13)
-  - [x] Component dev/doc workshop (Storybook or equivalent) — `frontend-component-workshop` (2026-11-13)
-  - [x] Theming / dark mode — `frontend-theming` (2026-11-13)
-  - [x] Motion/animation approach — `frontend-motion` (2026-11-13)
-  - [ ] Forms & validation
-  - [x] Routing / navigation — `frontend-routing` (2026-11-13)
-  - [ ] Auth / session handling (frontend) — distinct from section 4's
-        backend "Auth" row; the client-side pattern (login-redirect,
-        protected routes, where the session token lives), added
-        2026-11-13
-  Unlike the backend domain above, these are *not* waiting on a new
-  project — every dogfooded project so far has needed all of them;
-  build each the same way the earlier frontend domains were built
-  (concept → implementation → dogfood on `my-world`). Check a box off
-  and move its skill from this list to Done as each one lands. Three
-  more rows (SEO/discoverability, analytics, feature flags, section 7)
-  are genuinely app-type-conditional, marked "ask explicitly" so
-  `repo-init` asks rather than infers "no" — these stay unbuilt until a
-  project's real answer is "yes."
+- Three rows in `project-profile.md` section 7 (SEO/discoverability,
+  analytics, feature flags) are genuinely app-type-conditional, marked
+  "ask explicitly" so `repo-init` asks rather than infers "no" — these
+  stay unbuilt until a project's real answer is "yes" (see Done entry
+  below for the seven that were *not* conditional and are now built).
 - **Team review process for framework changes.** Right now any change to
   `skills/`/`DELEGATION-MODEL.md`/etc. is just agreed in conversation and
   written. Fine solo; for a team sharing this framework, decide whether
@@ -224,3 +207,29 @@ it live only in a conversation; remove it once it's actually done
   workshop, theming, motion, forms & validation, routing — see the open
   item above) and three conditional "ask explicitly" rows added to
   section 7 (SEO, analytics, feature flags).
+- Built all seven frontend domains the audit above found missing:
+  `frontend-routing` (client-state-only vs. router library, route-change
+  title/focus/scroll/code-splitting), `frontend-design-system`
+  (feature-local-until-promoted rule, closed variant API),
+  `frontend-component-workshop` (Storybook default, built only once a
+  shared component exists), `frontend-theming` (CSS `light-dark()` +
+  `color-scheme`, flash-of-wrong-theme handling), `frontend-motion`
+  (duration/easing tokens, CSS-first with Motion/View-Transitions for
+  what CSS can't do), `frontend-forms` (React Hook Form + Zod default,
+  client/server validation split), and `frontend-auth` (session
+  storage location, `HttpOnly` cookie default vs. a BaaS's own
+  `localStorage`-based SDK, protected-route UX vs. real server
+  enforcement). Each has a dated `Basis` section from real 2026
+  sources, not unaided reasoning. Also added one more gap the audit
+  itself missed until the owner asked for it explicitly: frontend
+  auth/session handling, distinct from the backend "Auth" row that
+  already existed. Dogfooded against `my-world`'s actual state where
+  each row could be confirmed immediately (e.g. routing: client-state
+  only, confirmed; design system: correctly "none — feature-local
+  only," not a gap; auth: Supabase's own `localStorage` session,
+  accepted tradeoff, no custom backend to put a cookie in front of it);
+  the remaining domains (theming, motion, forms, Storybook) don't yet
+  have a real decision to dogfood since `my-world` hasn't needed them
+  (dark mode, an animation library, a forms library, or a shared
+  component to showcase) — their profile rows record that honestly as
+  "none stated," not a forced adoption just to exercise the new skill.

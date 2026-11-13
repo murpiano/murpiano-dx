@@ -25,6 +25,8 @@ flowchart TD
     designsystem[frontend-design-system] --> workshop[frontend-component-workshop]
     theming[frontend-theming]
     motion[frontend-motion]
+    forms[frontend-forms]
+    auth[frontend-auth]
     knowledge[knowledge-refresh]
 ```
 
@@ -82,6 +84,14 @@ flowchart TD
 - **`frontend-motion`** — domain: duration/easing tokens, and when to
   use CSS transitions vs. an animation library (Motion/Framer Motion)
   vs. the View Transitions API for page-level transitions.
+- **`frontend-forms`** — domain: validation library choice (React Hook
+  Form + Zod default), client/server validation split, error display,
+  double-submit prevention.
+- **`frontend-auth`** — domain: the client-side side of
+  authentication — where the session credential lives in the browser,
+  protected-route redirect flow, logout cleanup. Distinct from the
+  backend "Auth" row (`project-profile.md` section 4), which is a
+  server-side mechanism.
 - **`repo-*` lifecycle group** — not a domain-architecture chain, a
   parallel category: repository lifecycle skills, each independent and
   triggered by its own task (not by `stack-selection`):
