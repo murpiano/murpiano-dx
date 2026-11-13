@@ -8,19 +8,28 @@ it live only in a conversation; remove it once it's actually done
 - **Backend domain** — do not pre-build; start it (concept →
   implementation → setup, per `DELEGATION-MODEL.md`) only once a real
   backend project is connected or created.
-- **Six frontend rows in `project-profile.md` have no governing skill
-  yet**: design system / shared components, component dev/doc workshop
-  (Storybook or equivalent), theming/dark mode, motion/animation
-  approach, forms & validation, routing/navigation (section 3, added
-  2026-11-12 after an audit found them missing — see that section's own
-  note). Unlike the backend domain above, these are *not* waiting on a
-  new project — every dogfooded project so far has needed all of them;
-  build them the same way the earlier frontend domains were built
-  (concept → implementation → dogfood on `my-world`), one at a time,
-  user-sequenced. Three more rows (SEO/discoverability, analytics,
-  feature flags, section 7) are genuinely app-type-conditional, marked
-  "ask explicitly" so `repo-init` asks rather than infers "no" — these
-  stay unbuilt until a project's real answer is "yes."
+- **Seven frontend rows in `project-profile.md` have no governing skill
+  yet** — build all of them, order doesn't matter, the goal is full
+  coverage, not a sequence (owner's own framing, 2026-11-12/13):
+  - [ ] Design system / shared components
+  - [ ] Component dev/doc workshop (Storybook or equivalent)
+  - [ ] Theming / dark mode
+  - [ ] Motion/animation approach
+  - [ ] Forms & validation
+  - [ ] Routing / navigation
+  - [ ] Auth / session handling (frontend) — distinct from section 4's
+        backend "Auth" row; the client-side pattern (login-redirect,
+        protected routes, where the session token lives), added
+        2026-11-13
+  Unlike the backend domain above, these are *not* waiting on a new
+  project — every dogfooded project so far has needed all of them;
+  build each the same way the earlier frontend domains were built
+  (concept → implementation → dogfood on `my-world`). Check a box off
+  and move its skill from this list to Done as each one lands. Three
+  more rows (SEO/discoverability, analytics, feature flags, section 7)
+  are genuinely app-type-conditional, marked "ask explicitly" so
+  `repo-init` asks rather than infers "no" — these stay unbuilt until a
+  project's real answer is "yes."
 - **Team review process for framework changes.** Right now any change to
   `skills/`/`DELEGATION-MODEL.md`/etc. is just agreed in conversation and
   written. Fine solo; for a team sharing this framework, decide whether
