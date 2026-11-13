@@ -29,6 +29,40 @@ task work.
     row's value as "not yet — see `<skill>` for the trigger" rather than
     leaving it blank or guessing. The owner should see a stated, revisitable
     decision, not an absence.
+- **Interaction mode — how much is explained vs. just done, chosen once
+  and remembered, not re-asked per row.** Every table-walking skill
+  (`stack-selection`, `frontend-stack-selection`, `backend-stack-selection`,
+  `*-project-setup`, `repo-init`'s own confirmation pass) runs in one of
+  three modes. Ask which one applies the first time any of these skills
+  runs for a project with no mode recorded yet, write the answer into
+  `project-profile.md`'s Identity → Interaction mode row, and use it from
+  then on — the owner can switch it at any point by just saying so, taking
+  effect immediately, no need to re-ask going forward.
+  - **Learning** — explain fully at every row: what it is, the real
+    option set with pros/cons (the skill's own table, not a compressed
+    summary), how it connects to rows already decided, and why the
+    picked option fits this project specifically — read the skill's
+    actual content inline, don't just silently apply its default. The
+    bar: the owner should be able to explain afterward what the row's
+    choice means and why, not just that something was picked.
+  - **Co-pilot** — state the recommendation plus a one-line why (not the
+    full option table), ask for a yes / no / "explain more" / pick a
+    named alternative on each row, move to the next once confirmed. Give
+    the full table on request for any specific row, but don't default to
+    it.
+  - **Autonomous** — apply this framework's own stated defaults end to
+    end with no per-row confirmation, writing every decision into
+    `project-profile.md` as it's made. Still stop and ask for: a row with
+    no recorded default at all (a domain with no skill written yet), a
+    genuine ambiguity the defaults can't resolve on their own, or
+    anything the Executing-actions-with-care rules already require
+    confirmation for (irreversible/destructive, visible to others).
+    Report what was decided once the task is done, not narrated as it
+    happens.
+  This is orthogonal to the already-separate "confirm each file before
+  the next" pacing in `frontend-project-setup`/`backend-project-setup` —
+  autonomous mode still produces one coherent unit at a time internally,
+  it just doesn't pause for the owner's confirmation between them.
 - **Guide step by step when starting new work.** Starting a new project, a
   new domain inside one, or a structural piece of work: walk the user
   through the relevant settled decisions one at a time (state the
