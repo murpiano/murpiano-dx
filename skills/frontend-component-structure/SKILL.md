@@ -80,8 +80,23 @@ export { Header } from './Header';
   happen to agree on bare-vs-prefixed by coincidence of taste, not
   because one derives from the other.
 
-## Basis (checked 2026-11-07)
+## Basis (checked 2026-11-13)
 
+- **FSD-vs-Bulletproof-React status, checked directly after the owner
+  challenged an unqualified "FSD is the world standard" claim**: no
+  State-of-JS-style survey or independent (non-FSD-authored, non-CIS)
+  engineering source confirms FSD as an industry-wide standard — the
+  strongest praise traces to FSD's own docs/blog and Russian/CIS
+  sources (Habr, Avito's engineering blog). Next.js's own docs stay
+  explicitly unopinionated on project structure and name FSD as a
+  third-party pattern, not an endorsed one:
+  [Next.js — Project structure](https://nextjs.org/docs/app/getting-started/project-structure).
+  Bulletproof React has comparable real recognition with a lighter,
+  convention-only (no enforced import layers) philosophy:
+  [Bulletproof React](https://bestofjs.org/projects/bulletproof-react).
+  Documented FSD downsides (learning curve, layer-boundary ambiguity):
+  aggregated across multiple practitioner reviews, e.g.
+  [Feature-Sliced Design review](https://dev.to/algoorgoal/feature-sliced-design-review-22k0).
 - Feature-Sliced Design: every slice has a public-API `index.ts` at its
   root; outside code imports the slice path, never a deep path into it
   — cross-slice access always goes through the public API, treating a
@@ -116,24 +131,48 @@ feature level) genuinely divides practitioners — this framework settles
 it at the feature level only, matching FSD's actual granularity and
 keeping the "keep barrels shallow" caution satisfied by construction.
 
-## When this isn't enough: Feature-Sliced Design
+## When this isn't enough: two different upgrade philosophies
 
 A flat feature-folder-per-domain layout (this skill's default) is
-deliberately simple — one tier, grouped by feature, nothing more. **Once
-a project outgrows that** (large app, multiple teams, a real need to
-distinguish app-wide vs. page-level vs. shared-entity code, not just
-"feature vs. shared"), **Feature-Sliced Design (FSD)** is the named,
-widely-adopted alternative — a formal layered architecture
-(`app → pages → widgets → features → entities → shared`) with its own
-import rules (a layer may only import from layers below it) and often
-its own ESLint plugin enforcing them. This isn't a competing default to
-argue against — it's a real, stated upgrade path for a scale this
-skill's simpler model doesn't aim to solve. Don't adopt FSD
-speculatively for a small project (its extra layers are overhead
-exactly where the simple model already works fine), and don't bolt
-"feature-sliced" terminology onto this skill's simpler barrel rule
-expecting FSD's own tooling/lint rules to apply — they're two distinct,
-real conventions, not the same thing under two names.
+deliberately simple — one tier, grouped by feature, nothing more.
+**Once a project outgrows that** (large app, multiple teams, a real
+need to distinguish app-wide vs. page-level vs. shared-entity code, not
+just "feature vs. shared"), there are two real, differently-shaped
+upgrade paths — not one obvious "next step":
+
+- **Feature-Sliced Design (FSD)** — a formal layered architecture
+  (`app → pages → widgets → features → entities → shared`) with its own
+  enforced import rules (a layer may only import from layers below it)
+  and often its own ESLint plugin checking them. Strongest adoption and
+  advocacy specifically in the Russian/CIS frontend community (its own
+  docs, Habr, Avito's engineering blog); no verified broader
+  "industry standard" claim found for it (no State-of-JS-style survey
+  or independent Western engineering-blog endorsement turned up in a
+  search for one) — treat "FSD is the/a world standard" as an
+  unverified claim, not a settled fact, the same way any other
+  practitioner-advocacy source gets treated in this framework's `Basis`
+  sections. Real, documented downsides: a learning-curve cost, and
+  reviewers citing ambiguity in exactly which layer a given piece of
+  code belongs in.
+- **Bulletproof React** — a lighter, convention-based reference
+  architecture (feature folders, each a self-contained mini-module with
+  its own UI/state/hooks/API calls) with real recognition outside the
+  CIS community specifically, but *no* FSD-style enforced cross-layer
+  import rules — conventions to follow, not a structure a linter
+  enforces for you.
+
+Next.js's own documentation is explicitly unopinionated here — it
+states no official structure beyond "group by feature, stay
+consistent," and names FSD itself as a third-party pattern, not
+something it endorses. This framework doesn't pick a default between
+these two for the same reason it doesn't default straight to
+microservices or Docker: **both are real structure worth adopting once
+the simple model actually strains — not before, and not reflexively
+because one of them was called a "standard" somewhere.** The owner
+states a reason to adopt one (strict enforced boundaries matter more →
+FSD; a lighter, broadly-recognized convention is enough → Bulletproof
+React) when that trigger is real, the same way any other build-trigger
+decision in this framework gets made explicitly rather than assumed.
 
 ## What this skill does not cover
 
