@@ -10,7 +10,9 @@ deploy target, Database hosting, Environments, Secrets management,
 Constraints & non-functional requirements → Primary market / user
 jurisdiction (ask explicitly — see project-profile/SKILL.md), Security /
 compliance (ask explicitly — see project-profile/SKILL.md), Infrastructure
-& delivery → Uptime monitoring / status page, Metrics & dashboards.
+& delivery → Security headers / CSP, Rate limiting / DDoS protection
+(edge), Incident response, Uptime monitoring / status page, Metrics &
+dashboards.
 
 Scope: these rows look like "just describe your project" fields, but each
 one has a real, bounded set of 2026 options with known tradeoffs. Reaching
@@ -93,6 +95,22 @@ pre-publish scan checks for) and no secret is ever hardcoded in source —
 moving to a dedicated secrets manager is a scale/compliance decision, not
 a starting requirement.
 
+**Rotation is a process, not a feature flag.** "Automatic rotation" in
+the table above describes what a cloud secrets manager *can* do, not a
+rotation policy that exists on its own just because the tool supports
+it — someone still has to configure a schedule and confirm the app
+actually picks up the new value without downtime. Default: no scheduled
+rotation for a solo/small project with no compliance driver — rotate
+manually only when a secret is suspected compromised (and then
+immediately, not on the next scheduled cycle). **Add real scheduled
+rotation** (90-day default for API keys/DB credentials is the common
+baseline) once a compliance framework from the Security/compliance row
+below requires it, or once team size makes "who else has seen this
+secret" a real question. Whichever tier: rotating a secret used by a
+long-lived session/JWT-signing key needs a grace-period overlap (accept
+both old and new value for a window) so in-flight sessions don't break
+the moment the old value is revoked.
+
 ## Primary market / user jurisdiction (ask explicitly — see `project-profile/SKILL.md`)
 
 **Ask this before Security/compliance, not after — it's what determines
@@ -130,6 +148,19 @@ applies. Don't let "which compliance law applies" crowd out the plain
 "does this product have a ToS at all" question — a product can need a
 ToS with zero of the named regulatory regimes applying.
 
+**Legal-document translation is a distinct task from `frontend-i18n`'s
+scope, not covered by it.** A project with both a stated jurisdiction
+requiring a Privacy Policy/ToS (this row) and a multi-language UI
+(`frontend-i18n`'s row, which explicitly excludes "translating backend/
+email content" — and by the same logic, legal documents — from its own
+automated string-extraction scope) needs the Privacy Policy and ToS
+themselves translated into every supported language, not just the UI
+strings around them. This is a real gap between the two skills if
+neither owns it: treat it as part of *this* row — the Primary-
+market/jurisdiction answer already names which languages the legal
+documents need to exist in, since that's a subset of "which languages
+does `frontend-i18n` already support," not a separate decision.
+
 ## Security / compliance (ask explicitly — see `project-profile/SKILL.md`)
 
 This row isn't "pick the best option" — it's "does a real regulatory/
@@ -142,7 +173,13 @@ before asking, not just read the acronym back:
   practical floor: a privacy policy, a lawful basis for processing, data
   deletion on request, and (per `frontend-analytics`) favoring
   cookie-less analytics to avoid a consent-banner requirement in the
-  first place.
+  first place. **Data portability (Article 20) is a distinct right from
+  deletion** — a user can request their own data back in a structured,
+  machine-readable format (a JSON export of their account data is
+  enough for most apps), not just have it deleted. Build this as a real
+  export path (even a simple "export my data" endpoint hitting the same
+  tables the account is built from) before it's actually requested, not
+  as a manual one-off scramble the first time someone asks.
 - **CCPA/CPRA** — California's state-level privacy law, the closest US
   equivalent to GDPR's general scope (not health-specific like HIPAA
   below). Applies once the product has California users and meets the
@@ -211,6 +248,61 @@ before asking, not just read the acronym back:
   base, parallel to how GDPR is raised for an EU one — don't let "ask
   explicitly" default to only naming GDPR/SOC2/HIPAA and silently skip
   152-ФЗ for a Russian-market product.
+
+## Security headers / Content-Security-Policy
+
+Distinct from `frontend-security`'s XSS-sanitization rule (what happens
+to a string before it reaches the DOM) — this is a response-header
+defense that limits the *blast radius* if an XSS bug slips through
+anyway, by telling the browser which script/style/image/connect sources
+are even allowed to load at all.
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **`@fastify/helmet` defaults, no custom CSP** | Zero-config baseline security headers (`X-Content-Type-Options`, `X-Frame-Options`, etc.) — already in `backend-project-setup`'s Step 4 | Helmet's own default CSP is permissive/report-only in practice — it doesn't give the strict XSS-blast-radius protection a tuned policy does | A new project's starting point — the baseline headers matter from day one, a tuned CSP is a deliberate follow-up, not bundled for free |
+| **Nonce-based strict CSP** (`script-src 'nonce-{random}' 'strict-dynamic'; object-src 'none'; base-uri 'none'`, a fresh nonce generated per response) | The strongest real defense — allowlist-style CSPs are documented as easy to bypass, nonce/hash-based policies are not | Real integration work: every inline script needs the matching nonce threaded through SSR, third-party embeds (analytics, maps) need explicit allowlisting or they silently break | A production app serving real traffic, especially one that renders any user-influenced content (ties directly to `frontend-security`'s own XSS boundary) |
+
+**Default: ship with Helmet's baseline from day one (already in
+`backend-project-setup`); add a tuned, nonce-based CSP once the app is
+handling real production traffic** — roll it out in `Content-Security-
+Policy-Report-Only` mode first (per MDN's own migration guidance) to
+see what it would have blocked before enforcing it, since a strict CSP
+deployed directly to enforcing mode can silently break a legitimate
+third-party embed with no warning.
+
+## Rate limiting / DDoS protection at the edge
+
+Distinct from `backend-project-setup`'s app-level `@fastify/rate-limit`
+— that protects one Node process from being overwhelmed by requests
+that already reached it; this is about not letting a flood of traffic
+(or a deliberate DDoS) reach the app at all.
+
+| Option | Pick it when |
+|---|---|
+| **The hosting platform's own edge protection** (Vercel/Netlify/Cloudflare Pages all include basic DDoS mitigation by default) | **Default** — a managed-platform deployment (this skill's own Hosting default) already gets this for free, nothing to configure |
+| **Cloudflare in front of the origin** (even when the app itself is hosted elsewhere) | Self-hosted/VPS deployment (`repo-containerization`'s own trigger) with no platform-level protection of its own — Cloudflare's free tier already includes basic WAF/rate-limiting rules |
+
+**Default: whatever the Hosting row's platform already includes; add
+Cloudflare in front of a self-hosted/VPS origin once that's the deploy
+target** — this is a direct consequence of the Hosting row's own
+choice, the same way Database hosting and Metrics follow from it.
+
+## Incident response (build-trigger, not default-on)
+
+A real process question once uptime monitoring/on-call above actually
+exists — monitoring tells you something broke; incident response is
+what happens next so the same mistake (or the same slow response) isn't
+repeated.
+
+| Option | Pick it when |
+|---|---|
+| **None — just fix it** | **Default** — a solo project with no users depending on a fast, accountable response |
+| **A lightweight incident process**: one severity scale (e.g. critical/major/minor), a short postmortem note per real incident (what broke, user impact, root cause, the fix) | Real users exist and downtime has already happened at least once, or is expected to — the postmortem note is what turns "it broke, we fixed it" into "it won't break that way again," not a compliance exercise |
+
+**Default: none until a real incident happens; a lightweight process
+(not a heavyweight one) once it does** — write the postmortem in the
+project's own `.agents/` notes or `BACKLOG.md`-style log, not a new
+tool to adopt; the process is the habit, not a piece of software.
 
 ## Uptime monitoring / status page (build-trigger, not default-on)
 
@@ -321,3 +413,26 @@ actually occur inside a running request (`frontend-monitoring`).
   [Datadog vs Grafana, 2026](https://signoz.io/blog/datadog-vs-grafana/) —
   cost figures are vendor-adjacent estimates and vary meaningfully by
   source; treat them as directional.
+- Nonce-based strict CSP (`'strict-dynamic'`, `object-src 'none'`,
+  `base-uri 'none'`, a fresh per-response nonce) as the hard-to-bypass
+  approach vs. allowlist-style CSPs being documented as easy to bypass,
+  and report-only mode for safe migration: primary/authoritative
+  sources, not aggregated blogs —
+  [web.dev — Mitigate XSS with a strict CSP](https://web.dev/articles/strict-csp),
+  [Chrome DevTools — Ensure CSP is effective against XSS](https://developer.chrome.com/docs/lighthouse/best-practices/csp-xss),
+  [MDN — CSP implementation guide](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/CSP).
+- GDPR Article 20 (data portability) as a right distinct from deletion/
+  correction: the GDPR text itself is the primary source for this,
+  not a claim needing a freshness check — it's the regulation, not a
+  trend.
+- Layered brute-force defense (rate limiting, MFA, WAF, monitoring),
+  reset endpoints needing their own velocity limit separate from login
+  (a real reported case: Auth0's default brute-force protection not
+  covering the Forgot Password endpoint), and per-account-plus-per-IP
+  limiting to avoid a single-layer gap: aggregated across multiple 2026
+  practitioner sources, e.g.
+  [Password reset velocity limits](https://www.avatier.com/blog/password-reset-velocity-limits/) —
+  specific numeric thresholds cited (e.g. "3 resets in 5 minutes") are
+  examples from individual vendors, not a universal standard; this
+  framework states the principle (reset endpoints get their own limit),
+  not a specific number to copy blindly.

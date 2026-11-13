@@ -133,7 +133,11 @@ it as a gap.
 
 ## What this skill does not cover
 
-Styling mechanics, module structure, or test strategy —
-`frontend-web-styles`, `frontend-component-structure`,
-`frontend-testing`. This skill only answers "is this UI usable without
-a mouse, without sight, or with motion sensitivity."
+Styling mechanics, module structure —
+`frontend-web-styles`, `frontend-component-structure`. This skill
+states the target (WCAG 2.2 AA) and the rules; automated test
+tooling that checks a component/page against them is
+`frontend-testing`'s own "Accessibility testing" section — read that
+one for axe-core/jest-axe/Playwright wiring, not this one. This skill
+only answers "is this UI usable without a mouse, without sight, or
+with motion sensitivity."
