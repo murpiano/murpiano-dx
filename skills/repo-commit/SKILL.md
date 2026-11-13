@@ -41,6 +41,23 @@ Use the configured type and scope, keep the subject imperative and concise, and
 keep body lines within the project limit. Do not mention agents or hidden workflow
 details in commits or PRs.
 
+## PR template and CODEOWNERS (team-size trigger, not a solo default)
+
+A PR description template (`.github/PULL_REQUEST_TEMPLATE.md`) and a
+`CODEOWNERS` file (auto-requesting review from the right people by path)
+both solve a *coordination* problem — they earn nothing for a solo
+maintainer who already knows what every PR is and who should review it
+(themselves). Same build-trigger pattern as Docker or feature flags:
+
+- **Solo**: skip both. A PR template asking "what changed and why" has
+  no one else to read the answer; CODEOWNERS has no one else to route to.
+- **Team**: add a PR template (what changed, how it was tested, linked
+  issue per `repo-tracking`) once a second person starts reviewing PRs
+  they didn't write — it's the thing that makes a review possible without
+  a live walkthrough every time. Add `CODEOWNERS` once the codebase has
+  more than one area with a distinct responsible person/team — it's not
+  useful with one person who owns everything.
+
 ## Validation
 
 Run the project tests, `git diff --check`, and the local [Kysaro](https://github.com/murpiano/kysaro) range check when
