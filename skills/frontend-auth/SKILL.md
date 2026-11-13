@@ -64,13 +64,16 @@ bug on a shared device, not just a cosmetic inconsistency.
 
 ## Basis (checked 2026-11-13)
 
-- `HttpOnly` + `Secure` + `SameSite` cookies are the practitioner
-  consensus for session credentials over `localStorage`, specifically
-  because `localStorage` is readable by any script on the page
-  including an XSS-injected one; a short-lived in-memory access token
-  plus an `HttpOnly` refresh cookie is a common SPA/OIDC hybrid:
-  [Where should browser apps store OIDC tokens?](https://oneuptime.com/blog/post/2026-08-10-oidc-browser-token-storage-bff/markdown),
-  [Token storage security checklist](https://frontendchecklist.io/rules/security/token-storage-security).
+- `HttpOnly` + `Secure` + `SameSite` cookies for session credentials are
+  not just a blog preference — OWASP's own Web Security Testing Guide
+  states the most secure session-cookie configuration as a `__Host-`
+  prefixed cookie with `Secure`, `HttpOnly`, and `SameSite=Strict`:
+  [OWASP WSTG — Testing for Cookies Attributes](https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/06-Session_Management_Testing/02-Testing_for_Cookies_Attributes).
+  `localStorage` lacks `HttpOnly`'s protection entirely — it's readable
+  by any script on the page, including an XSS-injected one. A
+  short-lived in-memory access token plus an `HttpOnly` refresh cookie
+  is a common SPA/OIDC hybrid built on the same cookie guarantee:
+  [Where should browser apps store OIDC tokens?](https://oneuptime.com/blog/post/2026-08-10-oidc-browser-token-storage-bff/markdown).
 - Client-side route guards only control UI visibility; the server (or
   BaaS rules) must independently validate every request — noted as the
   practical implication across the same sources above, consistent with
