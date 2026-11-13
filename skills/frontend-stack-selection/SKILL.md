@@ -17,6 +17,14 @@ default. Ask only which row's conditions this project actually matches
 (team size, SSR need, existing investment), never re-derive the option set
 from scratch.
 
+**TypeScript here is a default, not a mandate** — per
+`DELEGATION-MODEL.md`'s "a stated preference is a default, not a mandate"
+rule. A browser app is JS/TS by construction, but a task that genuinely
+needs native-level compute inside it (heavy image/video/audio processing,
+a physics or codec workload) is a real reason to reach for WebAssembly
+(often authored in Rust) for that one piece, not a reason to avoid the
+JS/TS default for the app as a whole.
+
 Order matters: UI framework → meta-framework (constrained by it) → bundler
 (mostly fixed by the meta-framework choice) → package manager (independent)
 → state management + data fetching (constrained by meta-framework's own

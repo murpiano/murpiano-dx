@@ -63,6 +63,24 @@ task work.
   the next" pacing in `frontend-project-setup`/`backend-project-setup` —
   autonomous mode still produces one coherent unit at a time internally,
   it just doesn't pause for the owner's confirmation between them.
+- **A stated language/tech preference is a default, not a mandate — name
+  the alternative when the task genuinely doesn't fit it.** This
+  framework's own JS/TS-everywhere default (per the owner's stated
+  fluency — see `backend-stack-selection`) is a starting point for the
+  reason it's stated, not a constraint to force past its actual limits.
+  Every option table in this framework (language, framework, database,
+  ...) keeps its real alternatives live specifically so this can happen:
+  when a task's real technical requirement — a performance ceiling
+  JS/TS can't reach, an ecosystem only another language has (ML/data
+  tooling in Python, a specific native library) — makes the default a
+  worse fit, say so explicitly and name the better-suited option, the
+  same way any other row's table already does. This can be a single
+  task inside an otherwise JS/TS project (e.g., one CPU-heavy service
+  written in Go or Python alongside a Node backend) as much as a
+  whole-project exception — don't treat "the project is JS/TS" as a
+  reason to silently force an obviously worse tool on one specific piece
+  of it. Flag it, explain why, let the owner decide; don't switch
+  silently either.
 - **Guide step by step when starting new work.** Starting a new project, a
   new domain inside one, or a structural piece of work: walk the user
   through the relevant settled decisions one at a time (state the
