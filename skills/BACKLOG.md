@@ -82,6 +82,32 @@ it live only in a conversation; remove it once it's actually done
   Step 4 rather than as new governed rows, since they're procedural
   scaffolding steps, not a technology choice with real alternatives to
   compare.
+- **A round of non-code development concerns the owner asked to survey:
+  task tracking, email, file storage, license, timezones, backups, ToS.**
+  Closed the universal ones: `repo-tracking` (new skill — backlog file
+  solo / GitHub Issues small team / Linear once Issues' workflow is
+  outgrown, never Jira by default), License as its own governed row in
+  `repo-readme` (was previously just a one-line "use MIT" with no option
+  table), Transactional email and File/object storage as new rows in
+  `backend-stack-selection` (Resend default, Cloudflare R2 default),
+  UTC-timestamp and backup/restore-testing guidance added to
+  `backend-project-setup` (procedural, no new row — these are
+  "always do it this way" facts, not a choice between named
+  alternatives), Terms-of-Service named explicitly in `repo-hosting` as
+  separate from any jurisdiction's privacy-law requirement.
+  **Surfaced but deliberately not built yet** (real gaps, lower priority
+  than the above — add when one is actually needed, not speculatively):
+  PR/issue templates + CODEOWNERS (team-collaboration artifacts, would
+  extend `repo-commit`), dependency *license* compliance (distinct from
+  `repo-dependency-security`'s vulnerability scanning — checking a
+  package's own license for copyleft risk), API documentation
+  (OpenAPI/Swagger generation from the tRPC/REST layer), full-text search
+  (Postgres FTS vs. Meilisearch/Algolia — an "ask explicitly" row once a
+  project actually needs search), uptime monitoring/status pages and
+  on-call/alerting (deferred-trigger, same pattern as background jobs —
+  real once production traffic exists), design-handoff workflow (Figma
+  tokens/specs vs. code — likely low-priority for a solo JS/TS
+  developer doing their own design).
 - **Language/tech default is a preference, not a mandate — new standing
   rule.** The owner caught that an unqualified "JS/TS everywhere" default
   would eventually force a bad fit on some real task. `DELEGATION-MODEL.md`

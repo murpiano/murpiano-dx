@@ -5,7 +5,7 @@ description: Use when writing, reviewing, or updating a repository README, GitHu
 
 # Repository documentation
 
-Governs `project-profile.md` fields: Identity → Project kind.
+Governs `project-profile.md` fields: Identity → Project kind, License.
 
 Write for humans in clear English. Keep detailed agent instructions in `AGENTS.md`
 and skills. Preserve an existing agent entry-point notice as the first README line;
@@ -20,13 +20,27 @@ template corrections must not remove it. Product documentation about AI is allow
 
 Use only facts confirmed by the repository. Do not invent features or guarantees.
 
-## Default license
+## License
 
-Use MIT by default for a project that has no license, unless the user chooses
-another license. Create `LICENSE` from `templates/LICENSE`, replacing `{{YEAR}}`
-with the current year and `{{COPYRIGHT_HOLDER}}` with the verified project owner.
-Keep package license metadata consistent when present. Preserve existing licenses;
-do not replace them without explicit user instruction.
+Not "pick one so GitHub stops showing a warning" — a real choice with
+real consequences, same option-set-with-a-default treatment as any
+other governed row.
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **MIT** | Shortest, most permissive, most widely understood — almost no friction for anyone to use the code, including commercially | No patent grant, no copyleft protection against someone closing off derivatives | **Default** — a project with nothing specific pushing toward a stronger license |
+| **Apache 2.0** | Adds an explicit patent grant (protects users from a patent claim by a contributor) — matters for anything with real patent exposure | Longer, slightly more to read | A project substantial enough that patent protection genuinely matters (less relevant for a small personal tool) |
+| **GPL / AGPL** (copyleft) | Forces derivatives to stay open source — protects against a company taking the code closed-source | Real adoption friction: many companies have policies against using copyleft-licensed code at all; AGPL specifically triggers on network use (a SaaS built on AGPL code must open its own source) | A deliberate stance that derivatives must stay open — a real, stated choice, not a default |
+| **Proprietary / none (private repo)** | No license needed at all — the project is private/closed-source by design | Not applicable to a public repo meant to be reused | This framework's own project-profile "Visibility: private" rows, or a product (not a library/tool) with no intent to be reused by others |
+
+**Default: MIT** for anything public, matching this skill's existing
+behavior — create `LICENSE` from `templates/LICENSE`, replacing
+`{{YEAR}}` with the current year and `{{COPYRIGHT_HOLDER}}` with the
+verified project owner. Keep package license metadata consistent when
+present. Preserve existing licenses; do not replace them without
+explicit user instruction. A private repo (per the Identity →
+Visibility row) needs no `LICENSE` file at all — don't add one
+reflexively.
 
 ## GitHub metadata
 

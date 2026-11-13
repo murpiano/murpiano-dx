@@ -119,6 +119,16 @@ is exactly the case where 152-ФЗ is *not* the relevant row — this is
 precisely why this question is asked explicitly per-project instead of
 assumed from the owner's own location once and reused everywhere.
 
+**Terms of Service is a separate, near-universal document from any
+jurisdiction's privacy law.** Every law named below requires a Privacy
+Policy (what's collected, why) in some form — but Terms of Service
+(usage rules, liability limitation, account termination conditions) is
+not a 152-ФЗ/GDPR-specific requirement, it's basic contract-law hygiene
+for any product with user accounts, regardless of which jurisdiction
+applies. Don't let "which compliance law applies" crowd out the plain
+"does this product have a ToS at all" question — a product can need a
+ToS with zero of the named regulatory regimes applying.
+
 ## Security / compliance (ask explicitly — see `project-profile/SKILL.md`)
 
 This row isn't "pick the best option" — it's "does a real regulatory/
