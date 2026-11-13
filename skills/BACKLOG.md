@@ -248,3 +248,22 @@ it live only in a conversation; remove it once it's actually done
   trigger justifies a service, and SSR/prerendering as the real fix
   for SPA SEO rather than treating client-injected meta tags as
   equivalent.
+- Owner named six more rows that had been sitting ungoverned in
+  `project-profile.md` since before this audit started (Linter(s),
+  Formatter, Pre-commit hooks' lint/format half, CI/CD provider, CI
+  pipeline stages, Containerization, Orchestration) — a reminder that
+  the earlier "found everything" audits were scoped to *new* frontend
+  concerns and never swept the framework's own pre-existing ungoverned
+  rows. Added `repo-lint-format` (ESLint+Prettier/Ruff/gofmt by
+  language, Husky/lint-staged kept fast and staged-files-only, composes
+  with `repo-cleanup`'s hook rather than replacing it), `repo-ci`
+  (GitHub Actions default, PR-gated lint/test/build with deploy gated
+  to `main` — already the shape `my-world`/`copycat`'s own CI uses, not
+  a new convention), and `repo-containerization` (no Docker by default;
+  real trigger is a self-hosted target or a co-located
+  database/worker — `my-world`'s own GitHub Pages deploy is the
+  worked "doesn't need it" example). Each has a dated `Basis`. This
+  raises the real question of whether another sweep is owed — see
+  `repo-init/SKILL.md`'s fixed-order rule, which exists so a *new*
+  project's adoption never skips a row again, but doesn't retroactively
+  guarantee this framework's own template had no pre-existing gaps.
