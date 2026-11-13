@@ -67,6 +67,7 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | Bundler | Vite / Webpack / Turbopack / esbuild / Parcel | |
 | Package manager | npm / pnpm / yarn / bun | |
 | Routing / navigation | library (name it) / client-state only, no router / none (single view) | |
+| Auth / session handling (frontend) | none — no accounts / login-redirect flow, protected routes, session storage (name the approach) | |
 | State management | Redux / Zustand / Context API / MobX / Recoil / none | |
 | Data fetching | REST client / GraphQL client (Apollo, urql) / tRPC / server actions | |
 | Design system / shared components | none — feature-local only / shared component library (name its location) | |
@@ -79,9 +80,15 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | E2E tests | Playwright / Cypress / none | |
 
 No skill governs design system, component workshop, theming, motion,
-forms & validation, or routing yet (see `skills/BACKLOG.md`) — these
-rows are plain information until each is written, same as every other
-ungoverned row.
+forms & validation, routing, or frontend auth/session handling yet (see
+`skills/BACKLOG.md`) — these rows are plain information until each is
+written, same as every other ungoverned row. The frontend "Auth /
+session handling" row above is distinct from section 4's backend "Auth"
+row: this one is the client-side pattern (login-redirect flow,
+protected routes, where the session token lives) that applies even for
+a frontend talking to a BaaS (Supabase, Firebase) with no custom backend
+of its own; section 4's row is the server-side mechanism a custom
+backend implements.
 
 ## 4. Backend
 
