@@ -98,6 +98,7 @@ mechanism a custom backend implements.
 | Language | Node.js / Python / Go / Java or Kotlin / Rust / C#/.NET / PHP / Ruby | `backend-stack-selection` |
 | Framework | Express / Fastify / NestJS / Django / FastAPI / Flask / Spring Boot / ASP.NET / Laravel / Rails | `backend-stack-selection` |
 | API style | REST / GraphQL / gRPC / tRPC / WebSocket | `backend-stack-selection` |
+| Realtime / live updates (ask explicitly — see project-profile/SKILL.md) | none / SSE / Socket.IO / raw WebSocket | `backend-stack-selection` |
 | Architecture pattern | layered (MVC) / clean or hexagonal / DDD / CQRS / microservices / monolith | `backend-stack-selection` |
 | Database | PostgreSQL / MySQL / MongoDB / Redis / SQLite / other | `backend-stack-selection` |
 | ORM / query layer | Prisma / TypeORM / Drizzle / SQLAlchemy / raw SQL | `backend-stack-selection` |
@@ -108,6 +109,7 @@ mechanism a custom backend implements.
 | File / object storage | Cloudflare R2 / S3 / Supabase Storage / none | `backend-stack-selection` |
 | API documentation | OpenAPI/Swagger / none (types are the docs) | `backend-stack-selection` |
 | Search (ask explicitly — see project-profile/SKILL.md) | none / PostgreSQL full-text / Meilisearch / Algolia | `backend-stack-selection` |
+| AI/LLM integration (ask explicitly — see project-profile/SKILL.md) | none / direct provider SDK / Vercel AI SDK / LangChain-LangGraph | `backend-stack-selection` |
 | Unit tests (backend) | Vitest / none | `backend-testing` |
 | Integration/API tests (backend) | `createCaller()` through the real router / Supertest / none | `backend-testing` |
 
@@ -123,8 +125,9 @@ mechanism a custom backend implements.
 | Database hosting | Neon / Supabase / Railway / AWS RDS / self-hosted / Russian-jurisdiction cloud (name it) | `repo-hosting` |
 | Environments | dev / staging / production (adjust) | `repo-hosting` |
 | Secrets management | `.env` files / secrets manager (name it) / platform env vars | `repo-hosting` |
-| Monitoring / logging | Sentry / Datadog / none | `frontend-monitoring` |
+| Monitoring / logging | Sentry / GlitchTip / Datadog / none | `frontend-monitoring` |
 | Uptime monitoring / status page | Better Uptime / UptimeRobot / none | `repo-hosting` |
+| Metrics & dashboards | platform built-in / Prometheus+Grafana(+Loki) / Grafana Cloud / Datadog / none | `repo-hosting` |
 | Release process | semantic versioning / calendar-based / none — changelog: auto / manual | `repo-release` |
 | Dependency scanning (ask explicitly — see project-profile/SKILL.md) | Dependabot / Renovate / none — CI audit gate: yes (`--audit-level=_`) / no | `repo-dependency-security` |
 

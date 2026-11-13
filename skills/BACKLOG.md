@@ -21,6 +21,52 @@ it live only in a conversation; remove it once it's actually done
 
 ## Done
 
+- **Gaps found by diffing against a real external ТЗ excerpt the owner
+  found.** Most of it matched this framework's existing defaults (Next.js,
+  TanStack Query, Zustand, RHF+Zod, NestJS, PostgreSQL, Prisma/TypeORM,
+  BullMQ, pnpm, ESLint/Prettier/Husky, Docker-for-self-hosted, trunk-based
+  Git, CI-on-every-PR) — confirming the defaults are sound, not a gap.
+  Genuinely new, closed:
+  - **Realtime / live updates** (`backend-stack-selection`, new
+    ask-explicitly row): none by default, SSE for one-way push,
+    Socket.IO for bidirectional — with the multi-instance pub/sub
+    requirement (Redis adapter) stated explicitly, since an in-memory-
+    only realtime layer silently breaks the moment a second backend
+    instance exists. Frontend connection-state visibility (connected/
+    reconnecting/lost) tied to `frontend-resilience`'s existing
+    never-fail-silently treatment.
+  - **AI/LLM integration** (`backend-stack-selection`, new
+    ask-explicitly row): none by default, direct provider SDK or
+    Vercel AI SDK (streaming chat UI) once a real feature exists,
+    LangChain/LangGraph only once genuinely multi-step/agentic.
+  - **Component library foundation** (`frontend-design-system`, new
+    section): shadcn/ui default instead of hand-building accessible
+    primitives from scratch — sits underneath the existing promotion
+    rule, doesn't replace it.
+  - **TypeORM** added to the ORM option table (NestJS's own idiomatic
+    default) — was missing even though the project-profile row's free
+    text already named it.
+  - **API documentation default corrected** to follow the API-style
+    row directly (none for tRPC, Swagger for REST) instead of only
+    triggering on a third-party client — REST's own lack of
+    type-sharing is reason enough even for a same-repo TS client.
+  - **GlitchTip** named in `frontend-monitoring` as the self-hosted,
+    Sentry-SDK-compatible option for the 152-ФЗ-localization case where
+    error reports could carry personal data.
+  - **Metrics & dashboards** (`repo-hosting`, new row), a third layer
+    distinct from Sentry (in-request errors) and uptime monitoring (is
+    it up at all): none by default, the hosting platform's own
+    built-in metrics first, Prometheus+Grafana(+Loki) once self-hosted/
+    Docker is the deploy target, Grafana Cloud as a lighter-ops middle
+    ground, Datadog for an enterprise context.
+  - **Feature-Sliced Design** named explicitly in
+    `frontend-component-structure` as the real upgrade path once the
+    simple feature-folder barrel is outgrown — not a competing default,
+    a stated escalation.
+  - `backend-project-setup`'s docker-compose updated to show Redis as
+    its own commented-out, trigger-gated service (BullMQ or Socket.IO's
+    adapter) instead of only ever showing Postgres.
+
 - **Closed every remaining item from the "surfaced but deliberately not
   built yet" list, plus the framework-level review-process question —
   the owner asked to go through the whole backlog before starting any

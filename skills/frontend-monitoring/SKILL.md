@@ -26,6 +26,14 @@ error. This connects directly to `frontend-resilience`: that skill's
 error boundary is the catch point, this skill is what happens to what
 it catches.
 
+**GlitchTip is a named, self-hosted, Sentry-SDK-compatible alternative**
+— same client SDK and API shape, self-hosted instead of Sentry's SaaS.
+Reach for it specifically when `repo-hosting`'s 152-ФЗ data-localization
+row applies and error reports could carry personal data (a user ID,
+an email in a stack trace) that shouldn't leave Russian-jurisdiction
+infrastructure — not a general-purpose swap, a named option for that
+specific trigger.
+
 ## Source maps never serve from the public build
 
 Build with hidden source maps and upload them to Sentry (or whichever
@@ -50,6 +58,10 @@ bundle, not just omitted from a `<script>` reference.
 
 ## Basis (checked 2026-11-13)
 
+- GlitchTip is an open-source, self-hosted, Sentry-SDK-compatible error
+  tracker — a stable project fact (its own documentation states SDK
+  compatibility directly), not a ranking claim needing a freshness
+  re-check the way a tool-popularity comparison does.
 - Source maps left on the public build expose the full original source
   to anyone who fetches the production JS; the standard fix is hidden
   source maps uploaded to the monitoring tool during CI, keyed to a

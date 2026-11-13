@@ -6,10 +6,12 @@ description: Use when a project needs a custom backend — deciding language, we
 # Backend stack selection — the option matrix for a custom backend
 
 Governs `project-profile.md` fields: Backend → Language, Framework, API
-style, Architecture pattern, Database, ORM / query layer, Request
-validation (API boundary), Auth, Background jobs / queue, Transactional
-email, File / object storage, API documentation, Search (ask explicitly
-— see project-profile/SKILL.md).
+style, Realtime / live updates (ask explicitly — see
+project-profile/SKILL.md), Architecture pattern, Database, ORM / query
+layer, Request validation (API boundary), Auth, Background jobs /
+queue, Transactional email, File / object storage, API documentation,
+Search (ask explicitly — see project-profile/SKILL.md), AI/LLM
+integration (ask explicitly — see project-profile/SKILL.md).
 
 Scope: `stack-selection` decides a project needs a backend at all and
 routes here. This skill is the backend's own tier-0 — same role
@@ -77,11 +79,41 @@ need, not before.
 | **REST** | Universally understood, works with any client, simplest to debug with generic tools | No automatic type-sharing — a frontend/backend mismatch is a runtime bug, not a compile error | A public/third-party API, or any non-TypeScript client needs to call it |
 | **GraphQL** | One query shape serves many different clients with different data needs | Real setup overhead (resolvers, schema) wasted on a single first-party client | Multiple real clients (web, mobile, a partner API) actually exist with different data shapes |
 | **gRPC** | Highest performance, strict contracts, great for service-to-service calls | Not browser-native (needs a proxy), unfamiliar to most frontend-only developers | Internal service-to-service communication, not a browser-facing API |
-| **WebSocket** | Real-time, bidirectional | Not a general API style — a transport for specific features | A specific feature needs live updates (chat, live collaboration) — layered alongside one of the above, not a replacement for it |
-
 **Default: tRPC**, for the single-client TypeScript case this framework
 already assumes. Fall back to REST the moment a non-TypeScript or
 third-party client enters the picture.
+
+## Realtime / live updates (ask explicitly — see `project-profile/SKILL.md`)
+
+A distinct row from API style above, not a variant of it — most apps
+have zero realtime need (a normal request/response API covers them
+completely); ask explicitly whether a feature genuinely needs the server
+to push data without the client asking first.
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **None** | Nothing to add | — | **Default** — most CRUD apps never need this row at all |
+| **Server-Sent Events (SSE)** | Plain HTTP, no new protocol/infra, trivial to proxy through anything that already handles HTTP | One-way only (server → client) | The need is one-directional: notifications, progress updates, streaming AI tokens, a live dashboard — the lighter default once realtime is needed at all |
+| **Socket.IO** | Auto-reconnect, rooms/namespaces, broadcasting, and a Redis adapter for scaling across multiple server instances — all built in | Its own protocol (not plain WebSocket), heavier client (~200KB) than raw `ws` | Genuine bidirectional, low-latency needs (chat, live collaboration, multiplayer) where the reconnect/rooms machinery would otherwise be hand-built |
+| **Raw WebSocket** (`ws`) | Smallest footprint, standard protocol | No reconnect/rooms/broadcasting built in — hand-rolled on top | Bidirectional need, but the team wants to own the protocol directly without Socket.IO's abstraction |
+
+**Default: none until a feature genuinely needs it; SSE for one-way
+push, Socket.IO for bidirectional** — the same build-trigger pattern as
+background jobs. **The moment the backend runs more than one instance
+(`repo-hosting`'s own scaling case), a realtime layer needs a shared
+pub/sub backbone — Socket.IO's Redis adapter, or an equivalent — so a
+message from a client connected to instance A reaches one connected to
+instance B.** This is not optional hardening added later: an
+in-memory-only realtime layer silently breaks the moment a second
+instance exists, the same way an in-memory session store does for Auth
+above — both need the same shared-state fix (Redis, already in this
+stack once BullMQ is adopted) for the same underlying reason.
+
+**On the frontend**: a realtime connection has a state the user needs to
+see — connected / reconnecting / lost — the same "never leave the user
+guessing" treatment `frontend-resilience` already gives loading/error/
+empty states. A dropped WebSocket that fails silently is a real-feature
+bug, not a cosmetic detail.
 
 ## Architecture pattern
 
@@ -132,6 +164,7 @@ reason.
 |---|---|---|---|
 | **Prisma** | The most mature migration tooling/documentation of the two — typed migration history, auto-generated types from the schema; Prisma 7 dropped its Rust engine for pure TypeScript, much smaller bundle and faster cold starts | Its own schema language to learn (not plain SQL/TS) | **Default for this framework** — the deployment target here is a normal long-lived Node process, where Prisma's tooling maturity outweighs Drizzle's edge-specific advantage |
 | **Drizzle** | Schemas are plain TypeScript, queries map directly to SQL (full visibility into what runs), smaller footprint, the clear choice for edge/serverless runtimes | Thinner migration tooling/docs than Prisma's | Deploying to Cloudflare Workers/Vercel Edge Functions, or the team wants queries that read as direct SQL |
+| **TypeORM** | NestJS's own idiomatic default — decorator-based entities fit NestJS's class/DI model directly, same style as the framework itself | Less actively evolving than Prisma/Drizzle; decorator-based entities couple the data model to the ORM more tightly | Already on NestJS and want its entities to match the framework's own decorator style, rather than mixing in Prisma's separate schema language |
 | **Raw SQL** | No abstraction to learn or fight | No type safety, manual migration tracking | A very small project where the ORM's own overhead isn't worth it — rare as a deliberate choice, not a default |
 
 **Default: Prisma.** Drizzle's real advantage (closer to raw SQL, smaller
@@ -248,13 +281,14 @@ project's own frontend) — a human-readable spec adds nothing there.
 
 | Option | Pick it when |
 |---|---|
-| **None** | **Default** — tRPC + shared TypeScript types already give the frontend full autocomplete/type-checking on every procedure; a separate doc describes what the compiler already enforces |
-| **OpenAPI/Swagger** (`@fastify/swagger` + `trpc-openapi` or a REST fallback) | A non-TypeScript or third-party client needs to read the API without access to the TS types — the same trigger as switching the API-style row itself toward REST |
+| **None** | **Default if API style = tRPC** — the shared TypeScript types already give the frontend full autocomplete/type-checking on every procedure; a separate doc describes what the compiler already enforces |
+| **OpenAPI/Swagger** (`@fastify/swagger`, or NestJS's own built-in `@nestjs/swagger`) | **Default if API style = REST** — REST has no automatic type-sharing even for a same-repo TypeScript client, so a generated spec plus the interactive Swagger UI is the real default the moment the API style row picks REST, not only once a third-party client shows up |
 
-**Default: none.** Add OpenAPI generation the moment a real external/
-non-TS consumer exists — the same "ask when there's a real client, not
-before" reasoning as the API-style row above, not separate scaffolding
-to add speculatively.
+**Default follows the API-style row directly: none for tRPC, Swagger
+for REST.** This isn't a separate "ask when there's a third-party
+client" decision — REST's own lack of type-sharing is reason enough on
+a same-repo TypeScript project, which is why NestJS ships
+`@nestjs/swagger` as a near-default for exactly this case.
 
 ## Search (ask explicitly — see `project-profile/SKILL.md`)
 
@@ -273,6 +307,24 @@ full-text search once it is** — avoid adding a second search
 infrastructure before Postgres's own capability has actually been
 tried and found wanting, same reasoning as every other build-trigger
 row in this skill.
+
+## AI/LLM integration (ask explicitly — see `project-profile/SKILL.md`)
+
+A genuinely common 2026 feature set (chat, summarization, an AI agent
+acting on the app's own data) with its own real option set — not every
+project needs this row, but don't silently skip asking.
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **None** | Nothing to add | — | **Default** — most apps have no AI feature at all |
+| **Direct provider SDK** (`@anthropic-ai/sdk`, `openai`) | Every provider feature available immediately, no abstraction layer's lag | Switching providers later means rewriting the integration | A single, deliberately chosen provider with no plan to swap, or a non-Next.js/React backend with no benefit from the Vercel SDK's frontend hooks |
+| **Vercel AI SDK** (`ai` + `@ai-sdk/*`) | Provider-agnostic — swapping models/providers is close to a one-line change; built-in streaming-UI hooks for a React/Next.js frontend | Still an abstraction layer — a provider-specific feature can lag behind the direct SDK | A Next.js/React chat-style feature, or genuinely wanting to keep provider choice swappable |
+| **LangChain / LangGraph** | Built for complex orchestration — multi-step agents, RAG pipelines, 200+ integrations | Real complexity/weight for anything simpler than that | The feature is genuinely a multi-step agent or RAG pipeline, not a single prompt/response call |
+
+**Default: none until a real AI feature is scoped; direct provider SDK
+or Vercel AI SDK (for a streaming chat UI) once one is — LangChain only
+once the feature is genuinely multi-step/agentic**, not for a single
+prompt-response call that the direct SDK already handles in a few lines.
 
 ## Next: scaffolding it
 
@@ -321,6 +373,22 @@ whether it needs containerizing (`repo-containerization`).
   feature set (WORM/Object Lock for regulated storage):
   [Cloudflare R2 vs AWS S3 vs Azure Blob vs GCS, 2026](https://inventivehq.com/blog/cloudflare-r2-vs-aws-s3-vs-azure-blob-vs-google-cloud-storage-comparison) —
   mostly vendor-authored comparisons; exact per-GB figures vary by source.
+- SSE for one-way push vs. Socket.IO for bidirectional with built-in
+  reconnect/rooms/Redis-adapter scaling vs. raw `ws` for the smallest
+  footprint: aggregated across multiple 2026 comparison posts, e.g.
+  [Server-Sent Events vs WebSockets in 2026](https://alexcloudstar.com/blog/server-sent-events-vs-websockets-2026/) —
+  bundle-size and latency figures conflict between sources and are
+  treated as directional, not exact.
+- TypeORM as NestJS's own idiomatic default (decorator-based entities
+  matching the framework's own style), vs. Prisma/Drizzle's separate
+  schema approach: [Prisma vs Drizzle vs TypeORM, 2026](https://encore.dev/articles/prisma-vs-drizzle-vs-typeorm)
+  (already cited above for the Prisma/Drizzle comparison itself).
+- Direct provider SDK vs. Vercel AI SDK (provider-agnostic, streaming-UI
+  hooks) vs. LangChain/LangGraph (multi-step agents/RAG): aggregated
+  across multiple 2026 comparison posts, e.g.
+  [LangChain vs Vercel AI SDK vs raw API](https://dev.to/whoffagents/langchain-vs-vercel-ai-sdk-vs-raw-api-choosing-your-ai-stack-4e56) —
+  download-count figures conflict between sources and are treated as
+  directional only.
 - "Monolith first" and the real-world case against premature
   microservices: Martin Fowler's own named article,
   [MonolithFirst](https://martinfowler.com/bliki/MonolithFirst.html),

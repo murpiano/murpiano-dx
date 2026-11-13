@@ -10,7 +10,7 @@ deploy target, Database hosting, Environments, Secrets management,
 Constraints & non-functional requirements → Primary market / user
 jurisdiction (ask explicitly — see project-profile/SKILL.md), Security /
 compliance (ask explicitly — see project-profile/SKILL.md), Infrastructure
-& delivery → Uptime monitoring / status page.
+& delivery → Uptime monitoring / status page, Metrics & dashboards.
 
 Scope: these rows look like "just describe your project" fields, but each
 one has a real, bounded set of 2026 options with known tradeoffs. Reaching
@@ -230,6 +230,29 @@ phone) is the same trigger one step further — add it once downtime has
 a real cost and someone needs to be woken up for it, not before. For a
 solo project, routing alerts to email/Slack is enough until that's true.
 
+## Metrics & dashboards (build-trigger, tied specifically to self-hosted/Docker deployment)
+
+A third, separate layer from the two above: `frontend-monitoring`'s
+Sentry/GlitchTip catches an error *inside* a request; this skill's own
+uptime monitoring catches the app being down entirely; **metrics and
+dashboards** (request rates, latency percentiles, resource usage over
+time, visualized and alertable) answer "how is it actually performing
+right now," which neither of the other two does.
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **None** | Nothing to run | — | **Default** — no production traffic yet, or traffic low enough that Sentry + uptime pings already answer every real question |
+| **The managed platform's own built-in metrics** (Vercel Analytics, Railway's dashboard) | Zero setup, already included with the Hosting row's choice | Limited depth/retention compared to a dedicated stack | A managed-platform deployment (this skill's own default) — use what's already there before adding anything |
+| **Prometheus + Grafana (+ Loki for logs)** (self-hosted "PLG" stack) | No license cost, full control, Loki is specifically cited as having "won" the log-aggregation space for small/medium workloads that don't need Elasticsearch-level full-text search | Real operational cost: one estimate puts a self-hosted LGTM-style stack's *engineering time* (not just infra) at a meaningful chunk of an FTE — this is not free just because the license is | A self-hosted/Docker deployment (`repo-containerization`'s own trigger) — this is the natural pairing once you're already running your own containers; add `node_exporter`/`cadvisor` alongside for host/container-level metrics |
+| **Grafana Cloud** | Same Prometheus/Loki/Grafana stack, hosted — a middle ground with much less ops burden than self-hosting it | Recurring cost, though usually less than a full Datadog-style platform | Wants the self-hosted stack's openness without running it — a real middle option, not just "self-host or pay for Datadog" |
+| **Datadog / New Relic** (commercial APM) | All-in-one, least setup of any option that isn't "built into the platform" | Cost scales with hosts/data — multiple sources call it overkill for a team under ~30 engineers | An enterprise context already standardized on one, or genuinely wants to pay to never touch the ops side |
+
+**Default: none until there's real production traffic worth watching;
+the managed platform's own built-in metrics first; Prometheus+Grafana(+
+Loki) once self-hosted/Docker is the deploy target anyway** — this row
+follows directly from the Hosting row's own choice, the same way the
+Database hosting row does.
+
 ## What this skill does not cover
 
 Containerization/orchestration itself (`repo-containerization`). The CI
@@ -288,3 +311,13 @@ actually occur inside a running request (`frontend-monitoring`).
   ФСТЭК-certification statements) describe their infrastructure, not an
   application built on it — don't treat a provider's own marketing page
   as confirmation that a specific project is compliant.
+- Self-hosted Prometheus/Grafana/Loki as the standard pairing for a
+  Docker-based deployment, Loki's stated strength for small/medium log
+  volumes versus Elasticsearch-style full-text search, and the real
+  engineering-time cost of self-hosting (not just infra spend) versus
+  a managed platform's own built-in metrics or Datadog's all-in-one
+  cost-at-scale: aggregated across multiple 2026 observability
+  comparison posts, e.g.
+  [Datadog vs Grafana, 2026](https://signoz.io/blog/datadog-vs-grafana/) —
+  cost figures are vendor-adjacent estimates and vary meaningfully by
+  source; treat them as directional.

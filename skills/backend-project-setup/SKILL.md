@@ -98,10 +98,17 @@ services:
     environment:
       POSTGRES_PASSWORD: localdev
     ports: ["5432:5432"]
+  # redis: only add this service once BullMQ (background jobs) or
+  # Socket.IO's Redis adapter (realtime, multi-instance) is actually
+  # adopted — not speculatively alongside Postgres by default.
+  # redis:
+  #   image: redis:7
+  #   ports: ["6379:6379"]
 ```
 
-`DATABASE_URL` goes in `.env` (git-ignored) per `repo-hosting`'s secrets
-default — never hardcoded.
+`DATABASE_URL` (and `REDIS_URL` once Redis is actually added) goes in
+`.env` (git-ignored) per `repo-hosting`'s secrets default — never
+hardcoded.
 
 ## Step 3 — Prisma schema and first migration
 
