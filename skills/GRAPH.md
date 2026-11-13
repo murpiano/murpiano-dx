@@ -22,6 +22,7 @@ flowchart TD
     resilience[frontend-resilience]
     i18n[frontend-i18n]
     routing[frontend-routing]
+    designsystem[frontend-design-system] --> workshop[frontend-component-workshop]
     knowledge[knowledge-refresh]
 ```
 
@@ -65,6 +66,13 @@ flowchart TD
   when it does (React Router default for a plain SPA), and the
   route-change side effects every router needs (title, focus, scroll,
   per-route code-splitting).
+- **`frontend-design-system`** — domain: when a component is promoted
+  from feature-local to a shared tier (two-or-more-consumers trigger,
+  not speculative), where it lives, and its closed variant API.
+- **`frontend-component-workshop`** — tooling for the above: an
+  isolated component dev/doc environment (Storybook default), built
+  only once a project has real shared components to show in it. Child
+  of `frontend-design-system` — see that node.
 - **`repo-*` lifecycle group** — not a domain-architecture chain, a
   parallel category: repository lifecycle skills, each independent and
   triggered by its own task (not by `stack-selection`):

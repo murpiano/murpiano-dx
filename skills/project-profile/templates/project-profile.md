@@ -70,17 +70,17 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | Auth / session handling (frontend) | none — no accounts / login-redirect flow, protected routes, session storage (name the approach) | |
 | State management | Redux / Zustand / Context API / MobX / Recoil / none | |
 | Data fetching | REST client / GraphQL client (Apollo, urql) / tRPC / server actions | |
-| Design system / shared components | none — feature-local only / shared component library (name its location) | |
+| Design system / shared components | none — feature-local only / shared component library (name its location) | `frontend-design-system` |
 | Styling approach | CSS Modules / Tailwind / SCSS+BEM / CSS-in-JS (Emotion, styled-components) / vanilla-extract | `frontend-styling-concept` |
 | Theming / dark mode | none / light+dark / multi-brand | |
 | Motion/animation approach | CSS transitions only / library (name it) / none stated | |
 | Forms & validation | none built yet / client-only / client+server — library (name it) or hand-rolled | |
-| Component dev/doc workshop | Storybook / Ladle / none | |
+| Component dev/doc workshop | Storybook / Ladle / none | `frontend-component-workshop` |
 | Unit/component tests | Vitest / Jest / none | |
 | E2E tests | Playwright / Cypress / none | |
 
-No skill governs design system, component workshop, theming, motion,
-forms & validation, or frontend auth/session handling yet (see
+No skill governs theming, motion, forms & validation, or frontend
+auth/session handling yet (see
 `skills/BACKLOG.md`) — these rows are plain information until each is
 written, same as every other ungoverned row. The frontend "Auth /
 session handling" row above is distinct from section 4's backend "Auth"

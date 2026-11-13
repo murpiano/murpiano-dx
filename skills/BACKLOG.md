@@ -11,8 +11,8 @@ it live only in a conversation; remove it once it's actually done
 - **Seven frontend rows in `project-profile.md` have no governing skill
   yet** — build all of them, order doesn't matter, the goal is full
   coverage, not a sequence (owner's own framing, 2026-11-12/13):
-  - [ ] Design system / shared components
-  - [ ] Component dev/doc workshop (Storybook or equivalent)
+  - [x] Design system / shared components — `frontend-design-system` (2026-11-13)
+  - [x] Component dev/doc workshop (Storybook or equivalent) — `frontend-component-workshop` (2026-11-13)
   - [ ] Theming / dark mode
   - [ ] Motion/animation approach
   - [ ] Forms & validation
