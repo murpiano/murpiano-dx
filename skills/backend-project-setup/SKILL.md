@@ -123,6 +123,25 @@ hand-edited database — this is what makes the migration history itself
 the record of how the schema got here, which is Prisma's own stated
 advantage in `backend-stack-selection`.
 
+**Store every timestamp in UTC, always** — Prisma's `DateTime` maps to
+Postgres `timestamptz`, which already stores in UTC internally; never
+add a separate "local time" column or convert before storing. Convert
+to the user's local time only at the display layer (frontend), using
+the browser's own timezone, not a value baked into the database. This
+is one of the most common real sources of off-by-hours bugs in a
+project with users across more than one timezone — decided once, here,
+rather than rediscovered as a bug later.
+
+**Back up the database from day one, not after the first real data
+loss.** Neon, Supabase, and RDS (`repo-hosting`'s Database hosting row)
+all provide automated daily backups plus point-in-time recovery
+out of the box — confirm it's actually enabled, don't assume a managed
+database backs itself up by default on every plan tier. A self-hosted
+Postgres (the 152-ФЗ-driven case in `repo-hosting`) needs this stated
+explicitly: a scheduled `pg_dump` plus an off-site copy (not stored on
+the same server/VM it backs up) and a periodically *tested* restore —
+an untested backup is a hope, not a backup.
+
 ## Step 4 — Fastify server and the tRPC adapter
 
 ```

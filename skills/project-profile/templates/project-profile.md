@@ -42,6 +42,7 @@ trigger, not cosmetics" before editing a governed row's value.
 | Team | solo / team (size) | |
 | Repository | | `repo-init` |
 | Visibility | private / public | `repo-init` |
+| License | MIT / Apache 2.0 / GPL-AGPL / none (private) | `repo-readme` |
 | Project status | prototype / active / maintenance / archived | |
 
 ## 2. Application type & platforms
@@ -103,6 +104,8 @@ mechanism a custom backend implements.
 | Request validation (API boundary) | Zod / JSON Schema / class-validator / Joi / Yup | `backend-stack-selection` |
 | Auth | session-based / JWT / OAuth2 / SSO | `backend-stack-selection` |
 | Background jobs / queue | none / cron / message queue (name it) | `backend-stack-selection` |
+| Transactional email | Resend / Postmark / SES / SendGrid / none | `backend-stack-selection` |
+| File / object storage | Cloudflare R2 / S3 / Supabase Storage / none | `backend-stack-selection` |
 | Unit tests (backend) | Vitest / none | `backend-testing` |
 | Integration/API tests (backend) | `createCaller()` through the real router / Supertest / none | `backend-testing` |
 
@@ -126,6 +129,7 @@ mechanism a custom backend implements.
 
 | Field | Value | Governed by |
 |---|---|---|
+| Issue / task tracking | backlog file (solo) / GitHub Issues / Linear / Jira | `repo-tracking` |
 | Branching model | trunk-based / GitHub flow / Git flow | `repo-commit` |
 | Commit convention | Conventional Commits (enforced by Kysaro / commitlint) / freeform | `repo-commit` |
 | PR requirements | required reviewers: _ / none — required checks: | `repo-commit` |

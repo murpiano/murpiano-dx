@@ -7,7 +7,8 @@ description: Use when a project needs a custom backend — deciding language, we
 
 Governs `project-profile.md` fields: Backend → Language, Framework, API
 style, Architecture pattern, Database, ORM / query layer, Request
-validation (API boundary), Auth, Background jobs / queue.
+validation (API boundary), Auth, Background jobs / queue, Transactional
+email, File / object storage.
 
 Scope: `stack-selection` decides a project needs a backend at all and
 routes here. This skill is the backend's own tier-0 — same role
@@ -205,6 +206,39 @@ unconsidered. Once needed: **BullMQ** if Redis is already acceptable
 infrastructure, **Graphile Worker** if the project wants to avoid adding
 Redis on top of the already-chosen Postgres.
 
+## Transactional email
+
+Near-universal the moment `frontend-auth`/this skill's own Auth row
+exists — password reset and email verification both need it, not just
+a "nice to have" marketing feature.
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **Resend** | Cleanest API for a TypeScript project, pairs with React Email for templates written as React components — the natural fit for this stack specifically | Younger company than the alternatives below | **Default** — matches this framework's own TypeScript-everywhere reasoning the same way tRPC/Zod do |
+| **Postmark** | Repeatedly cited as the deliverability leader; strict separation of transactional from bulk mail (refuses marketing traffic on the same infra) | Slightly more expensive at the low end than Resend | Deliverability is the literal top priority (e.g. financial/time-sensitive transactional email) |
+| **AWS SES** | Cheapest at real scale (~$0.10 per 1,000 messages) | You own reputation/bounce-handling yourself — real operational work | High volume, with the engineering capacity to manage deliverability directly |
+| **SendGrid** | Transactional + marketing email from one vendor | Broadest/most complex deliverability history of the options here | Marketing email is also needed from the same vendor as transactional |
+
+**Default: Resend.** Switch to Postmark if deliverability becomes a
+measured problem, to SES once volume/cost makes self-managed
+reputation worth it.
+
+## File / object storage
+
+Needed the moment a feature accepts a user-uploaded file (an avatar, a
+document, an image) — storing it in the database or on the server's own
+disk is not a default to reach for.
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **Cloudflare R2** | S3-compatible API (same client libraries work), zero egress fees — the real cost difference at any real traffic volume (S3 charges for every byte served out) | Smaller feature surface than S3 (fewer storage classes, no Object Lock/WORM) | **Default** — egress cost alone makes this the right starting choice for a typical app serving files to users |
+| **AWS S3** | Broadest feature set (versioning, Object Lock/WORM for regulated/immutable-storage needs, Storage Lens) | Egress fees add up fast once files are actually served to users | A regulated-industry need for immutable storage (WORM), or already deep in AWS for other reasons |
+| **Supabase Storage** | Bundled with Supabase if that BaaS path was chosen instead of this framework's own stack (see the Database-hosting row's Supabase option in `repo-hosting`) | Another piece of Supabase lock-in, same tradeoff as that row | Already committed to Supabase as the bundled backend platform |
+
+**Default: Cloudflare R2**, using the S3-compatible SDK so switching to
+real S3 later (for a WORM/compliance need) is a config change, not a
+rewrite.
+
 ## Next: scaffolding it
 
 Once these rows are settled (the framework defaults, unless this project
@@ -243,6 +277,15 @@ whether it needs containerizing (`repo-containerization`).
 - BullMQ as the de-facto standard Node.js job queue, Graphile Worker as
   the Postgres-native alternative avoiding a Redis dependency:
   aggregated across multiple 2026 job-queue comparison posts.
+- Resend as the TypeScript-ecosystem consensus default, Postmark's
+  deliverability reputation, SES's scale pricing: aggregated across
+  multiple 2026 comparison posts, e.g.
+  [Resend vs Postmark vs SES, 2026](https://dev.to/ericwoooo_kr/aws-ses-vs-postmark-vs-resend-which-one-actually-holds-up-when-youre-sending-real-email-in-2026-38da) —
+  pricing figures conflict by source and change often.
+- Cloudflare R2's zero-egress-fee advantage over S3, S3's broader
+  feature set (WORM/Object Lock for regulated storage):
+  [Cloudflare R2 vs AWS S3 vs Azure Blob vs GCS, 2026](https://inventivehq.com/blog/cloudflare-r2-vs-aws-s3-vs-azure-blob-vs-google-cloud-storage-comparison) —
+  mostly vendor-authored comparisons; exact per-GB figures vary by source.
 - "Monolith first" and the real-world case against premature
   microservices: Martin Fowler's own named article,
   [MonolithFirst](https://martinfowler.com/bliki/MonolithFirst.html),

@@ -143,7 +143,8 @@ flowchart TD
   triggered by its own task (not by `stack-selection`):
   `repo-init`, `repo-commit`, `repo-readme`, `repo-release`,
   `repo-dependency-security`, `repo-lint-format`, `repo-ci`,
-  `repo-containerization`, `repo-hosting`, `repo-cleanup`, `repo-agent-data`. No shared concept tier between them;
+  `repo-containerization`, `repo-hosting`, `repo-tracking`, `repo-cleanup`,
+  `repo-agent-data`. No shared concept tier between them;
   no `GRAPH.md` needed for this group unless one of them later grows
   children of its own.
 - **`framework-lint`** — not a domain, a meta-utility: checks `skills/`
