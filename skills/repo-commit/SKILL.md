@@ -70,3 +70,14 @@ Fix all template failures; do not silently waive them.
 
 The branch is clean, checks pass, the PR describes the user-visible result, and
 merge status matches the user’s request.
+
+## Basis (checked 2026-11-13)
+
+- Squash-merge as the standard pairing with a GitHub-flow, short-lived-
+  task-branch workflow (one clean commit on the default branch per
+  reviewed unit of work) — GitHub's own documentation describes squash
+  merging for exactly this "combine all commits into one" use:
+  [About pull request merges — GitHub Docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges).
+  Merge-commit and rebase are real, named alternatives for a team that
+  specifically wants per-commit history or a strictly linear log — not
+  a worse version of squash, a different tradeoff.

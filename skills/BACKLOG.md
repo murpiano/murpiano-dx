@@ -5,6 +5,46 @@ from `skills/DELEGATION-MODEL.md`. Move an item here instead of letting
 it live only in a conversation; remove it once it's actually done
 (mention the skill/file that resolved it, don't just delete silently).
 
+- **Nine real scope gaps found by an independent audit (fresh agent,
+  no session context) on 2026-11-13 — none were in this file before,
+  violating this file's own "keep current without being told" rule.**
+  Each is a genuine production concern with no skill or row covering
+  it anywhere in the framework today. Add when a real project's need
+  makes one concrete, not speculatively — but don't let them silently
+  stay missing from this list in the meantime:
+  - **CSP / security headers at the infra layer.** `frontend-security`
+    already says explicitly it has no framework skill for this yet —
+    this item makes that gap visible outside that one file too.
+  - **API rate limiting at the gateway/CDN/WAF level** — only
+    `backend-project-setup`'s app-level `@fastify/rate-limit` exists;
+    nothing covers a CDN/WAF-level throttle or DDoS layer.
+  - **Secrets rotation process.** `repo-hosting` only lists "automatic
+    rotation" as a cloud-secrets-manager *feature*; no skill describes
+    an actual rotation cadence/process to set up and follow.
+  - **Incident response / postmortems** — no severity levels, on-call
+    cadence, or postmortem template anywhere; "incident" only appears
+    as a trigger for adding staging or a feature-flag kill switch.
+  - **Automated accessibility testing** — `frontend-accessibility`
+    defers "test strategy" to `frontend-testing`, but `frontend-testing`
+    never mentions accessibility testing (axe-core/jest-axe/Lighthouse
+    CI) at all. This is a dangling cross-reference between two existing
+    skills, not just an absent topic — fix both sides together.
+  - **GDPR data portability (Article 20)** — `repo-hosting`'s GDPR/
+    152-ФЗ sections cover access/correction/deletion rights but never
+    portability (a structured, machine-readable data export), a
+    distinct right.
+  - **Database migration rollback / zero-downtime strategy** — Prisma/
+    Drizzle are named for migration *tooling* in `backend-stack-selection`,
+    but nothing covers rollback-on-failure or backward-compatible
+    migration patterns.
+  - **Legal-document i18n** — translating the Privacy Policy/ToS for a
+    project with both a jurisdiction-specific legal requirement
+    (`repo-hosting`) and multiple languages (`frontend-i18n`, which
+    explicitly excludes this from its own scope) falls into a gap
+    between the two skills.
+  - **Auth-endpoint-specific brute-force throttling** — only generic,
+    app-wide rate limiting is named anywhere; login/password-reset
+    endpoints have no stricter, dedicated throttle of their own.
 - **Raise `copycat`'s audit gate from `critical` to `high` once Electron
   is upgraded.** `copycat` still ships Electron 32; its 7 remaining
   `npm audit` findings are all Electron's own advisories, fixed only by
@@ -20,6 +60,36 @@ it live only in a conversation; remove it once it's actually done
   decision above had to go into a dated note instead of a governed row.
 
 ## Done
+
+- **Fixed every confirmed problem from the independent audit above**
+  (same 2026-11-13 audit that surfaced the nine scope gaps):
+  - `frontend-design-system`'s Foundation section claimed a "Tailwind
+    default" that doesn't exist — `frontend-styling-concept`'s actual
+    recorded default is CSS Modules. Fixed: default is now Radix UI
+    primitives + CSS Modules, matching the real default; shadcn/ui is
+    correctly scoped to only when Tailwind is the project's own stated
+    (non-default) styling choice, since shadcn/ui's generated
+    components require Tailwind.
+  - `repo-release`'s Release-process row had no option matrix/Basis —
+    added a semver-vs-CalVer-vs-none table to `rules.md` and a `Basis`
+    section to `SKILL.md`.
+  - `repo-commit`'s Merge-strategy row pointed to `rules.md` with
+    nothing there to find — added a real squash/merge-commit/rebase
+    table to `rules.md` and a `Basis` section to `SKILL.md`.
+  - `repo-readme`'s Project-kind handling covered 4 of the table's 7
+    legal values — added explicit mapping for the other three
+    (library→npm-package, landing page→personal-brand, internal
+    tool→app) to both `SKILL.md` and the template's own comment.
+  - Four "ask explicitly" skills (`repo-dependency-security`,
+    `frontend-seo`, `frontend-analytics`, `frontend-feature-flags`) had
+    the marker only in their boilerplate header, with no reinforcement
+    in the body — each now explicitly restates "ask even with no
+    signal detected" so the instruction survives being read standalone.
+  - `frontend-feature-flags`: fixed a dead Basis link (an erroneous
+    `.md` suffix giving a 404; verified the corrected URL loads) and
+    added Statsig to the option table — the same cited source calling
+    it "the best all-rounder" was already in the Basis but Statsig
+    itself was missing from the actual options.
 
 - **Gaps found by diffing against a real external ТЗ excerpt the owner
   found.** Most of it matched this framework's existing defaults (Next.js,

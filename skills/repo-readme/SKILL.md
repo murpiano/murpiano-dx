@@ -61,8 +61,23 @@ until then, template lookup still honors the old personal paths.
 
 ## Project kind
 
-Before editing, decide the project kind: `app`, `framework`, `npm-package`, or
-`personal-brand` (a descriptive, non-code page — personal site, portfolio, bio).
+Before editing, decide the project kind. The template's `kind: ...` tags (below)
+are written for four kinds — `app`, `framework`, `npm-package`, `personal-brand`
+— `project-profile.md`'s own row allows three more (`library`, `landing page`,
+`internal tool`); map each to the closest of the four until it earns its own
+distinct tagging:
+
+- `library` → treat as **`npm-package`** for section purposes (Install/Usage
+  sections required) even when it isn't actually published to npm — the shape
+  ("other code depends on this") is the same regardless of registry.
+- `landing page` → treat as **`personal-brand`** (a descriptive, non-code page)
+  — same "no Install/API sections" shape, for a product/company instead of a
+  person.
+- `internal tool` → treat as **`app`** minus anything public-facing (skip the
+  Release badge, skip public install instructions aimed at outside users) —
+  the internal/external distinction affects *what's shown*, not the section
+  shape itself.
+
 Ask the user only if the repository does not make it obvious.
 
 A section in the template is tagged `kind: ...` in the comment right after its

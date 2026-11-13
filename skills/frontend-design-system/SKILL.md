@@ -14,25 +14,32 @@ values (color, spacing, type scale) are `frontend-styling-concept`'s
 job, not this skill's — a design system *consumes* those tokens, it
 doesn't define new ones.
 
-## Foundation: don't build primitives from scratch — start from shadcn/ui
+## Foundation: don't build primitives from scratch
 
 Before the promotion question below even comes up: what are shared
 components actually built *out of*? Building every primitive (dialog,
 dropdown, popover — anything with real accessibility/focus-management
 behavior) from scratch is real, avoidable work with real bug surface
 (focus traps, ARIA roles, keyboard nav are each individually easy to
-get subtly wrong).
+get subtly wrong). **This row's right answer depends on the project's
+own Styling approach row (`frontend-styling-concept`) — it is not
+independent of it**, since `frontend-styling-concept`'s own recorded
+default is CSS Modules, not Tailwind, and shadcn/ui's generated
+components are authored in Tailwind.
 
 | Option | Strengths | Weaknesses | Pick it when |
 |---|---|---|---|
-| **shadcn/ui** | Copy-paste components (via its CLI) built on accessible headless primitives (Radix, or Base UI in newer shadcn projects) styled with Tailwind — you own the generated code outright, no runtime dependency to version-bump | Components live in your repo once generated — updates to shadcn's own templates don't auto-propagate (a deliberate tradeoff, not a bug) | **Default** — matches this framework's own Tailwind/CSS-token stack, gives real design control without hand-building accessibility behavior |
-| **Radix UI primitives directly** | Headless accessible primitives as a real npm dependency, full styling freedom, what shadcn itself is built on | More assembly required than shadcn's pre-built components | Building a genuinely custom design system where shadcn's own component shapes don't fit |
-| **MUI / Ant Design** | Complete, fully-styled component sets out of the box (Material Design / enterprise-data-table-heavy, respectively) | Harder to make *not* look like Material Design or Ant's own aesthetic — real friction for a distinctive visual identity (see `frontend-design`) | A large, data-table-heavy internal tool where shipping speed matters more than visual distinctiveness, or the team already standardized on one |
+| **Radix UI primitives directly + CSS Modules** | Headless accessible primitives as a real npm dependency, styled with this framework's own default mechanism — no second styling system introduced alongside it | More assembly required than shadcn's pre-built components | **Default** — matches `frontend-styling-concept`'s actual recorded default (CSS Modules), not a second, conflicting styling system |
+| **shadcn/ui** | Copy-paste components (via its CLI) built on accessible headless primitives (Radix, or Base UI in newer shadcn projects) — you own the generated code outright, no runtime dependency to version-bump | Requires Tailwind — adopting shadcn/ui means adopting Tailwind as this project's styling approach too, a real, stated deviation from `frontend-styling-concept`'s CSS Modules default, not a free add-on | A project has *already* chosen Tailwind for its Styling approach row (a stated, non-default choice per `frontend-styling-concept`'s own override rule) — then shadcn/ui is the right default foundation on top of that choice |
+| **MUI / Ant Design** | Complete, fully-styled component sets out of the box (Material Design / enterprise-data-table-heavy, respectively) | Harder to make *not* look like Material Design or Ant's own aesthetic — real friction for a distinctive visual identity (see `frontend-design`); also its own styling system (Emotion/CSS-in-JS for MUI), same cross-row dependency as shadcn/ui | A large, data-table-heavy internal tool where shipping speed matters more than visual distinctiveness, or the team already standardized on one |
 
-**Default: shadcn/ui**, consistent with this framework's Tailwind
-default in `frontend-styling-concept` — it's the primitive layer
-underneath everything the promotion rule below governs, not a
-replacement for that rule (a shadcn component still only gets copied
+**Default: Radix UI primitives styled with CSS Modules**, matching
+`frontend-styling-concept`'s actual recorded default — **shadcn/ui only
+once Tailwind is this project's own stated Styling-approach choice**,
+never adopted as a silent side effect of wanting shadcn's components.
+This is the primitive layer underneath everything the promotion rule
+below governs, not a replacement for that rule (a promoted component
+still only gets copied
 into the shared tier once it has two real consumers, same as any other
 component).
 

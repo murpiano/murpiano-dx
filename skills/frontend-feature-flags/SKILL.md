@@ -15,6 +15,14 @@ project that just ships when a feature is ready — don't add flag
 infrastructure speculatively for a toggle a redeploy already handles
 fine.
 
+**Ask about this row explicitly, even when no flag library is
+detected.** No flag dependency in `package.json` today doesn't tell
+you whether the owner ever considered needing on/off control without a
+redeploy — put the question to them directly per
+`project-profile/SKILL.md`'s "ask explicitly" rule, and record a real,
+stated "no" as the confirmed answer rather than inferring it from
+absence.
+
 ## Default: a hand-rolled flag, not a service, until the need outgrows it
 
 For a solo/small project whose actual need is "turn this one thing on
@@ -51,6 +59,17 @@ manage for a problem a single file solves.
   its governance/audit features matter at an organizational scale this
   framework's typical solo/small-team project isn't at; it is also
   the most expensive of the options above for a small team.
+- **Statsig** is a named, real alternative worth stating explicitly
+  (one comparison source calls it "the best all-rounder for most
+  teams") — it bundles flags, experimentation, and analytics in one
+  product the way PostHog does, with a generous free tier. Not this
+  framework's own default over PostHog specifically because PostHog is
+  already this framework's `frontend-analytics` default — adopting
+  Statsig *instead* would mean running two overlapping analytics
+  products, not an obvious win. Worth it when a project wants
+  experimentation-grade statistics (sequential testing, CUPED-style
+  variance reduction) that go beyond what PostHog's own flag/experiment
+  product offers.
 
 ## Basis (checked 2026-11-13)
 
@@ -62,4 +81,7 @@ manage for a problem a single file solves.
   team; PostHog is repeatedly recommended when a team already uses it
   for analytics, since it removes the need for a second tool:
   [Best feature flag tools, 2026](https://dupple.com/learn/best-feature-flag-tools),
-  [PostHog vs. LaunchDarkly](https://posthog.com/blog/posthog-vs-launchdarkly.md).
+  [PostHog vs. LaunchDarkly](https://posthog.com/blog/posthog-vs-launchdarkly) —
+  the same `dupple.com` source names Statsig "the best all-rounder for
+  most teams," which the option list above now states explicitly
+  rather than omitting.

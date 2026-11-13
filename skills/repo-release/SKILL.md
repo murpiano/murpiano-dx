@@ -70,3 +70,15 @@ information and its badge when applicable.
 Release files are in `main`, the secret and `RELEASES=on` are set, a `v*` tag exists,
 and public repositories have the Release badge. Pause/resume is verified with
 `gh variable get RELEASES`; removal leaves no release tags or files.
+
+## Basis (checked 2026-11-13)
+
+- Semantic Versioning as the near-universal convention for anything
+  with real external consumers (npm's own ecosystem enforces semver
+  ranges in `package.json` dependencies) — the specification itself is
+  the primary source: [Semantic Versioning 2.0.0](https://semver.org/).
+- Calendar-based versioning (CalVer) as a legitimate, named alternative
+  for products with no compatibility-reasoning need from consumers
+  (Ubuntu's own `YY.MM` scheme is the commonly-cited real-world
+  example) — a stable, well-established naming-scheme fact rather than
+  a trend needing a dated freshness check.

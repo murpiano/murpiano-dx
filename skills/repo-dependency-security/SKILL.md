@@ -13,6 +13,14 @@ already-installed dependencies, and **updating** dependencies to pull fixes
 in. Dependabot and Renovate both do some of each; neither is a full
 vulnerability scanner on its own.
 
+**Ask about this row explicitly, even when no scanning config is detected.**
+A project with no Dependabot/Renovate config yet is not the same fact as
+"the owner decided dependency scanning isn't needed" — the two look
+identical from a repo scan. Put the question to the owner directly per
+`project-profile/SKILL.md`'s "ask explicitly" rule, and record a real "no"
+as the confirmed answer if that's genuinely what they want, rather than
+inferring it from absence.
+
 ## Default setup
 
 1. **Dependabot security alerts** — enable in repository settings
