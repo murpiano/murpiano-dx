@@ -5,12 +5,21 @@ description: Follow murpiano-dx Git rules for task branches, Conventional Commit
 
 # Git workflow
 
-Governs `project-profile.md` fields: Git workflow → Commit convention,
-PR requirements, Merge strategy.
+Governs `project-profile.md` fields: Git workflow → Branching model,
+Commit convention, PR requirements, Merge strategy.
 
 Use this skill for branches, commits, pull requests, and merges. Read only the
 relevant section of [rules.md](rules.md). Project rules and `.kysaro/settings/`
 take precedence.
+
+**Default branching model: GitHub flow** — short-lived feature branches
+cut from the current default branch, merged back (squash by default,
+see `rules.md`) once checks pass, no separate long-lived `develop`
+branch. This is what the workflow below already does; it was never
+previously stated as a named default in its own right. Git flow (with
+a `develop` branch and release branches) is a stated, non-default
+alternative for a project with a real need for parallel release trains
+— not a default swap.
 
 ## Workflow
 

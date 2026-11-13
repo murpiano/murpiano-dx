@@ -267,3 +267,53 @@ it live only in a conversation; remove it once it's actually done
   `repo-init/SKILL.md`'s fixed-order rule, which exists so a *new*
   project's adoption never skips a row again, but doesn't retroactively
   guarantee this framework's own template had no pre-existing gaps.
+- **Full row-by-row audit of `project-profile.md`** (owner's own
+  request: "проверь, что у нас все пункты... не будут случайно
+  пропущены"), checking not just "is there a value" but "does a skill
+  that exists actually get linked, and does `framework-lint` itself
+  catch it if not." Found four real bugs — a skill existed, genuinely
+  covered a row, but was never wired to it, so `framework-lint` was
+  structurally blind to the gap (a skill with no `Governs` line at all
+  produces zero claims and is invisible to the cross-check):
+  - `frontend-testing` existed but had no `Governs` line at all —
+    "Unit/component tests" and "E2E tests" sat ungoverned despite a
+    whole skill already deciding them. Fixed.
+  - `frontend-component-structure` existed but had no `Governs` line
+    and *no row to attach to* — the template had never had a "Module
+    structure" field at all. Added the row (Frontend section, right
+    after Meta-framework) and the `Governs` line.
+  - `repo-commit`'s workflow already assumes GitHub flow (short-lived
+    branches off the default branch, no `develop`) but never named it
+    as the "Branching model" row's actual default. Fixed — stated the
+    default explicitly, Git flow as a non-default alternative.
+  - `stack-selection`'s own Step 2 table already writes "TypeScript"
+    into the profile as the Browser/Electron/Tauri default, but the
+    "Language" row's "Governed by" cell was blank. Fixed.
+  Also found and fixed a latent bug in `framework-lint` itself while
+  doing this: `check_governs` matched rows by field name alone, with
+  no section scoping — harmless today because the only repeated field
+  name (`Language`, in both Frontend and Backend) didn't yet have a
+  skill on both sides, but a second skill ever claiming "Language" for
+  the Backend row would have silently collided with `stack-selection`'s
+  Frontend claim instead of being flagged as two separate things. Made
+  both the table parser and the `Governs`-line parser section-aware
+  ((section, field) keys instead of just field). Also added a small,
+  clearly justified extension while already touching this: `Type
+  checking` (TS `strict: true` / `mypy --strict` default) folded into
+  `repo-lint-format`, since it sits right next to the lint/format
+  tooling decision that skill already owns.
+  **Rows checked and left deliberately ungoverned** (not a gap, a
+  genuine "no framework default" — distinguishing this from the bugs
+  above matters, since the owner's whole concern is not confusing the
+  two): Meta-framework, Bundler, Package manager, State management,
+  Data fetching — `stack-selection`'s own pattern already states the
+  rule for these ("a row with no default recorded yet means ask the
+  user, then write the answer down as the new default" — true of every
+  dogfooded project so far, which all independently landed on Vite+npm
+  without that ever being written down as *the* answer). Hosting/
+  deploy target, Environments, Secrets management, Security/
+  compliance, Target OS/browser support, Secondary platforms, Browser/
+  device support matrix — plain descriptive/project-specific
+  information with no single technical convention to govern across
+  every project. The whole Backend section stays under its existing
+  blanket note (no backend domain skill exists yet).

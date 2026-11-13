@@ -11,6 +11,8 @@ that) and independent of platform (`stack-selection`). Read this when
 creating a new feature folder, or deciding whether an existing one
 needs a public-API boundary.
 
+Governs `project-profile.md` fields: Frontend → Module structure.
+
 ## The rule: one barrel per feature folder, not per component
 
 Each feature folder (`src/features/<name>/`) gets exactly one

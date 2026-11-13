@@ -6,7 +6,7 @@ description: Use when setting up or reviewing a project's linter, formatter, and
 # Linter, formatter, pre-commit hook
 
 Governs `project-profile.md` fields: Git workflow → Linter(s), Formatter,
-Pre-commit hooks.
+Type checking, Pre-commit hooks.
 
 Scope: which tool checks/formats code, and where it runs — a fast,
 staged-files-only pass locally (pre-commit) vs. the full, authoritative
@@ -26,6 +26,19 @@ scans the *commit message* for agent traces, not the code.
 - **Go**: `gofmt` — there is no real alternative to default away from;
   the language ships its own formatter and the community treats
   deviation from it as the actual anti-pattern.
+
+## Type checking: strict by default
+
+For a TypeScript project — this framework's own default over plain
+JavaScript (`stack-selection`) — turn on `strict: true` in
+`tsconfig.json` from the start, not as a later tightening pass; a
+codebase that starts loose and tries to turn strict mode on later
+fights every existing `any` and implicit-null case at once, instead of
+never having them. `mypy --strict` is the equivalent default for a
+Python project that opts into static typing at all — a project with no
+type annotations anywhere records "none" and that's a legitimate
+answer, not a gap, since adding types retroactively is the project's
+own larger decision, not this skill's to force.
 
 ## Pre-commit hook: fast and staged-files-only, not the authoritative gate
 
