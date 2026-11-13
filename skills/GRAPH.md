@@ -27,6 +27,10 @@ flowchart TD
     motion[frontend-motion]
     forms[frontend-forms]
     auth[frontend-auth]
+    seo[frontend-seo]
+    analytics[frontend-analytics]
+    flags[frontend-feature-flags]
+    monitoring[frontend-monitoring]
     knowledge[knowledge-refresh]
 ```
 
@@ -92,6 +96,21 @@ flowchart TD
   protected-route redirect flow, logout cleanup. Distinct from the
   backend "Auth" row (`project-profile.md` section 4), which is a
   server-side mechanism.
+- **`frontend-seo`** — domain: whether a project has publicly indexable
+  pages, and if so, the rendering strategy and per-route metadata
+  (title, OG tags, canonical, structured data) that lets crawlers
+  actually see them.
+- **`frontend-analytics`** — domain: whether a project needs usage
+  telemetry, tool choice (Plausible default, cookie-less, over GA4),
+  and event naming.
+- **`frontend-feature-flags`** — domain: whether a project needs
+  runtime on/off toggles or real experiments, defaulting to a
+  hand-rolled constant until a real trigger (multi-person toggling,
+  per-user targeting, no-deploy kill switch) justifies a service.
+- **`frontend-monitoring`** — domain: where a caught client-side error
+  or performance number is reported (Sentry default), source-map
+  handling, PII scrubbing. The reporting counterpart to
+  `frontend-resilience`'s error boundary.
 - **`repo-*` lifecycle group** — not a domain-architecture chain, a
   parallel category: repository lifecycle skills, each independent and
   triggered by its own task (not by `stack-selection`):

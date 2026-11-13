@@ -115,7 +115,7 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 | Hosting / deploy target | Vercel / Netlify / AWS / GCP / Azure / self-hosted / on-prem | |
 | Environments | dev / staging / production (adjust) | |
 | Secrets management | `.env` files / secrets manager (name it) / platform env vars | |
-| Monitoring / logging | Sentry / Datadog / none | |
+| Monitoring / logging | Sentry / Datadog / none | `frontend-monitoring` |
 | Release process | semantic versioning / calendar-based / none — changelog: auto / manual | `repo-release` |
 | Dependency scanning (ask explicitly — see project-profile/SKILL.md) | Dependabot / Renovate / none — CI audit gate: yes (`--audit-level=_`) / no | `repo-dependency-security` |
 
@@ -143,9 +143,9 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 | Frontend rendering (XSS) | any raw-HTML rendering (`dangerouslySetInnerHTML`, user-derived URLs) audited / none in use | `frontend-security` |
 | Error/loading/empty states | has an app-root error boundary: yes / no — loading and empty states: pattern described | `frontend-resilience` |
 | Browser/device support matrix | | |
-| SEO / discoverability (ask explicitly — see project-profile/SKILL.md) | public pages meant to be indexed/shared: yes — meta tags present: _ / no | |
-| Analytics / product telemetry (ask explicitly — see project-profile/SKILL.md) | yes — tool: _ / no | |
-| Feature flags / experimentation (ask explicitly — see project-profile/SKILL.md) | yes — tool: _ / no | |
+| SEO / discoverability (ask explicitly — see project-profile/SKILL.md) | public pages meant to be indexed/shared: yes — meta tags present: _ / no | `frontend-seo` |
+| Analytics / product telemetry (ask explicitly — see project-profile/SKILL.md) | yes — tool: _ / no | `frontend-analytics` |
+| Feature flags / experimentation (ask explicitly — see project-profile/SKILL.md) | yes — tool: _ / no | `frontend-feature-flags` |
 
 ## Provenance
 

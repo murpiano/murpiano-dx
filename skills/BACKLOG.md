@@ -8,11 +8,6 @@ it live only in a conversation; remove it once it's actually done
 - **Backend domain** — do not pre-build; start it (concept →
   implementation → setup, per `DELEGATION-MODEL.md`) only once a real
   backend project is connected or created.
-- Three rows in `project-profile.md` section 7 (SEO/discoverability,
-  analytics, feature flags) are genuinely app-type-conditional, marked
-  "ask explicitly" so `repo-init` asks rather than infers "no" — these
-  stay unbuilt until a project's real answer is "yes" (see Done entry
-  below for the seven that were *not* conditional and are now built).
 - **Team review process for framework changes.** Right now any change to
   `skills/`/`DELEGATION-MODEL.md`/etc. is just agreed in conversation and
   written. Fine solo; for a team sharing this framework, decide whether
@@ -233,3 +228,23 @@ it live only in a conversation; remove it once it's actually done
   (dark mode, an animation library, a forms library, or a shared
   component to showcase) — their profile rows record that honestly as
   "none stated," not a forced adoption just to exercise the new skill.
+- Built the three app-type-conditional skills too
+  (`frontend-seo`, `frontend-analytics`, `frontend-feature-flags`) plus
+  one more conditional gap found while writing them
+  (`frontend-monitoring`, for `project-profile.md` section 5's
+  previously-ungoverned "Monitoring / logging" row — the reporting
+  counterpart to `frontend-resilience`'s error boundary, which catches
+  an error but never says where it goes). The owner explicitly chose
+  to finish writing the framework's own knowledge before adopting it
+  into any project ("сначала фреймворк, потом проекты") — these stay
+  marked "ask explicitly" in the profile template (still correctly
+  *conditional per project*, per `project-profile/SKILL.md`'s own
+  caution against marking every blank row that way), but now have a
+  real skill behind them the moment a project's answer is "yes,"
+  instead of a blank "Governed by" cell. Each has a dated `Basis`:
+  Plausible/cookie-less analytics over GA4's consent-banner
+  requirement, Sentry with hidden source maps and `beforeSend`
+  PII-scrubbing, hand-rolled flags until a real multi-user/no-deploy
+  trigger justifies a service, and SSR/prerendering as the real fix
+  for SPA SEO rather than treating client-injected meta tags as
+  equivalent.
