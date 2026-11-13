@@ -11,7 +11,8 @@ model, above *Concept* — see [../GRAPH.md](../GRAPH.md) for where it sits
 among the framework's other domains.
 
 Governs `project-profile.md` fields: Application type & platforms →
-Primary platform, Frontend → Language.
+Primary platform, Secondary platforms, Target OS / browser support,
+Frontend → Language.
 
 ## The governing rule here too
 
@@ -43,6 +44,40 @@ Ask (or confirm from context) which of these the project is:
   domain the same way (see Step 3)
 
 Write the answer into the profile's "Application type & platforms" row.
+
+## Step 1.5 — secondary platforms and support matrix
+
+Not a free-text description — a bounded choice with a stated default, same
+as every other row in this skill.
+
+**Secondary platforms** (does this project also need another platform
+beyond the primary one):
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **None (single platform)** | No shared-code complexity, fastest to ship | — | Default — don't add a second platform speculatively |
+| **React Native / Expo, sharing logic with a React web app** | Real code/logic reuse (state, API layer) if the web app is already React | UI still needs per-platform work; React Native Web for full UI-sharing is its own, narrower tradeoff | A mobile app is genuinely planned and the web app is React |
+| **Capacitor / Tauri wrapping the existing web app** | Near-zero extra UI code — ships the same web app as a desktop/mobile shell | Feels less native; app-store review scrutinizes bare web wrappers more | A thin native wrapper is enough (no native-only features needed) and shipping speed matters more than native feel |
+| **Separate native codebase per platform** | True native UX/performance | Full second (or third) codebase to maintain | Native UX is a hard requirement (e.g. complex platform-specific interactions) and the team can support it |
+
+Default: **none** until a second platform is a real, stated requirement —
+the same "don't build for a hypothetical" rule this framework applies to
+Docker (`repo-containerization`) and feature flags (`frontend-feature-flags`).
+
+**Target OS / browser support** (what versions actually need to work):
+
+| Option | Covers | Tradeoff |
+|---|---|---|
+| **Evergreen browsers, last 2 major versions** (Chrome, Firefox, Safari, Edge) | The overwhelming majority of real traffic for a new product with no legacy user base | Drops long-tail old-browser users — acceptable unless a stated audience needs otherwise |
+| **Explicit legacy support** (e.g. a specific older Safari/Android WebView version) | A named enterprise/embedded audience that can't update | Real transpilation/polyfill cost, and constrains which CSS/JS features are usable elsewhere in this project's own skills (e.g. `frontend-theming`'s `light-dark()` needs a modern browser) |
+| **Latest 2 major OS versions** (mobile/native: iOS N/N-1, Android covering ~95% of active devices per Google's own distribution data) | Standard native-app support window | A stated reason (enterprise device fleet on an old OS) to go further back |
+
+Default: **evergreen browsers, last 2 versions** for web; **latest 2 major
+OS versions** for native/mobile. Write the project's actual answer into
+the "Target OS / browser support" row — this is the one row in
+`project-profile.md` that doubles for both the web-browser case and the
+native-OS case; don't also fill a separate browser matrix elsewhere for
+the same project.
 
 ## Step 2 — language/framework for that type
 

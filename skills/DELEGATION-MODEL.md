@@ -11,6 +11,24 @@ task work.
   answers a question the current task raises, say what the convention is and
   apply it. Ask only for a decision this framework genuinely has not made
   yet, or to flag that a better alternative exists than the settled one.
+- **Every governed cell gets a populated option set, not a deferred
+  question.** A `project-profile.md` row with a `Governed by` skill is not
+  "ask the owner when we get there" — the governing skill must already
+  hold the real, bounded set of 2026 options for that row (what's actually
+  used, pros/cons of each, a reasoned default), the same shape
+  `frontend-stack-selection` and `repo-hosting` use. Reaching the row means
+  presenting that option set and a recommendation, never improvising one
+  on the spot or punting the whole decision back to the owner with no
+  framing. "No default recorded yet" is a stopgap for a domain nobody has
+  written up — fix it by writing the option set, don't leave it as the
+  permanent answer.
+  - **A row this framework deliberately defers until a real trigger exists**
+    (Docker, Storybook, a feature-flag service, a staging environment) is
+    not silently skipped either — say so explicitly when the row comes up:
+    name the trigger condition that would turn it on, and record the
+    row's value as "not yet — see `<skill>` for the trigger" rather than
+    leaving it blank or guessing. The owner should see a stated, revisitable
+    decision, not an absence.
 - **Guide step by step when starting new work.** Starting a new project, a
   new domain inside one, or a structural piece of work: walk the user
   through the relevant settled decisions one at a time (state the
