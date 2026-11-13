@@ -67,28 +67,24 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | Bundler | Vite / Webpack / Turbopack / esbuild / Parcel | |
 | Package manager | npm / pnpm / yarn / bun | |
 | Routing / navigation | library (name it) / client-state only, no router / none (single view) | `frontend-routing` |
-| Auth / session handling (frontend) | none — no accounts / login-redirect flow, protected routes, session storage (name the approach) | |
+| Auth / session handling (frontend) | none — no accounts / login-redirect flow, protected routes, session storage (name the approach) | `frontend-auth` |
 | State management | Redux / Zustand / Context API / MobX / Recoil / none | |
 | Data fetching | REST client / GraphQL client (Apollo, urql) / tRPC / server actions | |
 | Design system / shared components | none — feature-local only / shared component library (name its location) | `frontend-design-system` |
 | Styling approach | CSS Modules / Tailwind / SCSS+BEM / CSS-in-JS (Emotion, styled-components) / vanilla-extract | `frontend-styling-concept` |
 | Theming / dark mode | none / light+dark / multi-brand | `frontend-theming` |
 | Motion/animation approach | CSS transitions only / library (name it) / none stated | `frontend-motion` |
-| Forms & validation | none built yet / client-only / client+server — library (name it) or hand-rolled | |
+| Forms & validation | none built yet / client-only / client+server — library (name it) or hand-rolled | `frontend-forms` |
 | Component dev/doc workshop | Storybook / Ladle / none | `frontend-component-workshop` |
 | Unit/component tests | Vitest / Jest / none | |
 | E2E tests | Playwright / Cypress / none | |
 
-No skill governs forms & validation or frontend auth/session handling
-yet (see
-`skills/BACKLOG.md`) — these rows are plain information until each is
-written, same as every other ungoverned row. The frontend "Auth /
-session handling" row above is distinct from section 4's backend "Auth"
-row: this one is the client-side pattern (login-redirect flow,
-protected routes, where the session token lives) that applies even for
-a frontend talking to a BaaS (Supabase, Firebase) with no custom backend
-of its own; section 4's row is the server-side mechanism a custom
-backend implements.
+The frontend "Auth / session handling" row above is distinct from
+section 4's backend "Auth" row: this one is the client-side pattern
+(login-redirect flow, protected routes, where the session token lives)
+that applies even for a frontend talking to a BaaS (Supabase, Firebase)
+with no custom backend of its own; section 4's row is the server-side
+mechanism a custom backend implements.
 
 ## 4. Backend
 
