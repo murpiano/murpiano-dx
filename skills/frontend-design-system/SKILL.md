@@ -14,6 +14,28 @@ values (color, spacing, type scale) are `frontend-styling-concept`'s
 job, not this skill's — a design system *consumes* those tokens, it
 doesn't define new ones.
 
+## Foundation: don't build primitives from scratch — start from shadcn/ui
+
+Before the promotion question below even comes up: what are shared
+components actually built *out of*? Building every primitive (dialog,
+dropdown, popover — anything with real accessibility/focus-management
+behavior) from scratch is real, avoidable work with real bug surface
+(focus traps, ARIA roles, keyboard nav are each individually easy to
+get subtly wrong).
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **shadcn/ui** | Copy-paste components (via its CLI) built on accessible headless primitives (Radix, or Base UI in newer shadcn projects) styled with Tailwind — you own the generated code outright, no runtime dependency to version-bump | Components live in your repo once generated — updates to shadcn's own templates don't auto-propagate (a deliberate tradeoff, not a bug) | **Default** — matches this framework's own Tailwind/CSS-token stack, gives real design control without hand-building accessibility behavior |
+| **Radix UI primitives directly** | Headless accessible primitives as a real npm dependency, full styling freedom, what shadcn itself is built on | More assembly required than shadcn's pre-built components | Building a genuinely custom design system where shadcn's own component shapes don't fit |
+| **MUI / Ant Design** | Complete, fully-styled component sets out of the box (Material Design / enterprise-data-table-heavy, respectively) | Harder to make *not* look like Material Design or Ant's own aesthetic — real friction for a distinctive visual identity (see `frontend-design`) | A large, data-table-heavy internal tool where shipping speed matters more than visual distinctiveness, or the team already standardized on one |
+
+**Default: shadcn/ui**, consistent with this framework's Tailwind
+default in `frontend-styling-concept` — it's the primitive layer
+underneath everything the promotion rule below governs, not a
+replacement for that rule (a shadcn component still only gets copied
+into the shared tier once it has two real consumers, same as any other
+component).
+
 ## Default: feature-local until promoted, not a shared folder from day one
 
 `frontend-component-structure` already says every component lives in
@@ -93,6 +115,13 @@ these components — `frontend-component-workshop`.
   reserved for multi-product organizations — supporting "don't build
   the governed/versioned tier for a solo project":
   [Design system maturity](https://atomize.tools/blog/design-system-maturity/).
+- shadcn/ui as copy-paste components owned in-repo (built on Radix, or
+  Base UI in newer projects) vs. Radix UI directly vs. MUI/Ant Design's
+  fully-styled, harder-to-restyle component sets: aggregated across
+  multiple 2026 comparison posts, e.g.
+  [shadcn/ui vs MUI vs Ant Design](https://adminlte.io/blog/shadcn-ui-vs-mui-vs-ant-design/) —
+  download/star-count figures conflict between sources and are treated
+  as directional only.
 - Token names, component prop signatures, and slot/class names are all
   part of a shared component's public API surface, and a closed,
   intentional variant set (not an open style escape hatch) is what

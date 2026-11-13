@@ -116,6 +116,25 @@ feature level) genuinely divides practitioners — this framework settles
 it at the feature level only, matching FSD's actual granularity and
 keeping the "keep barrels shallow" caution satisfied by construction.
 
+## When this isn't enough: Feature-Sliced Design
+
+A flat feature-folder-per-domain layout (this skill's default) is
+deliberately simple — one tier, grouped by feature, nothing more. **Once
+a project outgrows that** (large app, multiple teams, a real need to
+distinguish app-wide vs. page-level vs. shared-entity code, not just
+"feature vs. shared"), **Feature-Sliced Design (FSD)** is the named,
+widely-adopted alternative — a formal layered architecture
+(`app → pages → widgets → features → entities → shared`) with its own
+import rules (a layer may only import from layers below it) and often
+its own ESLint plugin enforcing them. This isn't a competing default to
+argue against — it's a real, stated upgrade path for a scale this
+skill's simpler model doesn't aim to solve. Don't adopt FSD
+speculatively for a small project (its extra layers are overhead
+exactly where the simple model already works fine), and don't bolt
+"feature-sliced" terminology onto this skill's simpler barrel rule
+expecting FSD's own tooling/lint rules to apply — they're two distinct,
+real conventions, not the same thing under two names.
+
 ## What this skill does not cover
 
 Styling mechanics and file colocation with a component's own style file
