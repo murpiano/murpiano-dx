@@ -59,10 +59,21 @@ it live only in a conversation; remove it once it's actually done
     built-in metrics first, Prometheus+Grafana(+Loki) once self-hosted/
     Docker is the deploy target, Grafana Cloud as a lighter-ops middle
     ground, Datadog for an enterprise context.
-  - **Feature-Sliced Design** named explicitly in
-    `frontend-component-structure` as the real upgrade path once the
-    simple feature-folder barrel is outgrown — not a competing default,
-    a stated escalation.
+  - **Feature-Sliced Design, corrected after the owner challenged it.**
+    First pass named FSD alone as "the widely-adopted upgrade path" —
+    the owner had heard elsewhere that FSD is a world standard and
+    pushed back. A deeper check found no State-of-JS-style survey or
+    independent (non-FSD-authored, non-CIS) source confirming that;
+    the strongest praise traces to FSD's own docs and Russian/CIS
+    sources (Habr, Avito), and Next.js's own docs explicitly call it a
+    third-party pattern, not an endorsed one. Rewrote
+    `frontend-component-structure` to present **two** real upgrade
+    paths — FSD (strict enforced layers) and Bulletproof React (lighter
+    convention-based, broader non-CIS recognition) — with neither as
+    this framework's default, same build-trigger reasoning as
+    microservices/Docker. A genuine case of a strong claim needing a
+    real check before landing in the framework, not just restating the
+    first source found.
   - `backend-project-setup`'s docker-compose updated to show Redis as
     its own commented-out, trigger-gated service (BullMQ or Socket.IO's
     adapter) instead of only ever showing Postgres.
