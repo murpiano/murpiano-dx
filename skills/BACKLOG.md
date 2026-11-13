@@ -317,3 +317,33 @@ it live only in a conversation; remove it once it's actually done
   information with no single technical convention to govern across
   every project. The whole Backend section stays under its existing
   blanket note (no backend domain skill exists yet).
+- **Correction to the entry above: "deliberately ungoverned" was the
+  wrong call for most of those rows.** The owner pushed back: a row
+  left as free text means the agent will never reliably know to
+  present real options when it reaches that row — "plain descriptive
+  info" isn't true of a question with a real, bounded answer set, only
+  of ones that genuinely have none. Fixed by writing the option sets
+  instead of leaving them deferred:
+  - `frontend-stack-selection` (new) — UI framework, meta-framework,
+    bundler, package manager, state management, data fetching. Each a
+    real 2026 option table (pros/cons, a dated `Basis`, a default) —
+    not "ask when we get there."
+  - `repo-hosting` (new) — hosting/deploy target, environments,
+    secrets management, and security/compliance (GDPR/SOC2/HIPAA
+    applicability explained, not just named).
+  - `stack-selection` — extended with a Step 1.5 decision table for
+    secondary platforms and target OS/browser support, consolidating
+    the old duplicate "Browser/device support matrix" row (section 7)
+    into the section-2 "Target OS / browser support" row — same
+    question asked twice under two names was itself a found bug.
+  - `DELEGATION-MODEL.md` — added a standing rule ("Every governed cell
+    gets a populated option set, not a deferred question") so this
+    doesn't quietly regress the next time a new domain gets written:
+    a governed row must ship with its skill's real option set, and a
+    deliberately-deferred row (Docker, Storybook, feature flags, ...)
+    must say so explicitly with its trigger condition when reached,
+    never sit blank.
+  What's left correctly as plain fact, no technology decision possible
+  (Identity section's One-line description, Team, Project status):
+  these have no "options" to compare — they're just what the project
+  is, not a choice between named alternatives.

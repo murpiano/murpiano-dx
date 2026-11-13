@@ -48,8 +48,8 @@ trigger, not cosmetics" before editing a governed row's value.
 | Field | Value | Governed by |
 |---|---|---|
 | Primary platform | browser web app / Electron / Tauri / native desktop / native mobile / cross-platform mobile (React Native, Expo) / backend service / CLI / library | `stack-selection` |
-| Secondary platforms | — if single-platform | |
-| Target OS / browser support | | |
+| Secondary platforms | — if single-platform | `stack-selection` |
+| Target OS / browser support | evergreen browsers (web) / latest 2 OS versions (native, mobile) — adjust if stated otherwise | `stack-selection` |
 
 ## 3. Frontend
 
@@ -143,7 +143,6 @@ is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
 | Security / compliance (ask explicitly — see project-profile/SKILL.md) | GDPR / SOC2 / HIPAA / none stated | `repo-hosting` |
 | Frontend rendering (XSS) | any raw-HTML rendering (`dangerouslySetInnerHTML`, user-derived URLs) audited / none in use | `frontend-security` |
 | Error/loading/empty states | has an app-root error boundary: yes / no — loading and empty states: pattern described | `frontend-resilience` |
-| Browser/device support matrix | | |
 | SEO / discoverability (ask explicitly — see project-profile/SKILL.md) | public pages meant to be indexed/shared: yes — meta tags present: _ / no | `frontend-seo` |
 | Analytics / product telemetry (ask explicitly — see project-profile/SKILL.md) | yes — tool: _ / no | `frontend-analytics` |
 | Feature flags / experimentation (ask explicitly — see project-profile/SKILL.md) | yes — tool: _ / no | `frontend-feature-flags` |
