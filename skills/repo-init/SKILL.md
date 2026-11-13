@@ -10,6 +10,14 @@ Governs `project-profile.md` fields: Identity → Repository, Visibility.
 Run this skill only when the owner asks to initialize or repair a project. A normal
 development task does not reinitialize the project.
 
+This skill only covers the Git/GitHub/linter lifecycle — it does not
+decide what the project is built with. For a brand-new project with no
+code yet, also run `stack-selection` (see `skills/GRAPH.md`) to decide
+the stack; run both, in either order, for a from-scratch project — this
+skill's repo/origin/Kysaro setup and `stack-selection`'s Step 0 (which
+creates `.agents/project-profile.md`) are independent and neither
+substitutes for the other.
+
 1. From the project directory run `bash <murpiano-dx>/sync.sh init`.
 2. If no origin exists, ask whether to create a GitHub repository, then ask for
    private or public visibility (default private). Only after approval run

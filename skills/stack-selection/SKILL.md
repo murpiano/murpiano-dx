@@ -29,6 +29,10 @@ Create `.agents/project-profile.md` for this project from
 written into it as it's made, so the table is this checklist, not a
 report written after the fact. See `skills/project-profile/SKILL.md`.
 
+This skill decides the stack, not the repo/GitHub/linter setup — if
+there's no Git repo yet either, also run `repo-init` (either before or
+after this skill; they're independent and don't block each other).
+
 ## Step 1 — application type
 
 Ask (or confirm from context) which of these the project is:
