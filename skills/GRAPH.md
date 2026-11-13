@@ -10,6 +10,7 @@ flowchart TD
     profile[project-profile<br/>the one project-wide table]
     stack[stack-selection<br/>entry point: new application] --> frontendstack[frontend-stack-selection] --> frontend[frontend-styling-concept]
     stack --> backendstack[backend-stack-selection]
+    backendstack -. details .-> backendGraph["backend-stack-selection/GRAPH.md"]
     repo[repo-* lifecycle group]
     hosting[repo-hosting]
 
@@ -49,13 +50,15 @@ flowchart TD
   guided-setup skill. Read first when starting new work from scratch.
 - **`backend-stack-selection`** — domain: the option matrix for a custom
   backend — language, web framework, API style, architecture pattern,
-  database, ORM, auth mechanism, background jobs — each a bounded,
-  real-world option set with a reasoned default (Node.js+TypeScript /
-  Fastify / tRPC / layered monolith / PostgreSQL / Prisma / session+Better
-  Auth / none-until-triggered). Runs right after `stack-selection` routes
-  a backend-type project here; this framework's own stated default
-  (Node.js+TypeScript) matches the frontend's language so the whole
-  codebase stays readable with one mental model.
+  database, ORM, request validation, auth mechanism, background jobs —
+  each a bounded, real-world option set with a reasoned default
+  (Node.js+TypeScript / Fastify / tRPC / layered monolith / PostgreSQL /
+  Prisma / Zod / session+Better Auth / none-until-triggered). Runs right
+  after `stack-selection` routes a backend-type project here; this
+  framework's own stated default (Node.js+TypeScript) matches the
+  frontend's language so the whole codebase stays readable with one
+  mental model. Has a child → see
+  [backend-stack-selection/GRAPH.md](backend-stack-selection/GRAPH.md).
 - **`frontend-stack-selection`** — domain: the option matrix for UI
   framework, meta-framework, bundler, package manager, state management,
   and data fetching — each a bounded, real-world option set with a

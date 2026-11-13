@@ -44,10 +44,27 @@ it live only in a conversation; remove it once it's actually done
   Better Auth / no queue until a real trigger). `stack-selection`'s Step 2
   "Backend/service" row and Step 3 hand-off now point here instead of
   "no default recorded yet"; `project-profile.md`'s whole Backend section
-  is governed. Concept/implementation/setup tiers below this entry point
-  (e.g. a `backend-project-setup` guided walkthrough) are not written yet
-  — add them once a real backend project is actually being scaffolded,
-  per `DELEGATION-MODEL.md`'s "do not pre-build" rule.
+  is governed.
+- **`backend-project-setup` added — the guided, step-by-step backend
+  scaffold.** Mirrors `frontend-project-setup`'s shape: project init,
+  feature-folder layout (router → service → schema per feature,
+  matching `frontend-component-structure`'s barrel convention), local
+  Postgres via Docker for dev-parity only (not a deploy decision),
+  Prisma migration flow, Fastify+tRPC wiring, auth wiring matching
+  `frontend-auth`'s cookie choice, and an explicit list of what's
+  deliberately not scaffolded yet (job queue, a second service,
+  backend testing conventions — no `backend-testing` skill exists). Also
+  corrected two framing mistakes caught by the owner in
+  `backend-stack-selection`: the monolith-over-microservices and
+  Prisma-over-Drizzle defaults were worded as concessions to being new
+  to backend work, when the actual reasoning (Martin Fowler's
+  "MonolithFirst," Segment's "Goodbye Microservices," and the
+  managed-platform-not-edge deployment target) holds regardless of
+  skill level — reworded to the real technical argument. Added a new
+  governed row, Request validation (API boundary) — Zod as the default,
+  since tRPC takes it as its native input validator and the same schema
+  is importable by `frontend-forms`'s client-side validation with zero
+  duplication in a shared-TS codebase.
 - Framework self-lint (`framework-lint`).
 - External justification freshness rule + knowledge refresh
   (`DELEGATION-MODEL.md`, `knowledge-refresh`).
