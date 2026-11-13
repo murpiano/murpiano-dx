@@ -93,17 +93,14 @@ mechanism a custom backend implements.
 
 | Field | Value | Governed by |
 |---|---|---|
-| Language | Node.js / Python / Go / Java or Kotlin / Rust / C#/.NET / PHP / Ruby | |
-| Framework | Express / Fastify / NestJS / Django / FastAPI / Flask / Spring Boot / ASP.NET / Laravel / Rails | |
-| API style | REST / GraphQL / gRPC / tRPC / WebSocket | |
-| Architecture pattern | layered (MVC) / clean or hexagonal / DDD / CQRS / microservices / monolith | |
-| Database | PostgreSQL / MySQL / MongoDB / Redis / SQLite / other | |
-| ORM / query layer | Prisma / TypeORM / Drizzle / SQLAlchemy / raw SQL | |
-| Auth | session-based / JWT / OAuth2 / SSO | |
-| Background jobs / queue | none / cron / message queue (name it) | |
-
-No backend domain skill exists yet in this framework — every row above
-is plain information until one is written (see `skills/DELEGATION-MODEL.md`).
+| Language | Node.js / Python / Go / Java or Kotlin / Rust / C#/.NET / PHP / Ruby | `backend-stack-selection` |
+| Framework | Express / Fastify / NestJS / Django / FastAPI / Flask / Spring Boot / ASP.NET / Laravel / Rails | `backend-stack-selection` |
+| API style | REST / GraphQL / gRPC / tRPC / WebSocket | `backend-stack-selection` |
+| Architecture pattern | layered (MVC) / clean or hexagonal / DDD / CQRS / microservices / monolith | `backend-stack-selection` |
+| Database | PostgreSQL / MySQL / MongoDB / Redis / SQLite / other | `backend-stack-selection` |
+| ORM / query layer | Prisma / TypeORM / Drizzle / SQLAlchemy / raw SQL | `backend-stack-selection` |
+| Auth | session-based / JWT / OAuth2 / SSO | `backend-stack-selection` |
+| Background jobs / queue | none / cron / message queue (name it) | `backend-stack-selection` |
 
 ## 5. Infrastructure & delivery
 

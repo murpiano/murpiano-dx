@@ -9,6 +9,7 @@ has more than one direct child).
 flowchart TD
     profile[project-profile<br/>the one project-wide table]
     stack[stack-selection<br/>entry point: new application] --> frontendstack[frontend-stack-selection] --> frontend[frontend-styling-concept]
+    stack --> backendstack[backend-stack-selection]
     repo[repo-* lifecycle group]
     hosting[repo-hosting]
 
@@ -46,6 +47,15 @@ flowchart TD
 - **`stack-selection`** — entry point for any brand-new application:
   app type → language/technology → routes into the matching domain's
   guided-setup skill. Read first when starting new work from scratch.
+- **`backend-stack-selection`** — domain: the option matrix for a custom
+  backend — language, web framework, API style, architecture pattern,
+  database, ORM, auth mechanism, background jobs — each a bounded,
+  real-world option set with a reasoned default (Node.js+TypeScript /
+  Fastify / tRPC / layered monolith / PostgreSQL / Prisma / session+Better
+  Auth / none-until-triggered). Runs right after `stack-selection` routes
+  a backend-type project here; this framework's own stated default
+  (Node.js+TypeScript) matches the frontend's language so the whole
+  codebase stays readable with one mental model.
 - **`frontend-stack-selection`** — domain: the option matrix for UI
   framework, meta-framework, bundler, package manager, state management,
   and data fetching — each a bounded, real-world option set with a
@@ -136,6 +146,6 @@ flowchart TD
   one topic or a full sweep, user-triggered. Implements
   `DELEGATION-MODEL.md` → "External justification freshness."
 
-No other domain exists yet (backend, mobile-native, desktop-native, ...).
+No other domain exists yet (mobile-native, desktop-native, ...).
 Add a node here only when real work starts a new one — see `AGENTS.md` →
 Delegation model.

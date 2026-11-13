@@ -86,7 +86,7 @@ the same project.
 | Browser / Electron / Tauri | TypeScript; framework per project need (no single forced framework yet) | Default set — TS over JS, nothing else fixed |
 | Native desktop toolkit | — | No default recorded yet |
 | Native/cross-platform mobile | — | No default recorded yet |
-| Backend/service | — | No default recorded yet |
+| Backend/service | Node.js + TypeScript (framework-wide default — see `backend-stack-selection`) | Default set |
 
 A row with no default recorded yet means ask the user, then — once
 stated — this table is the place to write the answer down as the new
@@ -101,8 +101,11 @@ language/framework into the profile's "Frontend" or "Backend" section.
   data fetching — each a real option matrix with a recommendation, not an
   open question), then `frontend-styling-concept` (the architecture) and
   from there `frontend-project-setup` (the scaffold).
+- Backend/service → go to `backend-stack-selection` (language, framework,
+  API style, architecture pattern, database, ORM, auth, background jobs —
+  each a real option matrix with a recommendation).
 - Any row with no domain skill yet (native desktop, native/cross-platform
-  mobile, backend) → say so explicitly. Propose drafting that domain's
+  mobile) → say so explicitly. Propose drafting that domain's
   concept → implementation → guided-setup trio together, the same shape
   `frontend-*` already has, before writing any project code — do not
   silently improvise an unwritten convention.

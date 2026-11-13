@@ -5,9 +5,6 @@ from `skills/DELEGATION-MODEL.md`. Move an item here instead of letting
 it live only in a conversation; remove it once it's actually done
 (mention the skill/file that resolved it, don't just delete silently).
 
-- **Backend domain** — do not pre-build; start it (concept →
-  implementation → setup, per `DELEGATION-MODEL.md`) only once a real
-  backend project is connected or created.
 - **Team review process for framework changes.** Right now any change to
   `skills/`/`DELEGATION-MODEL.md`/etc. is just agreed in conversation and
   written. Fine solo; for a team sharing this framework, decide whether
@@ -38,6 +35,19 @@ it live only in a conversation; remove it once it's actually done
 - Delegation model, including the graph-trigger rule
   (`DELEGATION-MODEL.md`).
 - Skill revision/retirement rule (`DELEGATION-MODEL.md`).
+- **Backend domain opened: `backend-stack-selection`.** Language,
+  framework, API style, architecture pattern, database, ORM, auth,
+  background jobs — each with a real 2026 option matrix and a stated
+  default (Node.js+TypeScript, matching the frontend's own language per
+  the owner's explicit JS/TS fluency, / Fastify / tRPC / layered
+  feature-folder monolith / PostgreSQL / Prisma / session-based auth via
+  Better Auth / no queue until a real trigger). `stack-selection`'s Step 2
+  "Backend/service" row and Step 3 hand-off now point here instead of
+  "no default recorded yet"; `project-profile.md`'s whole Backend section
+  is governed. Concept/implementation/setup tiers below this entry point
+  (e.g. a `backend-project-setup` guided walkthrough) are not written yet
+  — add them once a real backend project is actually being scaffolded,
+  per `DELEGATION-MODEL.md`'s "do not pre-build" rule.
 - Framework self-lint (`framework-lint`).
 - External justification freshness rule + knowledge refresh
   (`DELEGATION-MODEL.md`, `knowledge-refresh`).
