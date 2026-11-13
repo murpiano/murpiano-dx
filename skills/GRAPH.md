@@ -35,6 +35,7 @@ flowchart TD
     flags[frontend-feature-flags]
     monitoring[frontend-monitoring]
     knowledge[knowledge-refresh]
+    backendtesting[backend-testing]
 ```
 
 ## Nodes
@@ -75,6 +76,11 @@ flowchart TD
 - **`frontend-testing`** — domain: what gets a unit test vs an
   end-to-end test, and test-naming style — independent of styling tech
   or platform.
+- **`backend-testing`** — domain: unit-test the service layer, cover
+  the real router/validation chain with a tRPC `createCaller()`
+  integration test, use a dedicated test database. Doesn't duplicate
+  `frontend-testing`'s own Playwright end-to-end layer, which already
+  exercises the real backend over HTTP as part of a full user flow.
 - **`frontend-accessibility`** — domain: keyboard, screen-reader
   semantics, focus management, color contrast, motion, alt text,
   target size — default target WCAG 2.2 AA.

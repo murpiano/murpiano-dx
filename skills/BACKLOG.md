@@ -65,6 +65,28 @@ it live only in a conversation; remove it once it's actually done
   since tRPC takes it as its native input validator and the same schema
   is importable by `frontend-forms`'s client-side validation with zero
   duplication in a shared-TS codebase.
+- **`backend-testing` added**, closing the gap `backend-project-setup`
+  itself had flagged: unit-test the service layer (Vitest), integration-
+  test the real router/validation chain via tRPC's own `createCaller()`
+  against a dedicated test database, no separate backend-only HTTP e2e
+  layer (that's `frontend-testing`'s Playwright job, already covering
+  the real backend over HTTP as part of a full user flow). Also closed
+  three smaller gaps found doing a final completeness pass before
+  declaring the backend domain done: env-var validation at boot
+  (`src/env.ts`, Zod-validated `process.env`), security headers +
+  rate limiting (`@fastify/helmet`, `@fastify/rate-limit` — never-skip,
+  same treatment as `frontend-security`'s XSS boundary), and structured
+  logging (Pino, built into Fastify via `logger: true`) with Sentry
+  Node SDK as the deferred-trigger addition once error *reporting*
+  (not just logging) matters — all added to `backend-project-setup`'s
+  Step 4 rather than as new governed rows, since they're procedural
+  scaffolding steps, not a technology choice with real alternatives to
+  compare.
+- **Cross-linked `repo-init` and `stack-selection`** — found while doing
+  the completeness pass that neither skill mentioned the other at all,
+  so a from-scratch project (no repo, no stack decided) had no stated
+  order or confirmation that running one doesn't substitute for the
+  other. Both now say so explicitly, in either direction.
 - Framework self-lint (`framework-lint`).
 - External justification freshness rule + knowledge refresh
   (`DELEGATION-MODEL.md`, `knowledge-refresh`).

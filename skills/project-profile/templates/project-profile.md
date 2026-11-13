@@ -102,6 +102,8 @@ mechanism a custom backend implements.
 | Request validation (API boundary) | Zod / JSON Schema / class-validator / Joi / Yup | `backend-stack-selection` |
 | Auth | session-based / JWT / OAuth2 / SSO | `backend-stack-selection` |
 | Background jobs / queue | none / cron / message queue (name it) | `backend-stack-selection` |
+| Unit tests (backend) | Vitest / none | `backend-testing` |
+| Integration/API tests (backend) | `createCaller()` through the real router / Supertest / none | `backend-testing` |
 
 ## 5. Infrastructure & delivery
 

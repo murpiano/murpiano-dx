@@ -125,20 +125,59 @@ advantage in `backend-stack-selection`.
 
 ## Step 4 — Fastify server and the tRPC adapter
 
+```
+pnpm add @fastify/helmet @fastify/rate-limit @fastify/cors
+```
+
+```ts
+// src/env.ts — validate process.env at startup, not on first use
+import { z } from 'zod';
+
+const envSchema = z.object({
+  DATABASE_URL: z.string().url(),
+  NODE_ENV: z.enum(['development', 'production', 'test']),
+});
+export const env = envSchema.parse(process.env);
+```
+
+Fail at boot, not three requests into production, if a required env var
+is missing or malformed — the same runtime-validation reasoning as the
+Request-validation row above, applied to configuration instead of
+request bodies.
+
 ```ts
 // src/server.ts
 import Fastify from 'fastify';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import { appRouter } from './trpc/router';
 import { createContext } from './trpc/context';
 
-const app = Fastify();
+const app = Fastify({ logger: true }); // Pino — Fastify's built-in
+                                        // structured logger, not a
+                                        // separate dependency
+app.register(helmet);                  // standard security headers
+app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
 app.register(fastifyTRPCPlugin, {
   prefix: '/trpc',
   trpcOptions: { router: appRouter, createContext },
 });
 app.listen({ port: 3000 });
 ```
+
+`logger: true` turns on Pino, which Fastify already ships with — no
+separate logging library to add. This is the backend's structured-log
+output; pair it with the Sentry Node SDK (same service `frontend-monitoring`
+already picked for the frontend, so one dashboard covers both sides) once
+error *reporting* (not just logging) matters — add that the same way any
+other deferred-trigger row gets added, not speculatively on day one.
+
+`@fastify/helmet` and `@fastify/rate-limit` are not optional hardening
+added later — a public-facing API with no rate limiting and no security
+headers is a real, known class of vulnerability from the first deployed
+request, the same "never-skip" treatment `frontend-security` gives the
+XSS boundary.
 
 This is the one piece of genuinely new wiring per project — everything
 above it is the stack's own settled shape. Confirm the server starts and
@@ -165,6 +204,11 @@ surface that calls them):
 4. **`index.ts`** — export only what another feature or `trpc/router.ts`
    actually needs.
 
+Write the service-layer unit tests and the router-level integration test
+(via `createCaller()`) alongside the feature, not as a separate pass
+afterward — see `backend-testing` for which layer gets which kind of
+test and why.
+
 ## Step 6 — auth
 
 Wire Better Auth with a session-based (cookie) strategy — matching
@@ -185,12 +229,10 @@ router.
 - **A second service / microservice split** — not before a real,
   measured reason exists (see `backend-stack-selection`'s Architecture
   pattern section). This walkthrough only ever scaffolds one service.
-- **Backend testing conventions** — no `backend-testing` skill exists
-  yet in this framework (only `frontend-testing` does). Flag this
-  explicitly once real test-writing starts on this project, and propose
-  drafting it then, the same way any other missing domain gets written
-  up per `DELEGATION-MODEL.md` — don't improvise an unwritten testing
-  convention silently in the meantime.
+- **Error *reporting* (Sentry) beyond structured logging** — Step 4's
+  Pino logging is on from the start; wiring the Sentry Node SDK on top
+  of it is a deferred-trigger addition (real production traffic worth
+  monitoring), not day-one scaffolding.
 
 ## Step 8 — record anything new
 
