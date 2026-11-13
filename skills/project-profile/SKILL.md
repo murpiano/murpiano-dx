@@ -5,6 +5,8 @@ description: Use when connecting an existing project, creating a brand-new one, 
 
 # Project profile
 
+Governs `project-profile.md` fields: Identity → Interaction mode.
+
 Scope: one standing, filled-in table per project describing everything
 about it — identity, platform, frontend/backend stack, infra, Git
 workflow, constraints. Used two ways:
@@ -83,6 +85,16 @@ setting up Kysaro writes `Commit convention`, `PR requirements`, and
 `Merge strategy` together) — the relationship is many-cells-per-skill,
 not one dedicated skill per cell. A skill's own `SKILL.md` should name
 which profile field(s) it governs, mirroring the table's own column.
+
+## Interaction mode — read it before walking any table
+
+Before running `stack-selection`, a domain's `*-stack-selection`, a
+`*-project-setup`, or `repo-init`'s confirmation pass, check the
+Identity → Interaction mode row. No value yet → ask once (learning /
+co-pilot / autonomous, see `DELEGATION-MODEL.md` → "Interaction mode"
+for what each means) and write the answer in. A value already there →
+use it without re-asking; the owner switches it by saying so, not by
+being asked again each session.
 
 ## Reading it before anything else
 

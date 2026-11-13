@@ -37,6 +37,7 @@ trigger, not cosmetics" before editing a governed row's value.
 | Field | Value | Governed by |
 |---|---|---|
 | Project kind | app / framework / npm-package / library / landing page / personal-brand / internal tool | `repo-readme` |
+| Interaction mode | learning / co-pilot / autonomous — see `DELEGATION-MODEL.md` → "Interaction mode" | `project-profile` |
 | One-line description | | |
 | Team | solo / team (size) | |
 | Repository | | `repo-init` |
@@ -114,6 +115,7 @@ mechanism a custom backend implements.
 | CI/CD provider | GitHub Actions / GitLab CI / CircleCI / Jenkins / none | `repo-ci` |
 | CI pipeline stages | e.g. lint → test → build → deploy | `repo-ci` |
 | Hosting / deploy target | Vercel / Netlify / AWS / GCP / Azure / self-hosted / on-prem | `repo-hosting` |
+| Database hosting | Neon / Supabase / Railway / AWS RDS / self-hosted / Russian-jurisdiction cloud (name it) | `repo-hosting` |
 | Environments | dev / staging / production (adjust) | `repo-hosting` |
 | Secrets management | `.env` files / secrets manager (name it) / platform env vars | `repo-hosting` |
 | Monitoring / logging | Sentry / Datadog / none | `frontend-monitoring` |

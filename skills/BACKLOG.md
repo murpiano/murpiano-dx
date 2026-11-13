@@ -82,6 +82,38 @@ it live only in a conversation; remove it once it's actually done
   Step 4 rather than as new governed rows, since they're procedural
   scaffolding steps, not a technology choice with real alternatives to
   compare.
+- **Interaction mode — learning / co-pilot / autonomous.** New standing
+  rule in `DELEGATION-MODEL.md`, a new `project-profile.md` Identity row
+  (governed by `project-profile` itself), recorded once per project and
+  reused across sessions. Learning = full option-table explanation per
+  row; co-pilot = recommendation + one-line why, confirmed per row;
+  autonomous = applies every default end to end, only stopping for an
+  undecided domain, a real ambiguity, or anything the
+  Executing-actions-with-care rules already require confirmation for.
+  Every table-walking skill (`stack-selection`, the two `*-stack-selection`
+  skills, both `*-project-setup` skills, `repo-init`) reads this before
+  walking the table.
+- **152-ФЗ added as a named option alongside GDPR/SOC2/HIPAA in
+  `repo-hosting`'s Security/compliance row**, with the real obligations
+  spelled out (privacy policy, consent, cookie banner, data localization,
+  Roskomnadzor notification, data-subject requests, special-category PD,
+  breach fines) instead of just naming the acronym — this was a real gap
+  for a Russian-market product, not a cosmetic addition. Data
+  localization now explicitly constrains the Hosting and new Database
+  hosting rows (a Russian-jurisdiction provider — Yandex Cloud, Selectel,
+  VK Cloud — once it applies). Flagged in `repo-hosting`'s own `Basis`
+  as needing a *tighter* freshness window than this skill's other rows —
+  152-ФЗ is actively changing in 2026 (a cross-border-transfer tightening
+  bill passed its third Duma reading 2026-07-08) — re-run
+  `knowledge-refresh` on this row specifically before relying on it for
+  a real project, not just trusting the usual ~month window.
+- **Database hosting added as its own governed row in `repo-hosting`**,
+  separate from Hosting/deploy target and from `backend-stack-selection`'s
+  Database (technology) row — "where the app runs" and "where Postgres
+  runs" are genuinely separate decisions. Default Neon for a solo/small
+  project (scale-to-zero, per-PR branching pairs with the Environments
+  default), Railway's managed Postgres if the app itself is on Railway,
+  a Russian-jurisdiction provider once 152-ФЗ localization applies.
 - **Cross-linked `repo-init` and `stack-selection`** — found while doing
   the completeness pass that neither skill mentioned the other at all,
   so a from-scratch project (no repo, no stack decided) had no stated
