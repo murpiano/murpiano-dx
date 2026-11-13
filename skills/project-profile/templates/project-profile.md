@@ -142,7 +142,8 @@ mechanism a custom backend implements.
 | Performance budget | | `frontend-performance` |
 | Accessibility target | WCAG 2.2 AA (framework default) / AAA / none stated | `frontend-accessibility` |
 | i18n / l10n (ask explicitly — see project-profile/SKILL.md) | yes — languages: _ / no | `frontend-i18n` |
-| Security / compliance (ask explicitly — see project-profile/SKILL.md) | GDPR / SOC2 / HIPAA / none stated | `repo-hosting` |
+| Primary market / user jurisdiction (ask explicitly — see project-profile/SKILL.md) | Russia / EU / US / global, no specific jurisdiction / other (name it) — can be more than one | `repo-hosting` |
+| Security / compliance (ask explicitly — see project-profile/SKILL.md) | 152-ФЗ / GDPR / CCPA-CPRA / HIPAA / SOC2 / none stated | `repo-hosting` |
 | Frontend rendering (XSS) | any raw-HTML rendering (`dangerouslySetInnerHTML`, user-derived URLs) audited / none in use | `frontend-security` |
 | Error/loading/empty states | has an app-root error boundary: yes / no — loading and empty states: pattern described | `frontend-resilience` |
 | SEO / discoverability (ask explicitly — see project-profile/SKILL.md) | public pages meant to be indexed/shared: yes — meta tags present: _ / no | `frontend-seo` |

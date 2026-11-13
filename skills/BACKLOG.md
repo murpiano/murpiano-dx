@@ -82,6 +82,27 @@ it live only in a conversation; remove it once it's actually done
   Step 4 rather than as new governed rows, since they're procedural
   scaffolding steps, not a technology choice with real alternatives to
   compare.
+- **Language/tech default is a preference, not a mandate — new standing
+  rule.** The owner caught that an unqualified "JS/TS everywhere" default
+  would eventually force a bad fit on some real task. `DELEGATION-MODEL.md`
+  now states the rule generally (every option table's real alternatives
+  exist specifically so this can happen — flag a better-suited option
+  for one task, even inside an otherwise JS/TS project, rather than
+  forcing the default past its fit); `backend-stack-selection` and
+  `frontend-stack-selection` each restate it for their own language row
+  (a CPU-heavy service in Go/Rust/Python alongside Node; WASM for a
+  browser-side heavy-compute task).
+- **Primary market / user jurisdiction split out as its own row, asked
+  before Security/compliance, in `repo-hosting`.** The owner caught that
+  152-ФЗ/GDPR/CCPA/HIPAA were lumped into one row with no explicit step
+  establishing *which* user base the product actually has — compliance
+  obligations come from where the users are, not where the owner is
+  working, and more than one regime can apply to the same product at
+  once (e.g. a Russian company with EU customers owes both). New row:
+  Primary market / user jurisdiction (ask explicitly), routing to the
+  applicable law(s) in Security/compliance below it. Also added CCPA/CPRA
+  as its own named US option, distinct from HIPAA (health-specific) —
+  a prior real gap, not just the ordering fix.
 - **Interaction mode — learning / co-pilot / autonomous.** New standing
   rule in `DELEGATION-MODEL.md`, a new `project-profile.md` Identity row
   (governed by `project-profile` itself), recorded once per project and

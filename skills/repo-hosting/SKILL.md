@@ -7,8 +7,9 @@ description: Use when deciding where a project is hosted, how many environments 
 
 Governs `project-profile.md` fields: Infrastructure & delivery → Hosting /
 deploy target, Database hosting, Environments, Secrets management,
-Constraints & non-functional requirements → Security / compliance
-(ask explicitly — see project-profile/SKILL.md).
+Constraints & non-functional requirements → Primary market / user
+jurisdiction (ask explicitly — see project-profile/SKILL.md), Security /
+compliance (ask explicitly — see project-profile/SKILL.md).
 
 Scope: these rows look like "just describe your project" fields, but each
 one has a real, bounded set of 2026 options with known tradeoffs. Reaching
@@ -91,12 +92,39 @@ pre-publish scan checks for) and no secret is ever hardcoded in source —
 moving to a dedicated secrets manager is a scale/compliance decision, not
 a starting requirement.
 
+## Primary market / user jurisdiction (ask explicitly — see `project-profile/SKILL.md`)
+
+**Ask this before Security/compliance, not after — it's what determines
+which law(s) even apply.** Legal/compliance obligations are not one
+global checklist; they come from *which country's users the product
+actually has*, and that's a fact only the owner knows (where the company
+is based doesn't answer it — a Russian company selling to EU customers
+owes both 152-ФЗ and GDPR; a US company with Russian users owes 152-ФЗ
+too). Get a real answer here before touching the Security/compliance row
+below — don't infer it from where the owner happens to be working, and
+don't assume "no specific jurisdiction stated" means "no law applies":
+every real user base lives somewhere.
+
+| Market | What it routes to below |
+|---|---|
+| **Russia** | 152-ФЗ applies |
+| **EU** | GDPR applies |
+| **US** | CCPA/CPRA if California users exist (a US-wide product almost always has some); HIPAA additionally if the product handles health data; neither is assumed from "US" alone — check which actually applies |
+| **Global / no specific jurisdiction stated** | Not a real answer for a product anyone can sign up for — ask again, naming likely markets (where the owner expects to launch/market first), and treat GDPR's floor as the safest default baseline if genuinely undecided, since it's the strictest of the common regimes and over-complying elsewhere costs little |
+| **More than one of the above** | Normal, not an edge case — every regime that applies to any real slice of the user base applies independently; satisfying one doesn't satisfy the others |
+| **A country not listed here** | Say so explicitly rather than silently defaulting to one of the above — this skill doesn't yet have that jurisdiction's specifics written up (see `DELEGATION-MODEL.md`'s "a new domain gets written up, not improvised" rule) |
+
+Working for a foreign company on a product with no Russian users at all
+is exactly the case where 152-ФЗ is *not* the relevant row — this is
+precisely why this question is asked explicitly per-project instead of
+assumed from the owner's own location once and reused everywhere.
+
 ## Security / compliance (ask explicitly — see `project-profile/SKILL.md`)
 
 This row isn't "pick the best option" — it's "does a real regulatory/
-contractual obligation apply," which only the owner can answer, but the
-agent should explain what each option actually means before asking, not
-just read the acronym back:
+contractual obligation apply," routed from the Primary market row above.
+The agent should explain what each applicable option actually means
+before asking, not just read the acronym back:
 
 - **GDPR** — applies if the product has any EU users and processes
   personal data (nearly every app with user accounts/analytics). The
@@ -104,6 +132,13 @@ just read the acronym back:
   deletion on request, and (per `frontend-analytics`) favoring
   cookie-less analytics to avoid a consent-banner requirement in the
   first place.
+- **CCPA/CPRA** — California's state-level privacy law, the closest US
+  equivalent to GDPR's general scope (not health-specific like HIPAA
+  below). Applies once the product has California users and meets the
+  law's size/revenue thresholds — gives users the right to know what's
+  collected, to delete it, and to opt out of its sale. Distinct from
+  HIPAA: a product can owe CCPA/CPRA with zero health data involved,
+  purely from having US/California consumer users.
 - **SOC 2** — a third-party audit of security controls (access control,
   change management, monitoring), typically required by enterprise
   B2B customers before they'll sign a contract — not something a product
@@ -186,11 +221,19 @@ secret-scanning pre-commit hook (`repo-cleanup`).
   industry practice (not tied to a single 2026 source) matching this
   framework's existing "build-trigger, not default-on" pattern already
   used in `repo-containerization` and `frontend-feature-flags`.
-- GDPR/SOC 2/HIPAA applicability conditions: general, stable regulatory
-  facts (EU personal-data scope for GDPR, enterprise-sales trigger for
-  SOC 2, US health-data scope for HIPAA) rather than a claim needing a
+- GDPR/SOC 2/HIPAA/CCPA-CPRA applicability conditions: general, stable
+  regulatory facts (EU personal-data scope for GDPR, enterprise-sales
+  trigger for SOC 2, US health-data scope for HIPAA, California
+  consumer-data scope for CCPA/CPRA) rather than a claim needing a
   freshness check — re-verify only if a specific jurisdiction's rules are
   in question, which is outside this skill's scope.
+- **Jurisdiction-first ordering (market determines which law applies,
+  not the other way around) is this skill's own structural fix, not an
+  external claim needing a citation** — the underlying facts (GDPR scopes
+  to the EU, 152-ФЗ to Russia, CCPA/CPRA to California, HIPAA to US
+  health data, SOC2 to enterprise sales in any market, and more than one
+  can apply simultaneously to the same product) are each individually
+  well-established law, cited where each one is first introduced above.
 - Neon/Supabase/Railway/AWS RDS tradeoffs for managed Postgres hosting:
   aggregated across multiple 2026 comparison posts, e.g.
   [Best PostgreSQL Hosting in 2026: RDS vs Supabase vs Neon vs Self-hosted](https://dev.to/philip_mcclarence_2ef9475/best-postgresql-hosting-in-2026-rds-vs-supabase-vs-neon-vs-self-hosted-5fkp) —

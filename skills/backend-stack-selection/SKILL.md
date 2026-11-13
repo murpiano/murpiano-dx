@@ -28,6 +28,18 @@ Per `DELEGATION-MODEL.md`'s "project-level overrides" rule, team fluency
 is itself a valid, explicit override reason — it doesn't need to be
 re-litigated per project once stated here.
 
+**This is a default, not a mandate — per `DELEGATION-MODEL.md`'s
+"a stated preference is a default, not a mandate" rule.** Every row below
+keeps its real non-JS/TS alternatives live for exactly this reason: when
+a specific task's actual technical requirement outgrows what Node/TS
+reasonably does well, say so and name the better-suited option — a
+single CPU-heavy service (video/image processing, ML inference, a
+latency-critical hot path) written in Go, Rust, or Python *alongside* an
+otherwise Node/TS codebase is a normal, expected outcome of this rule,
+not a contradiction of the framework default. The goal is a project
+that's JS/TS wherever that's genuinely the right tool, not JS/TS
+everywhere regardless of fit.
+
 ## Language
 
 | Option | Strengths | Weaknesses | Pick it when |
