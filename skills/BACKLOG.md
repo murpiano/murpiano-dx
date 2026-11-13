@@ -5,46 +5,6 @@ from `skills/DELEGATION-MODEL.md`. Move an item here instead of letting
 it live only in a conversation; remove it once it's actually done
 (mention the skill/file that resolved it, don't just delete silently).
 
-- **Nine real scope gaps found by an independent audit (fresh agent,
-  no session context) on 2026-11-13 — none were in this file before,
-  violating this file's own "keep current without being told" rule.**
-  Each is a genuine production concern with no skill or row covering
-  it anywhere in the framework today. Add when a real project's need
-  makes one concrete, not speculatively — but don't let them silently
-  stay missing from this list in the meantime:
-  - **CSP / security headers at the infra layer.** `frontend-security`
-    already says explicitly it has no framework skill for this yet —
-    this item makes that gap visible outside that one file too.
-  - **API rate limiting at the gateway/CDN/WAF level** — only
-    `backend-project-setup`'s app-level `@fastify/rate-limit` exists;
-    nothing covers a CDN/WAF-level throttle or DDoS layer.
-  - **Secrets rotation process.** `repo-hosting` only lists "automatic
-    rotation" as a cloud-secrets-manager *feature*; no skill describes
-    an actual rotation cadence/process to set up and follow.
-  - **Incident response / postmortems** — no severity levels, on-call
-    cadence, or postmortem template anywhere; "incident" only appears
-    as a trigger for adding staging or a feature-flag kill switch.
-  - **Automated accessibility testing** — `frontend-accessibility`
-    defers "test strategy" to `frontend-testing`, but `frontend-testing`
-    never mentions accessibility testing (axe-core/jest-axe/Lighthouse
-    CI) at all. This is a dangling cross-reference between two existing
-    skills, not just an absent topic — fix both sides together.
-  - **GDPR data portability (Article 20)** — `repo-hosting`'s GDPR/
-    152-ФЗ sections cover access/correction/deletion rights but never
-    portability (a structured, machine-readable data export), a
-    distinct right.
-  - **Database migration rollback / zero-downtime strategy** — Prisma/
-    Drizzle are named for migration *tooling* in `backend-stack-selection`,
-    but nothing covers rollback-on-failure or backward-compatible
-    migration patterns.
-  - **Legal-document i18n** — translating the Privacy Policy/ToS for a
-    project with both a jurisdiction-specific legal requirement
-    (`repo-hosting`) and multiple languages (`frontend-i18n`, which
-    explicitly excludes this from its own scope) falls into a gap
-    between the two skills.
-  - **Auth-endpoint-specific brute-force throttling** — only generic,
-    app-wide rate limiting is named anywhere; login/password-reset
-    endpoints have no stricter, dedicated throttle of their own.
 - **Raise `copycat`'s audit gate from `critical` to `high` once Electron
   is upgraded.** `copycat` still ships Electron 32; its 7 remaining
   `npm audit` findings are all Electron's own advisories, fixed only by
@@ -60,6 +20,49 @@ it live only in a conversation; remove it once it's actually done
   decision above had to go into a dated note instead of a governed row.
 
 ## Done
+
+- **Closed all nine scope gaps from the 2026-11-13 independent audit —
+  the owner asked to close every one, not leave them deferred.**
+  - **Security headers / CSP** (new `repo-hosting` row + section) and
+    **Rate limiting / DDoS protection at the edge** (new row, distinct
+    from `backend-project-setup`'s app-level `@fastify/rate-limit`):
+    Helmet defaults from day one, a tuned nonce-based strict CSP
+    (rolled out report-only first) once real production traffic
+    exists; edge protection follows directly from the Hosting row's
+    own platform choice.
+  - **Secrets rotation**: `repo-hosting`'s Secrets management section
+    now states an actual process (manual-only by default, 90-day
+    scheduled rotation once a compliance driver or team size requires
+    it, a grace-period overlap for rotating session/JWT-signing keys)
+    instead of only listing rotation as a tool feature.
+  - **Incident response** (new `repo-hosting` row): none until a real
+    incident happens, then a lightweight severity+postmortem process —
+    same build-trigger shape as everything else, explicitly not a new
+    tool to adopt.
+  - **Accessibility testing automation**: new "Accessibility testing"
+    section in `frontend-testing` (jest-axe for promoted components,
+    `@axe-core/playwright` as the default added to the existing e2e
+    suite, Lighthouse CI for score trends) — fixed the dangling
+    cross-reference, `frontend-accessibility` now points at the exact
+    section instead of a skill that didn't cover it.
+  - **GDPR data portability**: added to `repo-hosting`'s GDPR bullet
+    as the Article 20 right distinct from deletion — build a real
+    export path before it's requested, not as a one-off scramble.
+  - **Database migration rollback**: new guidance in
+    `backend-project-setup`'s Step 3 — forward-only in production (a
+    new migration reverses, never edit/delete an applied one), and the
+    expand-and-contract pattern for any schema change with real
+    downtime risk on a live table.
+  - **Legal-document i18n**: cross-linked `repo-hosting` and
+    `frontend-i18n` — the Primary-market/jurisdiction row now owns
+    "which languages the legal documents need," `frontend-i18n` points
+    there instead of silently excluding it with nowhere to land.
+  - **Auth-endpoint brute-force throttling**: new guidance in
+    `backend-project-setup`'s Step 6 — login/signup/password-reset get
+    their own stricter limit keyed by both account and IP (the
+    app-wide limit alone has a documented real gap here), with a
+    generic response to avoid account-enumeration via the reset
+    endpoint.
 
 - **Fixed every confirmed problem from the independent audit above**
   (same 2026-11-13 audit that surfaced the nine scope gaps):

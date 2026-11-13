@@ -94,6 +94,10 @@ skill.
 RTL layout mechanics (direction-aware CSS, logical properties) — not
 yet needed by any connected project; backend/email/notification
 content translation — a separate concern from UI strings, no skill
-yet. `frontend-performance` owns the code-splitting mechanics this
+yet. **Legal-document translation (Privacy Policy, ToS) is `repo-hosting`'s
+job, not this skill's** — this project's supported-languages list (set
+here) is the input that row needs, but translating the legal text
+itself isn't a string-extraction/pluralization problem this skill's
+tooling solves. `frontend-performance` owns the code-splitting mechanics this
 skill's loading rule depends on; `frontend-component-structure` owns
 the feature-folder boundaries this skill's key-namespacing follows.

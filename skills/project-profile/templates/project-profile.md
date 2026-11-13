@@ -126,6 +126,9 @@ mechanism a custom backend implements.
 | Environments | dev / staging / production (adjust) | `repo-hosting` |
 | Secrets management | `.env` files / secrets manager (name it) / platform env vars | `repo-hosting` |
 | Monitoring / logging | Sentry / GlitchTip / Datadog / none | `frontend-monitoring` |
+| Security headers / CSP | Helmet defaults / nonce-based strict CSP | `repo-hosting` |
+| Rate limiting / DDoS protection (edge) | platform built-in / Cloudflare / none | `repo-hosting` |
+| Incident response | none / lightweight process (severity + postmortem) | `repo-hosting` |
 | Uptime monitoring / status page | Better Uptime / UptimeRobot / none | `repo-hosting` |
 | Metrics & dashboards | platform built-in / Prometheus+Grafana(+Loki) / Grafana Cloud / Datadog / none | `repo-hosting` |
 | Release process | semantic versioning / calendar-based / none — changelog: auto / manual | `repo-release` |

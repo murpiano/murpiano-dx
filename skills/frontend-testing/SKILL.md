@@ -52,7 +52,28 @@ isn't catching, add a component-rendering test for that one component
   demonstrated with a few inputs — don't force one assertion per `it`
   if that fragments a single behavior into noise.
 
-## Basis (checked 2026-11-07)
+## Accessibility testing
+
+A distinct axis from the unit-vs-e2e split above, not a replacement for
+it — automated accessibility checks catch roughly 30-50% of real WCAG
+violations (the rest genuinely needs manual/screen-reader testing), so
+this is a floor, not a substitute for `frontend-accessibility`'s actual
+rules.
+
+| Layer | Tool | Pick it when |
+|---|---|---|
+| Unit/component-level | `jest-axe` (or Vitest + `axe-core` directly) — render, run axe against the DOM, fail on violations | A shared component (`frontend-design-system`'s promoted tier) where a regression should fail fast, close to the code |
+| End-to-end | `@axe-core/playwright` — run axe against a real rendered page, including interactive states (open modal, expanded menu) that a static render can't reach | **Default layer** — this skill's own e2e tier already exercises full pages; running axe against the same Playwright runs is close to free |
+| Trend tracking | Lighthouse CI — a 0–100 score gate, built on a subset of axe-core's rules | Tracking the score over time / failing CI on a regression, not a substitute for the two rows above (it checks fewer rules than running axe directly) |
+
+**Default: `@axe-core/playwright` added to the existing e2e suite** —
+this fits the same "cover behavior with e2e" default this skill
+already states, rather than introducing a separate testing layer.
+Add `jest-axe` specifically for a promoted shared component once one
+exists (`frontend-design-system`'s two-consumer trigger), where a fast,
+close-to-the-code check matters more than full-page e2e coverage.
+
+## Basis (checked 2026-11-13)
 
 - Skipping isolated component tests in favor of end-to-end plus
   narrowly-scoped unit tests is a named, real alternative — Thoughtworks'
@@ -70,6 +91,14 @@ isn't catching, add a component-rendering test for that one component
   The "should" question has no consensus; this framework drops it,
   matching what `my-world`'s own test suite already did consistently
   before this was written down.
+- axe-core as the reference rule engine most other accessibility tools
+  embed (including Lighthouse's own audit); jest-axe for component-level
+  checks, `@axe-core/playwright` for full-page/interactive-state e2e
+  checks, Lighthouse CI for score-trend tracking; automated checks
+  catching roughly 30-50% of real WCAG violations (manual/screen-reader
+  testing still matters for the rest): aggregated across multiple 2026
+  practitioner sources, e.g.
+  [Automated accessibility testing, 2026](https://testparty.ai/blog/automated-accessibility-testing-2026).
 
 This is a judgment call about *this framework's* default, not a claim
 that component-rendering tests are wrong in general — a project with a

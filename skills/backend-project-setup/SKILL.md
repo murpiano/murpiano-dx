@@ -149,6 +149,22 @@ explicitly: a scheduled `pg_dump` plus an off-site copy (not stored on
 the same server/VM it backs up) and a periodically *tested* restore —
 an untested backup is a hope, not a backup.
 
+**Migrations are forward-only in production — rolling back means
+writing a new, backward-compatible migration, not reversing the last
+one.** `prisma migrate dev` is a local/dev-only command; once a
+migration has run in production, "undo" it by writing a new migration
+that reverses the change (dropping a column that was just added, say),
+never by editing or deleting the applied migration file — the
+migration history is the record of what actually happened to that
+database, and rewriting it breaks that record for every environment
+that already applied it. For any schema change with real downtime
+risk on a live table (renaming or dropping a column still read by the
+currently-deployed code), use the expand-and-contract pattern: add the
+new column alongside the old one, deploy code that writes to both,
+backfill, switch reads to the new column, *then* drop the old one in a
+later migration — never a single migration that both app code and old
+deployed instances could disagree about mid-rollout.
+
 ## Step 4 — Fastify server and the tRPC adapter
 
 ```
@@ -245,6 +261,19 @@ which routes require a session (most of them) vs. which are public
 procedure — a tRPC middleware checking `ctx.session` is the standard
 shape, applied once in `trpc/context.ts`, not re-checked ad hoc per
 router.
+
+**Login, signup, and password-reset need their own, stricter rate
+limit — Step 4's app-wide `@fastify/rate-limit` is not enough on its
+own.** A documented real-world gap: a platform's default brute-force
+protection not covering its own Forgot Password endpoint, because that
+endpoint wasn't included in the general limit. Apply a tighter,
+per-route limit (e.g. 5 attempts per 15 minutes) to these three routes
+specifically, keyed by **both** the account identifier and the IP
+(per-account alone misses a password-spray attack trying one password
+across many accounts; per-IP alone misses a distributed attack) — and
+keep the response generic either way ("if that email exists, we sent a
+reset link") so the endpoint itself can't be used to confirm which
+emails have accounts.
 
 ## Step 7 — what's deliberately not here yet
 
