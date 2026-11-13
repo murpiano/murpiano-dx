@@ -6,8 +6,8 @@ description: Use when a project needs a custom backend — deciding language, we
 # Backend stack selection — the option matrix for a custom backend
 
 Governs `project-profile.md` fields: Backend → Language, Framework, API
-style, Architecture pattern, Database, ORM / query layer, Auth,
-Background jobs / queue.
+style, Architecture pattern, Database, ORM / query layer, Request
+validation (API boundary), Auth, Background jobs / queue.
 
 Scope: `stack-selection` decides a project needs a backend at all and
 routes here. This skill is the backend's own tier-0 — same role
@@ -79,12 +79,23 @@ third-party client enters the picture.
 | **CQRS** | Separates read/write models — scales reads and writes independently | Real complexity; usually paired with event sourcing | A specific, measured read/write scaling mismatch — not a starting architecture |
 | **Microservices** | Independent deployability and scaling per service | Full distributed-systems tax: network calls where there were function calls, deployment/observability overhead | Multiple teams need to ship independently, or one specific service has a real, separate scaling need — never a starting point |
 
-**Default: layered/feature-folder monolith.** Don't reach for clean
-architecture, DDD, CQRS, or microservices speculatively — same
-premature-infrastructure caution already applied to Docker
-(`repo-containerization`) and feature flags (`frontend-feature-flags`).
-A monolith split into services later, once a real trigger exists, is a
-normal evolution, not a mistake to avoid up front.
+**Default: layered/feature-folder monolith — this is the recognized best
+practice, not a concession to project size.** "Monolith first" is Martin
+Fowler's own named recommendation: even teams planning to end up with
+microservices are told to start as a monolith until the real service
+boundaries are known from working code, because guessing them upfront
+reliably gets them wrong. Segment's widely-cited "Goodbye Microservices"
+post is the sharper version of the same lesson — they built real
+production microservices, hit the operational cost (every one needed its
+own on-call, monitoring, deploy pipeline), and moved back to a monolith.
+Netflix, Amazon, and other microservices-heavy companies got there after
+years of monolith operation revealed the actual boundaries, not before.
+Reaching for microservices/CQRS/DDD before a concrete trigger exists
+(multiple teams needing independent deploys, a measured scaling mismatch
+between specific services) isn't the advanced path skipped for
+simplicity — it's the mistake the industry's own case studies warn
+against. A monolith split into services later, once a real trigger
+exists, is the normal, well-trodden evolution.
 
 ## Database
 
@@ -105,16 +116,44 @@ reason.
 
 | Option | Strengths | Weaknesses | Pick it when |
 |---|---|---|---|
-| **Prisma** | The most polished migration/tooling experience and documentation of the two — matters most for someone newer to backend/SQL; Prisma 7 dropped its Rust engine for pure TypeScript, much smaller bundle and faster cold starts | Its own schema language to learn (not plain SQL/TS) | **Default for this framework** — the more beginner-friendly migration workflow matters more than Drizzle's edge advantage for a Node-server (not edge-function) deployment |
-| **Drizzle** | Schemas are plain TypeScript, queries map directly to SQL (full visibility into what runs), smaller footprint, the clear choice for edge/serverless runtimes | Thinner tooling/docs than Prisma's for migrations as a newcomer | Deploying to Cloudflare Workers/Vercel Edge Functions, or the team already knows SQL well and wants a thinner layer |
+| **Prisma** | The most mature migration tooling/documentation of the two — typed migration history, auto-generated types from the schema; Prisma 7 dropped its Rust engine for pure TypeScript, much smaller bundle and faster cold starts | Its own schema language to learn (not plain SQL/TS) | **Default for this framework** — the deployment target here is a normal long-lived Node process, where Prisma's tooling maturity outweighs Drizzle's edge-specific advantage |
+| **Drizzle** | Schemas are plain TypeScript, queries map directly to SQL (full visibility into what runs), smaller footprint, the clear choice for edge/serverless runtimes | Thinner migration tooling/docs than Prisma's | Deploying to Cloudflare Workers/Vercel Edge Functions, or the team wants queries that read as direct SQL |
 | **Raw SQL** | No abstraction to learn or fight | No type safety, manual migration tracking | A very small project where the ORM's own overhead isn't worth it — rare as a deliberate choice, not a default |
 
-**Default: Prisma**, specifically because this framework's standing
-assumption is a team newer to backend/SQL (per the owner's own stated
-learning stage) — Prisma's migration tooling and documentation reduce
-that specific risk more than Drizzle's edge-runtime or SQL-proximity
-advantages matter for a plain Node.js server deployment (not an edge
-function).
+**Default: Prisma.** Drizzle's real advantage (closer to raw SQL, smaller
+footprint) matters most on edge/serverless runtimes — not this stack's
+deployment target (`repo-hosting`'s managed-platform default runs a
+normal long-lived Node process, not an edge function). On a plain Node
+server, Prisma's migration tooling (typed migration history, a
+documented path for schema drift, auto-generated types from the schema)
+is the stronger default: it's the same reasoning as picking Fastify over
+NestJS — take the option with less operational ceremony for the actual
+deployment shape in front of you, not the one with the most theoretical
+headroom. Switch to Drizzle the moment the deploy target becomes an edge
+runtime, or the team wants the schema itself to be plain TypeScript.
+
+## Request validation (API boundary)
+
+TypeScript types are compile-time only — erased completely by the time
+code runs, so they give zero protection against what actually arrives
+over the network (a malformed body, a missing field, a client bug, a
+hostile request). Every API boundary needs a **runtime** check that
+real, arriving data matches the shape the handler assumes. This is a
+distinct decision from the API-style row above — it's what validates
+the data, independent of REST/tRPC/GraphQL.
+
+| Option | Strengths | Weaknesses | Pick it when |
+|---|---|---|---|
+| **Zod** | Schema defined once in plain TypeScript, infers the static type from itself (`z.infer<typeof schema>`) — one definition is both the runtime check and the compile-time type; the same schema object is importable by the frontend's own form validation (`frontend-forms`'s React Hook Form + Zod default) with zero duplication in a shared-TS codebase | Slightly more verbose than some alternatives for deeply nested unions | **Default** — direct synergy with every other default in this stack: tRPC procedures take a Zod schema as their input validator natively, so this isn't an extra library bolted on, it's the same mechanism tRPC already needs |
+| **Fastify's native JSON Schema** | Built into Fastify, no extra dependency, fastest validation (compiled ahead of time) | A separate schema language from TypeScript — no shared-type inference, can't reuse the schema on the frontend | Raw performance is the literal bottleneck and the schema never needs to cross into frontend code |
+| **class-validator** (NestJS's own default) | Decorator-based, fits NestJS's DI/class model directly | Tied to NestJS's class-based style; doesn't fit a plain Fastify/tRPC setup | Already on NestJS, where it's the idiomatic choice |
+| **Joi / Yup** | Mature, widely used historically | No first-class TypeScript type inference the way Zod has (Yup's is weaker; Joi has none built in) | An existing codebase already standardized on one — not a reason to start with it |
+
+**Default: Zod**, validating every tRPC procedure's input (and every REST
+handler's body/params/query, if REST is used instead) — this is not
+optional hardening added later, it's part of the API boundary from the
+first endpoint written, the same way `frontend-security` treats the
+raw-HTML/XSS boundary as never-skip.
 
 ## Auth (backend mechanism)
 
@@ -154,12 +193,21 @@ unconsidered. Once needed: **BullMQ** if Redis is already acceptable
 infrastructure, **Graphile Worker** if the project wants to avoid adding
 Redis on top of the already-chosen Postgres.
 
+## Next: scaffolding it
+
+Once these rows are settled (the framework defaults, unless this project
+states a reason to deviate), go to `backend-project-setup` for the actual
+step-by-step walkthrough — project init, folder shape, database, first
+feature, auth wiring — applying every default above instead of
+re-deciding it.
+
 ## What this skill does not cover
 
 Whether a backend exists at all, or routing here from the frontend
-(`stack-selection`). The frontend's own client-side session-storage
-pattern (`frontend-auth`). Hosting/deploy target for the backend service
-(`repo-hosting`) and whether it needs containerizing (`repo-containerization`).
+(`stack-selection`). The actual scaffolding steps (`backend-project-setup`).
+The frontend's own client-side session-storage pattern (`frontend-auth`).
+Hosting/deploy target for the backend service (`repo-hosting`) and
+whether it needs containerizing (`repo-containerization`).
 
 ## Basis (checked 2026-11-13)
 
@@ -183,6 +231,19 @@ pattern (`frontend-auth`). Hosting/deploy target for the backend service
 - BullMQ as the de-facto standard Node.js job queue, Graphile Worker as
   the Postgres-native alternative avoiding a Redis dependency:
   aggregated across multiple 2026 job-queue comparison posts.
+- "Monolith first" and the real-world case against premature
+  microservices: Martin Fowler's own named article,
+  [MonolithFirst](https://martinfowler.com/bliki/MonolithFirst.html),
+  and Segment's widely-cited production account,
+  [Goodbye Microservices](https://segment.com/blog/goodbye-microservices/) —
+  both are primary, named sources (not an aggregated blog consensus),
+  which is why this row is argued more strongly than the others in this
+  skill.
+- Zod as tRPC's native input-validator mechanism and its type-inference
+  advantage over Joi/Yup/class-validator: documented directly in tRPC's
+  and Zod's own docs — a stable, structural fact about how the chosen
+  stack's pieces fit together, not a trend that needs a freshness
+  re-check the way a framework-popularity ranking does.
 
 These are 2026 practitioner-consensus snapshots from aggregated blogs,
 not a formal standards body — re-verify via `knowledge-refresh` before
