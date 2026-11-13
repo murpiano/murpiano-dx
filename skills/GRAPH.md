@@ -23,6 +23,8 @@ flowchart TD
     i18n[frontend-i18n]
     routing[frontend-routing]
     designsystem[frontend-design-system] --> workshop[frontend-component-workshop]
+    theming[frontend-theming]
+    motion[frontend-motion]
     knowledge[knowledge-refresh]
 ```
 
@@ -73,6 +75,13 @@ flowchart TD
   isolated component dev/doc environment (Storybook default), built
   only once a project has real shared components to show in it. Child
   of `frontend-design-system` — see that node.
+- **`frontend-theming`** — domain: the light/dark/multi-brand switching
+  mechanism once semantic tokens exist (CSS `light-dark()` +
+  `color-scheme`, flash-of-wrong-theme handling) — not token naming
+  itself.
+- **`frontend-motion`** — domain: duration/easing tokens, and when to
+  use CSS transitions vs. an animation library (Motion/Framer Motion)
+  vs. the View Transitions API for page-level transitions.
 - **`repo-*` lifecycle group** — not a domain-architecture chain, a
   parallel category: repository lifecycle skills, each independent and
   triggered by its own task (not by `stack-selection`):
