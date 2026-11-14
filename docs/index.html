@@ -42,6 +42,21 @@
   header .meta a { color: var(--accent); text-decoration: none; }
   header .meta a:hover { text-decoration: underline; }
 
+  .view-toggle { margin-top: 12px; display: flex; gap: 8px; }
+  .view-toggle button {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .view-toggle button.active { background: var(--accent); color: #0f1115; border-color: var(--accent); font-weight: 600; }
+  .legend { margin-top: 10px; font-size: 0.75rem; color: var(--text-dim); display: flex; gap: 16px; flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
   main {
     display: flex;
     max-width: 1400px;
@@ -52,6 +67,22 @@
     min-width: 0;
     padding: 20px;
   }
+  #graph {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: calc(100vh - 148px);
+    position: relative;
+  }
+  #graph .hint {
+    position: absolute;
+    left: 16px; bottom: 12px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    pointer-events: none;
+    z-index: 2;
+  }
+  body.view-table #graph { display: none; }
+  body.view-graph #sections { display: none; }
   .section {
     margin-bottom: 28px;
     border: 1px solid var(--border);
@@ -103,9 +134,9 @@
     border-left: 1px solid var(--border);
     padding: 20px;
     position: sticky;
-    top: 97px;
+    top: 148px;
     align-self: flex-start;
-    max-height: calc(100vh - 110px);
+    max-height: calc(100vh - 160px);
     overflow-y: auto;
   }
   #panel .placeholder { color: var(--text-dim); font-size: 0.85rem; }
@@ -163,14 +194,14 @@
   footer a { color: var(--accent); text-decoration: none; }
 </style>
 </head>
-<body>
+<body class="view-graph">
 <header>
   <h1>murpiano-dx — pipeline graph</h1>
   <p>
-    Every field below is a row of a real project's <code>.agents/project-profile.md</code>.
-    Each row's <strong>value</strong> column is its real option set; its <strong>skill chip(s)</strong>
-    link to the skill that owns the decision — click one to see that skill's description, its
-    default (if it states one), and when its external justification was last checked.
+    Every node below is a row of a real project's <code>.agents/project-profile.md</code>, or the
+    skill that governs it. Drag to rotate, scroll to zoom, click a node to see that skill's
+    description, its default (if it states one), and when its external justification was last
+    checked.
   </p>
   <div class="meta">
     One-time snapshot, not a live view. Source:
@@ -178,12 +209,22 @@
     · generated from
     <a href="https://github.com/murpiano/murpiano-dx/blob/main/skills/project-profile/templates/project-profile.md" target="_blank" rel="noopener">project-profile.md</a>
   </div>
+  <div class="view-toggle">
+    <button id="btn-graph" class="active">Graph</button>
+    <button id="btn-table">Table</button>
+  </div>
+  <div class="legend">
+    <span><span class="dot" style="background:#e0b35c"></span> section (7)</span>
+    <span><span class="dot" style="background:#6fb3ff"></span> skill (34)</span>
+    <span><span class="dot" style="background:#5c7a9e"></span> profile field (83)</span>
+  </div>
 </header>
 
 <main>
   <div id="sections"><p class="no-skill">Loading…</p></div>
+  <div id="graph"><p class="hint">drag = rotate · scroll = zoom · click a node for details</p></div>
   <aside id="panel">
-    <p class="placeholder">Click a skill chip in any row to see its description, default, and freshness date here.</p>
+    <p class="placeholder">Click a node (or a skill chip in the table view) to see its description, default, and freshness date here.</p>
   </aside>
 </main>
 <div id="overlay"></div>
@@ -193,18 +234,111 @@
   with no governing skill (e.g. a project's own name).
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.2/dist/3d-force-graph.min.js"></script>
 <script>
 const REPO = "https://github.com/murpiano/murpiano-dx/blob/main/";
+const SECTION_COLOR = "#e0b35c";
+const SKILL_COLOR = "#6fb3ff";
+const FIELD_COLOR = "#5c7a9e";
 
 async function main() {
   const res = await fetch("demo-data.json");
   const data = await res.json();
-  renderSections(data.sections);
   window.__skills = data.skills;
+  window.__sections = data.sections;
+
+  renderSections(data.sections);
   document.querySelectorAll(".skill-chip").forEach(chip => {
     chip.addEventListener("click", () => showSkill(chip.dataset.skill));
   });
   document.getElementById("overlay").addEventListener("click", closePanel);
+
+  initGraph(data);
+  wireToggle();
+}
+
+function wireToggle() {
+  const btnGraph = document.getElementById("btn-graph");
+  const btnTable = document.getElementById("btn-table");
+  btnGraph.addEventListener("click", () => {
+    document.body.classList.remove("view-table");
+    document.body.classList.add("view-graph");
+    btnGraph.classList.add("active");
+    btnTable.classList.remove("active");
+    if (window.__graph) {
+      const el = document.getElementById("graph");
+      setTimeout(() => window.__graph.width(el.clientWidth).height(el.clientHeight), 50);
+    }
+  });
+  btnTable.addEventListener("click", () => {
+    document.body.classList.remove("view-graph");
+    document.body.classList.add("view-table");
+    btnTable.classList.add("active");
+    btnGraph.classList.remove("active");
+  });
+}
+
+function buildGraphData(data) {
+  const nodes = [];
+  const links = [];
+  const skillSeen = new Set();
+
+  data.sections.forEach(section => {
+    const sectionId = "section:" + section.number;
+    nodes.push({ id: sectionId, label: section.name, kind: "section", val: 10 });
+
+    section.rows.forEach((row, i) => {
+      const fieldId = "field:" + section.number + ":" + i;
+      nodes.push({ id: fieldId, label: row.field, kind: "field", value: row.value, val: 3 });
+      links.push({ source: sectionId, target: fieldId });
+
+      row.skills.forEach(skillName => {
+        const skillId = "skill:" + skillName;
+        if (!skillSeen.has(skillId)) {
+          skillSeen.add(skillId);
+          const hasSkill = !!data.skills[skillName];
+          nodes.push({ id: skillId, label: skillName, kind: "skill", val: hasSkill ? 6 : 4 });
+        }
+        links.push({ source: fieldId, target: skillId });
+      });
+    });
+  });
+
+  return { nodes, links };
+}
+
+function initGraph(data) {
+  const graphData = buildGraphData(data);
+  const el = document.getElementById("graph");
+  const graph = ForceGraph3D()(el)
+    .graphData(graphData)
+    .backgroundColor("#0f1115")
+    .nodeLabel(n => escapeHtml(n.label))
+    .nodeColor(n => n.kind === "section" ? SECTION_COLOR : n.kind === "skill" ? SKILL_COLOR : FIELD_COLOR)
+    .nodeVal("val")
+    .nodeOpacity(0.95)
+    .linkColor(() => "rgba(160,170,190,0.25)")
+    .linkOpacity(0.5)
+    .onNodeClick(node => {
+      if (node.kind === "skill") {
+        showSkill(node.label);
+      } else if (node.kind === "field") {
+        showField(node);
+      } else {
+        showSectionInfo(node);
+      }
+      const distance = 120;
+      const ratio = 1 + distance / Math.hypot(node.x, node.y, node.z || 1);
+      graph.cameraPosition(
+        { x: node.x * ratio, y: node.y * ratio, z: (node.z || 1) * ratio },
+        node,
+        800
+      );
+    });
+  window.__graph = graph;
+  window.addEventListener("resize", () => {
+    graph.width(el.clientWidth).height(el.clientHeight);
+  });
 }
 
 function renderSections(sections) {
@@ -269,6 +403,38 @@ function showSkill(name) {
     `;
     panel.querySelector(".close-btn").addEventListener("click", closePanel);
   }
+  panel.classList.add("open");
+  document.getElementById("overlay").classList.add("open");
+}
+
+function showField(node) {
+  const panel = document.getElementById("panel");
+  const skillsHtml = node.value !== undefined && node.value !== null
+    ? escapeHtml(node.value)
+    : "";
+  panel.innerHTML = `
+    <button class="close-btn" aria-label="Close">✕</button>
+    <h2>${escapeHtml(node.label)}</h2>
+    <div class="row">
+      <div class="row-label">Option set</div>
+      <div class="row-value">${skillsHtml || "<span class=\"no-skill\">—</span>"}</div>
+    </div>
+    <p class="desc">Click the connected skill node (blue) to see what governs this field.</p>
+  `;
+  panel.querySelector(".close-btn").addEventListener("click", closePanel);
+  panel.classList.add("open");
+  document.getElementById("overlay").classList.add("open");
+}
+
+function showSectionInfo(node) {
+  const panel = document.getElementById("panel");
+  const section = window.__sections.find(s => "section:" + s.number === node.id);
+  panel.innerHTML = `
+    <button class="close-btn" aria-label="Close">✕</button>
+    <h2>${escapeHtml(node.label)}</h2>
+    <p class="desc">${section ? section.rows.length : "?"} fields in this project-profile.md section.</p>
+  `;
+  panel.querySelector(".close-btn").addEventListener("click", closePanel);
   panel.classList.add("open");
   document.getElementById("overlay").classList.add("open");
 }
