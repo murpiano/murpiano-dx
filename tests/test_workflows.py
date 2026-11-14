@@ -1254,15 +1254,24 @@ fi
         self.assertIn('Second fix', result.stdout)
         self.assertEqual(self.git(self.project, 'tag').stdout.strip(), 'v1.0.0')
 
-    def test_release_body_keeps_sentences_shaped_like_trailers(self):
+    def test_release_notes_are_subject_only_no_commit_body_prose(self):
         self.git(self.project, 'tag', 'v1.0.0')
         self.git(self.project, 'commit', '--allow-empty', '-qm', 'fix: wire up cors',
                  '-m', "credentials: true needs a named origin, not a wildcard.",
                  '-m', 'Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>')
         result = self.run_cmd(['bash', str(self.dx / 'skills/repo-release/release.sh'), '--dry-run'],
                               self.project)
-        self.assertIn('credentials: true needs a named origin, not a wildcard.', result.stdout)
+        self.assertIn('Wire up cors', result.stdout)
+        self.assertNotIn('credentials: true needs a named origin', result.stdout)
         self.assertNotIn('Co-Authored-By', result.stdout)
+
+    def test_release_notes_drop_exact_duplicate_subjects(self):
+        self.git(self.project, 'tag', 'v1.0.0')
+        for _ in range(2):
+            self.git(self.project, 'commit', '--allow-empty', '-qm', 'fix: typo in readme')
+        result = self.run_cmd(['bash', str(self.dx / 'skills/repo-release/release.sh'), '--dry-run'],
+                              self.project)
+        self.assertEqual(result.stdout.count('Typo in readme'), 1)
 
     def test_personal_template_and_missing_file_fallback(self):
         personal = self.dx / 'templates'

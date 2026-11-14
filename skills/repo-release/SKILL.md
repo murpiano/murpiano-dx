@@ -21,9 +21,10 @@ workspace-level `templates/release-notes.md`; lookup honors it until migration.
 Editing that file is enough; no registration is required. An explicit task template wins.
 For manual notes, follow its structure. For automatic releases, copy the selected
 template to the project's `.github/release-notes.md` during setup or requested updates.
-Generated notes use commit subjects plus concrete points from commit bodies. The
-generator removes duplicate points and keeps the latest point when equivalent
-points conflict. Release descriptions must be strictly English; fail generation
+Generated notes use the commit subject only, one bullet per commit - never
+commit-body prose, which is what turns a release into a wall of implementation
+detail instead of a short thesis. The generator drops an exact-duplicate
+bullet. Release descriptions must be strictly English; fail generation
 when generated content contains Cyrillic text. That copy must contain `{{CHANGES}}`, replaced by generated change sections; it may
 also use `{{VERSION}}` and `{{PREVIOUS_VERSION}}`. CI uses the committed copy,
 because the personal workspace is not available on GitHub runners. Do not copy

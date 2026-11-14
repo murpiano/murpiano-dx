@@ -23,11 +23,12 @@ reason explicitly if choosing it, don't default to it by omission.
 
 ## Release notes
 
-Group user-visible changes under Added, Changed, Fixed, and Removed when useful.
-Use commit bodies to add concrete implementation points, then merge equivalent
-points, remove duplicates, and resolve contradictions in favor of the latest
-commit. Release descriptions must be strictly English. Mention migrations or
-breaking behavior explicitly. Do not include agent traces.
+Group user-visible changes under Breaking changes, New, and Fixed. One bullet
+per commit, the subject line only — a short thesis, never commit-body prose.
+If a breaking change needs its actual impact stated, say it in the commit
+subject itself (still one short line), not as a second line pulled from the
+body. Release descriptions must be strictly English. Do not include agent
+traces.
 
 ## Automation
 

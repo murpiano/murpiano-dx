@@ -30,22 +30,6 @@ fi
 bump=0 # 0 none, 1 patch, 2 minor, 3 major
 breaking=() added=() fixed=()
 
-entry() {
-  local subject=$1 body=$2 paragraph
-  # All body paragraphs, without trailers, joined into one concrete summary.
-  # Only strips known trailer keys, never a generic "word: " line - a body
-  # sentence legitimately starting that way (e.g. "credentials: true...",
-  # "backend-project-setup: ...") must survive.
-  paragraph=$(printf '%s\n' "$body" | sed '/^Co-Authored-By:/Id; /^BREAKING CHANGE/d' |
-    sed 's/^[[:space:]]*[-*+][[:space:]]*//; s/^[[:space:]]*[0-9]\+[.)][[:space:]]*//' |
-    awk 'NF {printf "%s%s", sep, $0; sep = " "; seen = 1} END {if (seen) print ""}')
-  if [ -n "$paragraph" ]; then
-    printf -- '- %s\n  %s' "$subject" "$paragraph"
-  else
-    printf -- '- %s' "$subject"
-  fi
-}
-
 while IFS= read -r -d $'\x1e' record; do
   record=${record#$'\n'}
   subject=${record%%$'\x1f'*}
@@ -59,7 +43,9 @@ while IFS= read -r -d $'\x1e' record; do
   # Subjects start in lower case; notes start with a capital unless the word is a name (iOS).
   first=${text%% *}
   [[ ${first:1} =~ [[:upper:]] ]] || text=${text^}
-  item=$(entry "$text" "$body")
+  # One bullet, the commit subject only - no commit-body prose. Keeps
+  # release notes thesis-short instead of a wall of implementation detail.
+  item="- $text"
   if [ -n "$bang" ] || grep -q '^BREAKING CHANGE' <<<"$body"; then
     breaking+=("$item")
     bump=3
@@ -102,8 +88,8 @@ trap 'rm -f "$notes"' EXIT
   [ -n "$remote" ] && printf 'Full diff: %s/compare/%s...%s\n' "$remote" "$last" "$tag"
 } >"$notes"
 
-# Keep generated notes concise and consistent: remove duplicate body points and
-# let the latest equivalent point win. Reject non-English generated content.
+# Drop an exact-duplicate bullet (two commits with the identical subject).
+# Reject non-English generated content.
 python3 - "$notes" <<'PY'
 import re
 import sys
@@ -114,19 +100,13 @@ text = path.read_text()
 if re.search(r"[\u0400-\u04ff]", text):
     raise SystemExit("Generated release notes must be strictly English; Cyrillic text found.")
 
-seen = {}
+seen = set()
 out = []
 for line in text.splitlines():
-    if line.startswith("  "):
-        normalized = re.sub(r"[^a-z0-9]+", " ", line.lower()).strip()
-        words = normalized.split()
-        # The first four words identify the described point in normal commit
-        # bodies. A later point with the same key supersedes an earlier one.
-        key = " ".join(words[:4]) if len(words) >= 4 else normalized
-        if key in seen:
-            out[seen[key]] = line
+    if line.startswith("- "):
+        if line in seen:
             continue
-        seen[key] = len(out)
+        seen.add(line)
     out.append(line)
 path.write_text("\n".join(out) + "\n")
 PY
