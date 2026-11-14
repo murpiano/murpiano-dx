@@ -72,8 +72,24 @@ Release files are in `main`, the secret and `RELEASES=on` are set, a `v*` tag ex
 and public repositories have the Release badge. Pause/resume is verified with
 `gh variable get RELEASES`; removal leaves no release tags or files.
 
-## Basis (checked 2026-11-13)
+## Basis (checked 2026-11-14)
 
+- Generated release notes are the commit subject only, one bullet per
+  commit, never commit-body prose — checked directly against the
+  actual specs, not memory, after the owner challenged whether this
+  matched real-world practice: Common Changelog's own rule is "a
+  change should be brief and to the point, no more than one line
+  long... long descriptions should be in commits or other
+  references" — [Common Changelog, §3.6](https://common-changelog.org/).
+  Keep a Changelog states "using commit log diffs as changelogs is a
+  bad idea: they're full of noise" and that a changelog entry
+  documents "the noteworthy difference," not the commit's own step-by-
+  step record — [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+  The `conventional-changelog`/`semantic-release` tooling this
+  framework's own semver-bump rules already mirror renders exactly
+  this shape in practice: one bullet per commit, the subject line,
+  grouped under `Features`/`Bug Fixes` headings —
+  [conventional-changelog](https://conventional-changelog.js.org/conventional-changelog/).
 - Semantic Versioning as the near-universal convention for anything
   with real external consumers (npm's own ecosystem enforces semver
   ranges in `package.json` dependencies) — the specification itself is
