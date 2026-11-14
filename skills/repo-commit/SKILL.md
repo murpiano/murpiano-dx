@@ -29,6 +29,13 @@ alternative for a project with a real need for parallel release trains
 3. Make the smallest coherent change and run the project checks.
 4. Create a Conventional Commit. [Kysaro](https://github.com/murpiano/kysaro) validates the exact project format.
 5. Push the branch and open a PR with a useful title and body when requested.
+   Before running `gh pr create`/`gh pr edit`, write the drafted title+body to a
+   file and run `bash <murpiano-dx>/skills/repo-cleanup/check-text.sh <file>` —
+   no git hook ever sees PR description text (`gh` calls the GitHub API
+   directly, bypassing commit-msg/pre-commit entirely), so this is the only
+   check that exists for it. A non-zero exit means the draft itself contains
+   an agent-trace mention — fix the text and re-check before submitting, do
+   not submit first and clean up after.
 6. Wait for required checks. Merge only when checks pass and the user authorizes it.
 7. After a merge (or whenever a task branch's work is otherwise finished),
    ask the user whether to delete that specific branch — locally and on the

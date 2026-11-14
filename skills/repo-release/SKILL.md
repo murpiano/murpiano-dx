@@ -52,7 +52,9 @@ published only from a verified GitHub Release.
 - Resume: set `RELEASES` to `on`.
 - Preview: run `bash .github/scripts/release.sh --dry-run`.
 - Rewrite notes: read the release commits, show the notes, then edit the release
-  after user approval.
+  after user approval. Before `gh release edit`, run
+  `bash <murpiano-dx>/skills/repo-cleanup/check-text.sh <notes-file>` — a GitHub
+  Release body goes straight to the API like a PR body, no git hook sees it.
 - Remove: confirm first, set `RELEASES=off`, delete releases and tags, remove the
   workflow, script, badge, and secret, then commit and merge the change.
 
