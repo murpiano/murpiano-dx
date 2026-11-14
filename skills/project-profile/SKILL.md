@@ -9,7 +9,7 @@ Governs `project-profile.md` fields: Identity → Interaction mode.
 
 Scope: one standing, filled-in table per project describing everything
 about it — identity, platform, frontend/backend stack, infra, Git
-workflow, constraints. Used two ways:
+workflow, constraints. Used three ways:
 
 - **Connecting an existing project** (`skills/repo-init/SKILL.md`): fill
   it from detected signals, confirmed with the owner.
@@ -17,6 +17,12 @@ workflow, constraints. Used two ways:
   domain's guided-setup skill, e.g. `frontend-project-setup`): fill it
   top to bottom *as decisions are made* — this table is the checklist
   for building the project, not only a report written after the fact.
+- **Worked by hand, no agent**: the table's own `Governed by` column
+  names the skill file that is the knowledge base for that row — open
+  `skills/<name>/SKILL.md` directly to read its default, real
+  alternatives, and dated `Basis` sources, and write the decision into
+  the table yourself. An agent walks this table as a convenience; it is
+  not a gate on reading the knowledge base behind any one row.
 
 Master templates: [templates/project-profile.md](templates/project-profile.md)
 (the table) and [templates/decision.md](templates/decision.md) (one
