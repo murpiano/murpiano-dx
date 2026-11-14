@@ -301,7 +301,14 @@ def check_for_update():
         'Tell the user what changed and ask whether to update before continuing; '
         f'do not update without asking. Summary:\n{summary}\n'
         f'Full notes: {release["html_url"]}\n'
-        f'To update: bash sync.sh update --fetch {latest}'
+        f'To update: bash sync.sh update --fetch {latest}\n'
+        'After updating, this release may add a project-profile.md row, a '
+        'hook, or a check this project connected before it existed - do not '
+        'just update the workspace and move on. Check the current project\'s '
+        'own .agents/project-profile.md against the refreshed '
+        'skills/project-profile/templates/project-profile.md (see '
+        'project-profile/SKILL.md -> "Keeping it current") and offer to fold '
+        'in anything the project never got asked about, in the same task.'
     )
 
 
