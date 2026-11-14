@@ -76,7 +76,7 @@ confirm them in this order every time (see `repo-init`'s own rule).
 | Language | JavaScript / TypeScript | `stack-selection` |
 | UI framework | React / Vue / Svelte / Angular / vanilla | `frontend-stack-selection` |
 | Meta-framework | Next.js / Nuxt / Remix / Astro / none | `frontend-stack-selection` |
-| Module structure | public-API barrel per feature folder (framework default) / other | `frontend-component-structure` |
+| Module structure | Feature-Sliced Design, layers+slices (framework default) / flat feature folders / Bulletproof React | `frontend-component-structure` |
 | Bundler | Vite / Webpack / Turbopack / esbuild / Parcel | `frontend-stack-selection` |
 | Package manager | npm / pnpm / yarn / bun | `frontend-stack-selection` |
 | Routing / navigation | library (name it) / client-state only, no router / none (single view) | `frontend-routing` |

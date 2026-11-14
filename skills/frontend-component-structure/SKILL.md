@@ -1,53 +1,78 @@
 ---
 name: frontend-component-structure
-description: Use when deciding how to organize a frontend feature's files — a public-API barrel (index.ts) per feature folder, which files are internal, component/file naming. Not about styling mechanics (CSS Modules, tokens — that's frontend-web-styles) or picking a platform (stack-selection). Applies whenever a new feature folder is created or an existing one is reorganized.
+description: Use when deciding how a frontend project's files are organized — Feature-Sliced Design's layers and slices (the framework default), each slice's public-API barrel (index.ts), which files are internal, component/file naming. Not about styling mechanics (CSS Modules, tokens — that's frontend-web-styles) or picking a platform (stack-selection). Applies whenever a new slice is created, an existing one is reorganized, or a project is scaffolded.
 ---
 
 # Frontend component/module structure
 
-Scope: how a feature's files are organized and exposed to the rest of
-the app — independent of styling tech (`frontend-web-styles` covers
-that) and independent of platform (`stack-selection`). Read this when
-creating a new feature folder, or deciding whether an existing one
-needs a public-API boundary.
+Scope: how a frontend project's files are organized into layers and
+slices and exposed to the rest of the app — independent of styling
+tech (`frontend-web-styles` covers that) and independent of platform
+(`stack-selection`). Read this when scaffolding a new project,
+creating a new slice, or deciding whether an existing one needs a
+public-API boundary.
 
 Governs `project-profile.md` fields: Frontend → Module structure.
 
-## The rule: one barrel per feature folder, not per component
+## The default: Feature-Sliced Design (FSD)
 
-Each feature folder (`src/features/<name>/`) gets exactly one
-`index.ts` at its root — the folder's public API. Outside code imports
-only from that path (`@/features/header`), never from a file inside it
-(`@/features/header/HouseIcon`). What's inside the folder — one
-component or ten, which of them are implementation details the main
-component uses privately — is not the outside world's concern.
+Six layers, top to bottom: `app → pages → widgets → features →
+entities → shared`. **A module may only import from a layer strictly
+below its own** — `pages` can import `widgets`/`features`/`entities`/
+`shared`, never another `pages` slice sideways and never anything in
+`app`; `shared` imports nothing from the other five. This import
+direction is the whole point of choosing FSD over a flatter layout: it
+makes "what can depend on what" a structural fact the file tree
+enforces, not a convention someone has to remember.
 
-- **The barrel lives at the feature root, not inside each component.**
-  A component that is purely an internal detail of another (e.g. a
-  small icon only the feature's main component renders) does not get
-  its own `index.ts` or subfolder — it stays a plain sibling file,
-  imported directly by the file that uses it.
-- **Export only the public surface**: the component(s), hooks, and
-  types other features or the app shell actually need. Everything else
-  (internal sub-components, helpers) stays unexported from the barrel,
-  even though it's a plain file sitting right next to it.
-- **Files inside the folder import each other directly**, not through
-  the folder's own `index.ts` — a file importing its own barrel is a
-  circular dependency a bundler often hides until a production build,
-  not something to debug from.
-- **A barrel that only re-exports one thing is still worth keeping**
-  for this framework's convention (every feature folder has the same
-  shape, so nothing about a folder's internal file count leaks into
-  how it's imported) — don't skip it just because the folder currently
-  holds a single component.
+| Layer | Holds |
+|---|---|
+| `app` | App-wide setup: providers, global styles, router init — not features themselves |
+| `pages` | One slice per route: composes widgets/features/entities into what that route renders |
+| `widgets` | Large, self-contained UI blocks combining several features/entities for a page (e.g. a page header with nav + search + user menu) |
+| `features` | One user-facing action/use-case per slice (`add-to-cart`, `toggle-favorite`) — the thing a user *does* |
+| `entities` | One business entity per slice (`user`, `product`) — its own UI, data shape, and the API calls that fetch it |
+| `shared` | Reusable, business-agnostic code: UI kit, utils, the API client's own config — knows nothing about any feature/entity above it |
+
+Each slice (a named folder inside a layer, e.g. `features/add-to-cart/`)
+gets exactly one `index.ts` at its root — the slice's public API, the
+same barrel rule this skill always had, now scoped to the slice instead
+of a flat feature folder. Outside code imports only
+`@/features/add-to-cart`, never a deep path into it. Segments inside a
+slice follow FSD's own naming: `ui/`, `model/`, `api/`, `lib/`,
+`config/` — not every segment is needed by every slice, add the ones a
+given slice actually has.
+
+- **The barrel lives at the slice root, not inside each component.** A
+  component that's purely another's internal detail (an icon only one
+  feature's main component renders) stays a plain sibling file inside
+  `ui/`, imported directly — it does not get its own `index.ts`.
+- **Export only the public surface** from a slice's barrel: the
+  component(s), hooks, and types other slices actually need.
+- **Files inside a slice import each other directly**, never through
+  the slice's own barrel — importing your own barrel is a circular
+  dependency a bundler often hides until production.
+- **A layer itself never gets a public API/`index.ts`** — only a
+  *slice* inside a layer does (`shared` is segment-only, no slices, so
+  this applies trivially there too). Confusing "the layer" with "a
+  slice in the layer" is the single most common FSD mistake reviewers
+  report.
+- **Enforce the import-direction rule with
+  [Steiger](https://github.com/feature-sliced/steiger)** (`npm i -D
+  steiger @feature-sliced/steiger-plugin`), FSD's own official linter:
+  `no-higher-level-imports` catches a sideways/upward import,
+  `public-api`/`no-public-api-sidestep` catch a deep import bypassing a
+  slice's barrel. Wire it into CI the same way `repo-lint-format`
+  wires ESLint — a rule nobody checks mechanically erodes the first
+  time someone's in a hurry.
 
 ```ts
-// src/features/header/index.ts
-export { Header } from './Header';
-// HouseIcon is Header's own implementation detail — not exported
+// src/features/add-to-cart/index.ts
+export { AddToCartButton } from './ui/AddToCartButton';
+// price-formatting helper used only inside this slice — not exported
 ```
 
-- **The one sanctioned exception: a symbol another feature needs
+- **The one sanctioned exception: a symbol another slice needs
   eagerly, that also sits in the same barrel as a component being
   `lazy()`-split for `frontend-performance`.** A bundler decides
   chunking per *module*, not per export — if anything still statically
@@ -58,6 +83,26 @@ export { Header } from './Header';
   importing that one eager symbol from its own file, bypassing the
   barrel, instead of moving the barrel's design — only for the specific
   symbol causing the eager pull-in, not as a general escape hatch.
+
+## Real alternatives, not a worse FSD
+
+- **Flat feature folders** (`src/features/<name>/`, one tier, no
+  enforced layers) — this skill's own previous default. Pick it for a
+  solo/small project where FSD's six-layer discipline and a linter
+  dependency are real overhead with nothing yet big enough to need the
+  enforced boundary; the public-API-barrel rule above still applies at
+  the single feature-folder level.
+- **Bulletproof React** — a lighter, convention-based reference
+  architecture (feature folders, each a self-contained mini-module)
+  with real recognition outside the CIS community specifically, but no
+  FSD-style enforced cross-layer import rules.
+
+State the reason when picking one of these over the FSD default (team
+unfamiliar with FSD and the project is small enough that the enforced
+boundary isn't earning its cost yet; or a lighter convention is
+genuinely enough) — don't default to FSD by omission without having
+actually decided it fits, the same "state it explicitly" discipline
+this framework applies to every other default.
 
 ## Naming
 
@@ -80,23 +125,40 @@ export { Header } from './Header';
   happen to agree on bare-vs-prefixed by coincidence of taste, not
   because one derives from the other.
 
-## Basis (checked 2026-11-13)
+## Basis (checked 2026-11-14)
 
-- **FSD-vs-Bulletproof-React status, checked directly after the owner
-  challenged an unqualified "FSD is the world standard" claim**: no
-  State-of-JS-style survey or independent (non-FSD-authored, non-CIS)
-  engineering source confirms FSD as an industry-wide standard — the
-  strongest praise traces to FSD's own docs/blog and Russian/CIS
-  sources (Habr, Avito's engineering blog). Next.js's own docs stay
-  explicitly unopinionated on project structure and name FSD as a
-  third-party pattern, not an endorsed one:
+- **FSD is this framework's chosen default, not a claimed industry
+  standard — the owner made that call explicitly on 2026-11-14 after
+  this section's own prior finding** (checked 2026-11-13, after the
+  owner challenged an unqualified "FSD is the world standard" claim):
+  no State-of-JS-style survey or independent (non-FSD-authored,
+  non-CIS) engineering source confirms FSD as an industry-wide
+  standard — the strongest praise traces to FSD's own docs/blog and
+  Russian/CIS sources (Habr, Avito's engineering blog). Next.js's own
+  docs stay explicitly unopinionated on project structure and name FSD
+  as a third-party pattern, not an endorsed one:
   [Next.js — Project structure](https://nextjs.org/docs/app/getting-started/project-structure).
-  Bulletproof React has comparable real recognition with a lighter,
-  convention-only (no enforced import layers) philosophy:
-  [Bulletproof React](https://bestofjs.org/projects/bulletproof-react).
-  Documented FSD downsides (learning curve, layer-boundary ambiguity):
-  aggregated across multiple practitioner reviews, e.g.
+  **That finding still stands as written — it is not reversed by
+  defaulting to FSD anyway.** A framework default does not require
+  universal-standard status (this framework's own CSS Modules default
+  over Tailwind is the same shape of choice); it requires a stated
+  reason, and the owner's is explicit: this framework's own projects
+  benefit from FSD's enforced layer boundaries regardless of FSD's
+  adoption breadth elsewhere. Documented FSD downsides (learning
+  curve, layer-boundary ambiguity) are real and still apply — named
+  directly in this skill's own alternatives section, not hidden by
+  making FSD the default: aggregated across multiple practitioner
+  reviews, e.g.
   [Feature-Sliced Design review](https://dev.to/algoorgoal/feature-sliced-design-review-22k0).
+  Bulletproof React has comparable real recognition with a lighter,
+  convention-only (no enforced import layers) philosophy, named as the
+  real alternative for exactly the case FSD's downsides make it a
+  worse fit: [Bulletproof React](https://bestofjs.org/projects/bulletproof-react).
+- Steiger as FSD's own official linter (`no-higher-level-imports` for
+  the layer-import direction, `public-api`/`no-public-api-sidestep`
+  for the barrel rule) — confirmed directly against the project's own
+  repository, still in beta/active development as of this check:
+  [feature-sliced/steiger](https://github.com/feature-sliced/steiger).
 - Feature-Sliced Design: every slice has a public-API `index.ts` at its
   root; outside code imports the slice path, never a deep path into it
   — cross-slice access always goes through the public API, treating a
@@ -127,52 +189,9 @@ export { Header } from './Header';
   (prefix).
 
 Whether a barrel belongs at the *component* level too (not just the
-feature level) genuinely divides practitioners — this framework settles
-it at the feature level only, matching FSD's actual granularity and
+slice level) genuinely divides practitioners — this framework settles
+it at the slice level only, matching FSD's actual granularity and
 keeping the "keep barrels shallow" caution satisfied by construction.
-
-## When this isn't enough: two different upgrade philosophies
-
-A flat feature-folder-per-domain layout (this skill's default) is
-deliberately simple — one tier, grouped by feature, nothing more.
-**Once a project outgrows that** (large app, multiple teams, a real
-need to distinguish app-wide vs. page-level vs. shared-entity code, not
-just "feature vs. shared"), there are two real, differently-shaped
-upgrade paths — not one obvious "next step":
-
-- **Feature-Sliced Design (FSD)** — a formal layered architecture
-  (`app → pages → widgets → features → entities → shared`) with its own
-  enforced import rules (a layer may only import from layers below it)
-  and often its own ESLint plugin checking them. Strongest adoption and
-  advocacy specifically in the Russian/CIS frontend community (its own
-  docs, Habr, Avito's engineering blog); no verified broader
-  "industry standard" claim found for it (no State-of-JS-style survey
-  or independent Western engineering-blog endorsement turned up in a
-  search for one) — treat "FSD is the/a world standard" as an
-  unverified claim, not a settled fact, the same way any other
-  practitioner-advocacy source gets treated in this framework's `Basis`
-  sections. Real, documented downsides: a learning-curve cost, and
-  reviewers citing ambiguity in exactly which layer a given piece of
-  code belongs in.
-- **Bulletproof React** — a lighter, convention-based reference
-  architecture (feature folders, each a self-contained mini-module with
-  its own UI/state/hooks/API calls) with real recognition outside the
-  CIS community specifically, but *no* FSD-style enforced cross-layer
-  import rules — conventions to follow, not a structure a linter
-  enforces for you.
-
-Next.js's own documentation is explicitly unopinionated here — it
-states no official structure beyond "group by feature, stay
-consistent," and names FSD itself as a third-party pattern, not
-something it endorses. This framework doesn't pick a default between
-these two for the same reason it doesn't default straight to
-microservices or Docker: **both are real structure worth adopting once
-the simple model actually strains — not before, and not reflexively
-because one of them was called a "standard" somewhere.** The owner
-states a reason to adopt one (strict enforced boundaries matter more →
-FSD; a lighter, broadly-recognized convention is enough → Bulletproof
-React) when that trigger is real, the same way any other build-trigger
-decision in this framework gets made explicitly rather than assumed.
 
 ## What this skill does not cover
 

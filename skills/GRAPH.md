@@ -70,9 +70,10 @@ flowchart TD
 - **`frontend-styling-concept`** — domain: cross-platform styling
   architecture. Has children → see
   [frontend-styling-concept/GRAPH.md](frontend-styling-concept/GRAPH.md).
-- **`frontend-component-structure`** — domain: how a feature's files are
-  organized and exposed (public-API barrel per feature folder, what
-  stays internal) — independent of styling tech or platform.
+- **`frontend-component-structure`** — domain: how a project's files are
+  organized into layers and slices (Feature-Sliced Design, the
+  framework default), each slice's public-API barrel, what stays
+  internal — independent of styling tech or platform.
 - **`frontend-testing`** — domain: what gets a unit test vs an
   end-to-end test, and test-naming style — independent of styling tech
   or platform.
