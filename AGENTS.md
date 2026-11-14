@@ -54,8 +54,12 @@ structural change.
 
 After merging a change to `murpiano-dx` itself into `main`, refresh any already
 provisioned local workspace with `MURPIANO_DX_DATA_DIR=<workspace> bash sync.sh update`,
-run from this checkout. It force-updates the runtime files and `global/` templates;
-`skills/` and `defaults/` stay additive (existing files there are never overwritten).
+run from this checkout. It force-updates the runtime files, `global/` templates, and
+`skills/` (a skill's own `templates/` subdirectory excepted — see
+`sync.py`'s `update_skills_tree`, which preserves an owner's personal override
+there, e.g. `repo-readme/templates/README.md`); `defaults/` stays additive
+(existing files there are never overwritten) — those are project-scaffold
+starting points an owner is expected to adjust per project.
 
 Any workspace — not only this maintainer checkout — is told about a newer release on
 its own. Every `sync.sh start` compares the workspace's recorded version

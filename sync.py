@@ -160,17 +160,47 @@ def bootstrap_workspace_files(update_runtime=False, source_root=None):
     ACTIVE_ROOT = DATA_ROOT
 
 
+def update_skills_tree(source, target):
+    """Force-update skills/ content, except each skill's own templates/.
+
+    skills/ is the framework's shared knowledge base (SKILL.md, rules.md,
+    scripts) - owners aren't meant to hand-edit it, overrides belong under
+    rules/ (see global/agent-rules.md) - so a bugfix there must reach an
+    already-provisioned workspace the same way a global/ change does, not
+    sit frozen at whatever version first installed it. The one established
+    exception is a skill's own templates/ subdirectory (e.g.
+    repo-readme/templates/README.md, repo-release/templates/release-notes.md):
+    select_template()'s own precedence rule depends on a personal copy there
+    staying exactly as the owner left it, so those paths stay additive-only
+    (new default templates arrive; an existing personal one is never touched).
+    """
+    for item in source.rglob('*'):
+        relative = item.relative_to(source)
+        destination = target / relative
+        if item.is_dir():
+            destination.mkdir(parents=True, exist_ok=True)
+            continue
+        is_template = 'templates' in relative.parts[:-1]
+        if is_template and destination.exists():
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if not destination.exists() or destination.read_bytes() != item.read_bytes():
+            shutil.copy2(item, destination)
+            print(f'Updated skills/{relative}')
+
+
 def update_workspace(source_root=None):
     """Refresh an existing local workspace from a murpiano-dx checkout.
 
     Unlike bootstrap_workspace_files on a first install (additive only), this
-    overwrites the framework-owned runtime files and global/ templates
+    overwrites the framework-owned runtime files, global/ templates, and
+    skills/ (except each skill's own templates/, see update_skills_tree)
     unconditionally, so a change to murpiano-dx reaches an already-provisioned
-    workspace. skills/ and defaults/ stay additive (copy_missing_tree never
-    overwrites a file that already exists there), so personal additions and
-    already-restored skills are preserved. source_root defaults to this
-    checkout; pass a fetched release checkout to update from a GitHub tag
-    instead (see fetch_release_checkout).
+    workspace. defaults/ stays additive (copy_missing_tree never overwrites a
+    file that already exists there) - those are project-scaffold starting
+    points owners are expected to adjust per project, unlike skills/.
+    source_root defaults to this checkout; pass a fetched release checkout to
+    update from a GitHub tag instead (see fetch_release_checkout).
     """
     source_root = source_root or SOURCE_ROOT
     if DATA_ROOT.resolve() == source_root.resolve():
@@ -186,6 +216,7 @@ def update_workspace(source_root=None):
         if not destination.exists() or destination.read_bytes() != item.read_bytes():
             shutil.copy2(item, destination)
             print(f'Updated global/{item.name}')
+    update_skills_tree(source_root / 'skills', DATA_ROOT / 'skills')
 
 
 def semver_tuple(tag):
