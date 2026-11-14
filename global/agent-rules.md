@@ -15,7 +15,11 @@ commits and PRs — `repo-commit`, README and metadata — `repo-readme`, releas
 `repo-release`. For requested migration of existing agent files out of a project's
 published tree, use `repo-agent-data`; to scan or clean agent-development traces and
 secrets before publishing, use `repo-cleanup` — its pre-commit scan is installed
-automatically for a tracked project. Read only the skill for the current task and the relevant rules section;
+automatically for a tracked project. Walking, resuming, or continuing the project's
+one pipeline table (`.agents/project-profile.md`), or any mention of its
+learning/co-pilot/autonomous interaction mode, uses `project-profile` (the table
+itself) and `DELEGATION-MODEL.md` (what each mode means) — read these before
+guessing. Read only the skill for the current task and the relevant rules section;
 do not reread unchanged content in the same task. No special user phrase is required.
 Project rules and [Kysaro](https://github.com/murpiano/kysaro) settings take precedence over the generic caveman-commit format.
 [Kysaro](https://github.com/murpiano/kysaro) is the Git linter. It checks commit messages through commit-msg and CI in each project; murpiano-dx

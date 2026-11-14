@@ -6,6 +6,13 @@ This file is the agent entry point for `murpiano-dx`.
 
 1. Run `bash sync.sh start` once at the beginning of work.
 2. Read only the skill that matches the task:
+   - `skills/project-profile/SKILL.md` for the project's one standing
+     pipeline table (`.agents/project-profile.md`) — read this whenever the
+     user references "the pipeline," asks to walk/continue/resume it, or
+     names an interaction mode (learning / co-pilot / autonomous) for a
+     new or existing project; its own Interaction mode row (see
+     `skills/DELEGATION-MODEL.md`) then governs how much you explain versus
+     just do for every row that follows.
    - `skills/repo-init/SKILL.md` for project initialization;
    - `skills/repo-commit/SKILL.md` for branches, commits, and pull requests;
    - `skills/repo-readme/SKILL.md` for README and repository metadata;
