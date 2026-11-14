@@ -52,6 +52,7 @@ process an agent follows — no agent required to use the knowledge base.
 | Repository | | `repo-init` |
 | Visibility | private / public | `repo-init` |
 | License | MIT / Apache 2.0 / GPL-AGPL / none (private) | `repo-readme` |
+| README & GitHub metadata | written: yes/no — badges: CI/Release/License/none — GitHub description & topics set: yes/no | `repo-readme` |
 | Project status | prototype / active / maintenance / archived | |
 
 ## 2. Application type & platforms

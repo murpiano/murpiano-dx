@@ -131,6 +131,20 @@ else in this framework (`skills/DELEGATION-MODEL.md`).
 - When a project's stack changes (a new backend added, a styling
   approach migrated), update the profile in the same change — it should
   never silently drift out of date.
+- **The master template itself gains rows over time** (a new skill is
+  written, or an existing one grows a row this framework didn't ask
+  about before). An existing project's own `.agents/project-profile.md`
+  is a filled-in snapshot taken at some point in the past — it does not
+  pick up a template row added after that point on its own, and nothing
+  else re-checks it. Before relying on an existing profile as complete,
+  diff its section headings and row names against the current
+  `templates/project-profile.md`: a row the template has that the
+  profile's matching section lacks entirely (not even a `—`) is neither
+  confirmed nor explicitly deferred — it's simply never been asked. Fold
+  any such row into that section's next confirmation pass, in the
+  table's own order, the same as a brand-new row on a brand-new project
+  — not a special catch-up step, not silently left missing because the
+  profile predates it.
 - A profile value that contradicts this framework's recorded default
   (e.g. Tailwind where `frontend-styling-concept` defaults to CSS
   Modules) is exactly the project-level override described in

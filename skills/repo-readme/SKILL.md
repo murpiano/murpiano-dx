@@ -5,7 +5,8 @@ description: Use when writing, reviewing, or updating a repository README, GitHu
 
 # Repository documentation
 
-Governs `project-profile.md` fields: Identity → Project kind, License.
+Governs `project-profile.md` fields: Identity → Project kind, License,
+README & GitHub metadata.
 
 Write for humans in clear English. Keep detailed agent instructions in `AGENTS.md`
 and skills. Preserve an existing agent entry-point notice as the first README line;

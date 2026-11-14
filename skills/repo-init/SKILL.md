@@ -100,5 +100,12 @@ any framework default (e.g. a `frontend-styling-concept` implementation):
 For projects without a license, follow `repo-readme`'s default MIT license setup
 using `skills/repo-readme/templates/LICENSE`. Preserve existing licenses.
 
+For a project with no README yet, or one missing the badges/description/topics
+`repo-readme` covers, run `repo-readme` itself before marking initialization
+done — do not leave `project-profile.md`'s "README & GitHub metadata" row
+unwritten just because the owner didn't ask for it by name. A project this
+framework initializes should not end up with no description, no badges, and
+no GitHub topics simply because nobody knew to ask for them.
+
 The project has a local Git repository, a preserved or approved origin, linked
 project data, and a verified [Kysaro](https://github.com/murpiano/kysaro) installation when the owner approved it.
