@@ -9,18 +9,32 @@ import eslintConfigPrettier from 'eslint-config-prettier/flat';
 // project with no React frontend — see SKILL.md.
 import reactHooks from 'eslint-plugin-react-hooks';
 
-export default defineConfig({
-  files: ['**/*.{js,ts,tsx}'],
-  extends: [
-    js.configs.recommended,
-    tseslint.configs.recommended,
-    tseslint.configs.recommendedTypeChecked,
-    reactHooks.configs.flat.recommended,
-    eslintConfigPrettier,
-  ],
-  languageOptions: {
-    parserOptions: {
-      projectService: true,
+export default defineConfig([
+  {
+    files: ['**/*.{js,ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      // strictTypeChecked + stylisticTypeChecked is typescript-eslint's
+      // own maximum type-aware coverage — each already includes
+      // recommended's rules, so don't also list recommended/
+      // recommendedTypeChecked here.
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
+      reactHooks.configs.flat.recommended,
+      eslintConfigPrettier,
+    ],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
   },
-});
+  {
+    // This config file itself isn't covered by tsconfig.json's own
+    // `include`, so type-aware rules above have no type information for
+    // it — type-check everything else, not this file.
+    files: ['eslint.config.js'],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
+]);

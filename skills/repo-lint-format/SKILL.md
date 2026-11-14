@@ -48,16 +48,20 @@ teams actually reach for often enough to be worth naming explicitly —
 state it as a deliberate team preference in a `.prettierrc`, not a
 silent drift from the default.
 
-### ESLint: `typescript-eslint`'s `recommended-type-checked`, not bare `recommended`
+### ESLint: maximum real coverage, not the lightest preset that passes
 
 **Default stack**, wired in `eslint.config.js` (see
 [templates/eslint.config.js](templates/eslint.config.js)):
 
-1. `typescript-eslint`'s **`recommended-type-checked`** config —
-   `recommended` alone skips every rule that needs real type
-   information (the rules that catch genuine bugs, not just style);
-   type-checked linting is already the cost of using TypeScript at
-   all, so there's no real reason to opt out of the rules that use it.
+1. `typescript-eslint`'s **`strictTypeChecked` + `stylisticTypeChecked`**
+   — this is `typescript-eslint`'s own actual maximum: `strictTypeChecked`
+   already contains all of `recommended`, `recommendedTypeChecked`, and
+   `strict`, so don't also list those; `stylisticTypeChecked` adds the
+   separate, orthogonal axis of type-aware style/idiom rules. Don't
+   default to bare `recommended` — it skips every rule that needs real
+   type information, which is already the cost of using TypeScript at
+   all, and skips the strict-only bug-catching rules (e.g.
+   `no-non-null-assertion`) on top of that.
 2. `eslint-plugin-react-hooks`'s recommended config, **only when the
    project has a React frontend** — `rules-of-hooks` and
    `exhaustive-deps` catch real runtime bugs (stale closures, hooks
@@ -67,10 +71,25 @@ silent drift from the default.
    turn off every ESLint rule that would otherwise fight Prettier over
    formatting — order matters, a later config overrides an earlier one.
 
-**Real, named alternative**: `strict-type-checked` once a nontrivial
-share of the team is genuinely proficient in TypeScript and wants the
-stricter, more opinionated rule set — `typescript-eslint`'s own docs
-recommend against it as a default for everyone.
+**What this deliberately leaves out**: core ESLint's own `js.configs.all`
+(every rule ESLint ships, with no curation) — ESLint's own docs call
+this "not recommended for production use because it changes with every
+minor and major version of ESLint... use at your own risk." Enabling
+it means a routine ESLint version bump can start failing CI with no
+warning, for a rule that was never deliberately chosen. Use
+`js.configs.recommended` for the untyped-JS layer instead, and get the
+real "maximum" from `strictTypeChecked`/`stylisticTypeChecked`, which
+are curated and stable between releases. A project that wants `all`
+anyway despite this is a stated, explicit choice — not this skill's
+default.
+
+**First real alternative, if `strictTypeChecked` still feels too
+permissive**: `typescript-eslint`'s own strict-mode rules already go
+further than most teams use in practice — there isn't a stricter named
+tier above it; the next lever is adding more type-aware third-party
+plugins (e.g. `eslint-plugin-sonarjs` for cognitive-complexity/code-smell
+detection), which is a separate, explicit addition, not part of this
+default.
 
 ### Ruff: keep its own default rule selection, don't narrow it
 
@@ -109,6 +128,31 @@ own larger decision, not this skill's to force.
 Husky (JS/TS) or `pre-commit` (Python) running **lint-staged** (or
 `pre-commit`'s own staged-file filtering) is the default — lint with
 autofix, then format, on changed files only. Keep this fast:
+
+**JS/TS setup** (verified end to end — installed in a throwaway repo,
+confirmed an autofixable issue gets fixed and re-staged, and confirmed
+a real `eslint` error blocks the commit rather than silently passing):
+
+```bash
+pnpm add -D husky lint-staged
+npx husky init
+```
+
+- Copy [templates/lint-staged.config.js](templates/lint-staged.config.js)
+  to the project root as `lint-staged.config.js` — runs `eslint --fix`
+  then `prettier --write` on staged `*.{js,ts,tsx}` files, in that
+  order, only proceeding to `prettier` if `eslint` exits 0.
+- Copy [templates/husky-pre-commit](templates/husky-pre-commit) to
+  `.husky/pre-commit` (`npx husky init` already created this file with
+  a placeholder `npm test` — replace its contents, don't append).
+- `husky init` also adds a `"prepare": "husky"` script to
+  `package.json` — this is what re-installs the hook for anyone who
+  clones the repo and runs `npm install`; don't remove it.
+
+**Python setup**: `pre-commit` (the tool) with its own staged-file
+filtering — `ruff check --fix` then `ruff format`, equivalent shape,
+no separate lint-staged-style dependency needed since staging filter
+is `pre-commit`'s own built-in behavior.
 
 - **Don't run a full-project typecheck or the full test suite in
   pre-commit** — these are slow enough to make commits painful, and
@@ -171,3 +215,20 @@ itself — `repo-commit`.
   work from the docs alone:
   [eslint-plugin-react-hooks](https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks),
   [eslint-config-prettier](https://github.com/prettier/eslint-config-prettier).
+- `strictTypeChecked` "contains all of `recommended`,
+  `recommended-type-checked`, and `strict`" (don't list the smaller
+  configs alongside it); ESLint's own docs call `js.configs.all` "not
+  recommended for production use because it changes with every minor
+  and major version of ESLint... use at your own risk" — the reason
+  this framework defaults away from it:
+  [typescript-eslint — Shared Configs](https://typescript-eslint.io/users/configs),
+  [ESLint — predefined configurations](https://eslint.org/docs/latest/use/configure/configuration-files#using-predefined-configurations).
+- Husky 9's current setup (`npx husky init`, no more shebang/`husky.sh`
+  boilerplate in `.husky/pre-commit`) and lint-staged's current config
+  shape and ordering/re-staging behavior, confirmed against each
+  project's own current docs, then the whole chain (Husky init →
+  lint-staged config → a real `git commit`) run in a throwaway repo:
+  an autofixable file came out fixed and committed, a real
+  `rules-of-hooks` violation blocked the commit entirely:
+  [Husky — Get Started](https://typicode.github.io/husky/get-started.html),
+  [lint-staged](https://github.com/lint-staged/lint-staged).
