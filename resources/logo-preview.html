@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>murpiano Developer Experience framework preview</title>
+<style>
+  @font-face {
+    font-family: "Roboto Local";
+    src: url("./Roboto-wdth-wght.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 100 900;
+    font-stretch: 75% 100%;
+    font-display: swap;
+  }
+  :root {
+    color-scheme: light;
+    --motion-float: 4s;
+    --ease-float: cubic-bezier(.45, 0, .55, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { width: 100%; min-width: 320px; min-height: 100%; margin: 0; background: #fff; }
+  body { display: grid; place-items: start center; font-family: Arial, Helvetica, sans-serif; }
+  .diagram {
+    position: relative;
+    width: min(100vw, 1724px);
+    aspect-ratio: 1724 / 912;
+    overflow: hidden;
+    background: #fff url("./logo.png") center / 100% 100% no-repeat;
+    isolation: isolate;
+  }
+  .core-glow {
+    position: absolute;
+    z-index: 2;
+    left: 38.4%;
+    top: 28.2%;
+    width: 23.2%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124, 220, 255, .08) 50%, rgba(73, 204, 255, .3) 64%, rgba(73, 204, 255, 0) 76%);
+    filter: blur(3px);
+    animation: glow-pulse var(--motion-float) var(--ease-float) infinite;
+  }
+  .core-art {
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    transform-origin: 50% 50.4%;
+    -webkit-mask-image: radial-gradient(circle at 50% 50.4%, #000 0 10.5%, rgba(0, 0, 0, .96) 11.8%, rgba(0, 0, 0, .45) 13.2%, transparent 15%);
+    mask-image: radial-gradient(circle at 50% 50.4%, #000 0 10.5%, rgba(0, 0, 0, .96) 11.8%, rgba(0, 0, 0, .45) 13.2%, transparent 15%);
+    animation: core-breathe var(--motion-float) var(--ease-float) infinite;
+    will-change: transform, filter;
+  }
+  .label {
+    position: absolute;
+    z-index: 4;
+    top: calc(var(--y) * 100%);
+    display: flex;
+    align-items: center;
+    height: calc(118 / 912 * 100%);
+    padding: 0 clamp(5px, .65vw, 11px);
+    padding-right: clamp(8px, 1.35vw, 23px);
+    overflow: hidden;
+    border-radius: 0 clamp(5px, 1.4vw, 24px) clamp(5px, 1.4vw, 24px) 0;
+    background: #fff;
+    color: #101820;
+    font-size: clamp(6px, 1.85vw, 32px);
+    font-family: "Roboto Local", "Arial Narrow", Arial, Helvetica, sans-serif;
+    font-stretch: 75%;
+    font-weight: 400;
+    font-variation-settings: "wdth" 75, "wght" 400;
+    letter-spacing: -.01em;
+    line-height: 1.12;
+  }
+  .label.left { left: 10.15%; width: 18.45%; }
+  .label.right { left: 77.75%; width: 18.2%; }
+  @keyframes core-breathe {
+    0%, 100% { transform: scale(.975); filter: drop-shadow(0 6px 10px rgba(48, 181, 230, .08)); }
+    50% { transform: scale(1.035); filter: drop-shadow(0 13px 19px rgba(48, 181, 230, .31)); }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { transform: scale(.92); opacity: .48; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .core-art, .core-glow { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main class="diagram" aria-label="murpiano Developer Experience framework capability map">
+  <div class="core-glow" aria-hidden="true"></div>
+  <img class="core-art" src="./logo.png" alt="">
+  <div class="label left" style="--y:.052632">Context, Memory<br>&amp; Sync</div>
+  <div class="label left" style="--y:.208333">Rules &amp; Agent<br>Setup</div>
+  <div class="label left" style="--y:.364035">Project Data<br>&amp; Migration</div>
+  <div class="label left" style="--y:.519737">Project &amp;<br>Stack Setup</div>
+  <div class="label left" style="--y:.675439">Backend<br>&amp; Data</div>
+  <div class="label left" style="--y:.831140">Frontend<br>&amp; UX</div>
+  <div class="label right" style="--y:.052632">Architecture<br>Guidance</div>
+  <div class="label right" style="--y:.208333">Git &amp;<br>Collaboration</div>
+  <div class="label right" style="--y:.364035">Quality &amp;<br>Security</div>
+  <div class="label right" style="--y:.519737">Docs &amp;<br>Metadata</div>
+  <div class="label right" style="--y:.675439">CI &amp;<br>Testing</div>
+  <div class="label right" style="--y:.831140">Releases &amp;<br>Operations</div>
+</main>
+</body>
+</html>

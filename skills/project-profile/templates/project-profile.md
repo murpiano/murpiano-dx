@@ -32,6 +32,15 @@ is plain information with no skill behind it (yet, or ever). See
 `skills/project-profile/SKILL.md` → "Changing a governed cell is a
 trigger, not cosmetics" before editing a governed row's value.
 
+**Working on a row without an agent?** Open
+`<murpiano-dx>/skills/<name-in-Governed-by>/SKILL.md` directly — e.g.
+`Governed by: backend-stack-selection` → `skills/backend-stack-selection/SKILL.md`.
+That file is this framework's actual knowledge base for the row: the
+default, the real alternatives with their trade-offs, and a dated
+`Basis` section with the sources behind the recommendation. Reading it
+and writing the chosen value into this table yourself is the same
+process an agent follows — no agent required to use the knowledge base.
+
 ## 1. Identity
 
 | Field | Value | Governed by |

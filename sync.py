@@ -33,6 +33,8 @@ WORKSPACE_FILES = (
     'murpiano-dx', 'install.sh', 'sync.sh', 'sync.py', 'configure-codex.py',
     'agent_setup.py', 'workspace_sync.py', 'session_hook.py',
     'config.env', 'README.md', 'LICENSE', 'resources/logo.png',
+    'resources/logo-preview.html', 'resources/logo-preview.gif',
+    'resources/Roboto-wdth-wght.ttf', 'resources/Roboto-OFL.txt',
     'resources/project-data-flow.svg',
 )
 WORKSPACE_DIRS = ('global', 'skills', 'defaults')
