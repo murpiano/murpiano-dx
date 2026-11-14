@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>murpiano-dx — pipeline graph</title>
+<meta name="description" content="Snapshot demo of murpiano-dx's project-profile.md: every field linked to the skill that governs it, its option set, and that skill's freshness date and default.">
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --border: #2a2f3a;
+    --text: #e4e6ea;
+    --text-dim: #9aa1ad;
+    --accent: #6fb3ff;
+    --accent-dim: #3a5a80;
+    --ok: #6fd3a0;
+    --warn: #e0b35c;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(15,17,21,0.92);
+    backdrop-filter: blur(6px);
+    z-index: 10;
+  }
+  header h1 { margin: 0 0 4px; font-size: 1.25rem; font-weight: 600; }
+  header p { margin: 0; color: var(--text-dim); font-size: 0.85rem; max-width: 760px; }
+  header .meta { margin-top: 8px; font-size: 0.78rem; color: var(--text-dim); }
+  header .meta a { color: var(--accent); text-decoration: none; }
+  header .meta a:hover { text-decoration: underline; }
+
+  main {
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  #sections {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 20px;
+  }
+  .section {
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .section-head {
+    padding: 12px 16px;
+    background: var(--panel-2);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .section-head .count { color: var(--text-dim); font-weight: 400; font-size: 0.8rem; }
+  .section-head .chev { transition: transform 0.15s ease; color: var(--text-dim); }
+  .section.collapsed .chev { transform: rotate(-90deg); }
+  .section.collapsed .rows { display: none; }
+
+  table.rows { width: 100%; border-collapse: collapse; }
+  table.rows td { padding: 10px 16px; border-top: 1px solid var(--border); vertical-align: top; font-size: 0.85rem; }
+  table.rows tr:first-child td { border-top: none; }
+  td.field { width: 26%; color: var(--text); font-weight: 500; white-space: normal; }
+  td.value { width: 46%; color: var(--text-dim); }
+  td.skills { width: 28%; }
+  .skill-chip {
+    display: inline-block;
+    margin: 2px 4px 2px 0;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .skill-chip:hover { background: var(--accent-dim); color: #fff; }
+  .skill-chip.active { background: var(--accent); color: #0f1115; border-color: var(--accent); }
+  .no-skill { color: var(--text-dim); font-size: 0.78rem; font-style: italic; }
+
+  #panel {
+    width: 380px;
+    flex: 0 0 380px;
+    border-left: 1px solid var(--border);
+    padding: 20px;
+    position: sticky;
+    top: 97px;
+    align-self: flex-start;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+  #panel .placeholder { color: var(--text-dim); font-size: 0.85rem; }
+  #panel h2 { margin: 0 0 4px; font-size: 1.05rem; font-family: var(--mono); color: var(--accent); }
+  #panel .desc { color: var(--text); font-size: 0.85rem; margin: 10px 0; }
+  #panel .row { margin: 14px 0; }
+  #panel .row-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin-bottom: 4px; }
+  #panel .row-value { font-size: 0.85rem; }
+  #panel .basis-date { color: var(--ok); font-family: var(--mono); }
+  #panel .basis-date.missing { color: var(--warn); }
+  #panel a.src-link { color: var(--accent); text-decoration: none; font-size: 0.8rem; }
+  #panel a.src-link:hover { text-decoration: underline; }
+  #panel .close-btn {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    main { flex-direction: column; }
+    #panel {
+      width: auto;
+      flex: none;
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 86vw;
+      max-width: 420px;
+      max-height: none;
+      background: var(--panel);
+      box-shadow: -8px 0 24px rgba(0,0,0,0.4);
+      transform: translateX(100%);
+      transition: transform 0.2s ease;
+      z-index: 20;
+    }
+    #panel.open { transform: translateX(0); }
+    #panel .close-btn {
+      display: block;
+      position: absolute;
+      top: 12px; right: 14px;
+      background: none; border: none; color: var(--text-dim);
+      font-size: 1.1rem; cursor: pointer;
+    }
+    #overlay {
+      display: none;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 15;
+    }
+    #overlay.open { display: block; }
+  }
+
+  footer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 12px 20px 40px;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>murpiano-dx — pipeline graph</h1>
+  <p>
+    Every field below is a row of a real project's <code>.agents/project-profile.md</code>.
+    Each row's <strong>value</strong> column is its real option set; its <strong>skill chip(s)</strong>
+    link to the skill that owns the decision — click one to see that skill's description, its
+    default (if it states one), and when its external justification was last checked.
+  </p>
+  <div class="meta">
+    One-time snapshot, not a live view. Source:
+    <a href="https://github.com/murpiano/murpiano-dx" target="_blank" rel="noopener">murpiano/murpiano-dx</a>
+    · generated from
+    <a href="https://github.com/murpiano/murpiano-dx/blob/main/skills/project-profile/templates/project-profile.md" target="_blank" rel="noopener">project-profile.md</a>
+  </div>
+</header>
+
+<main>
+  <div id="sections"><p class="no-skill">Loading…</p></div>
+  <aside id="panel">
+    <p class="placeholder">Click a skill chip in any row to see its description, default, and freshness date here.</p>
+  </aside>
+</main>
+<div id="overlay"></div>
+
+<footer>
+  83 rows across 7 sections, referencing 34 skills. Rows with no skill chip are owner-filled free text
+  with no governing skill (e.g. a project's own name).
+</footer>
+
+<script>
+const REPO = "https://github.com/murpiano/murpiano-dx/blob/main/";
+
+async function main() {
+  const res = await fetch("demo-data.json");
+  const data = await res.json();
+  renderSections(data.sections);
+  window.__skills = data.skills;
+  document.querySelectorAll(".skill-chip").forEach(chip => {
+    chip.addEventListener("click", () => showSkill(chip.dataset.skill));
+  });
+  document.getElementById("overlay").addEventListener("click", closePanel);
+}
+
+function renderSections(sections) {
+  const root = document.getElementById("sections");
+  root.innerHTML = "";
+  sections.forEach(section => {
+    const el = document.createElement("div");
+    el.className = "section";
+    const rowsHtml = section.rows.map(row => {
+      const skillsHtml = row.skills.length
+        ? row.skills.map(s => `<span class="skill-chip" data-skill="${escapeAttr(s)}">${escapeHtml(s)}</span>`).join("")
+        : `<span class="no-skill">no governing skill</span>`;
+      return `<tr>
+        <td class="field">${escapeHtml(row.field)}</td>
+        <td class="value">${escapeHtml(row.value)}</td>
+        <td class="skills">${skillsHtml}</td>
+      </tr>`;
+    }).join("");
+    el.innerHTML = `
+      <div class="section-head">
+        <span>${section.number}. ${escapeHtml(section.name)}</span>
+        <span class="count">${section.rows.length} rows <span class="chev">▾</span></span>
+      </div>
+      <table class="rows"><tbody>${rowsHtml}</tbody></table>
+    `;
+    el.querySelector(".section-head").addEventListener("click", () => {
+      el.classList.toggle("collapsed");
+    });
+    root.appendChild(el);
+  });
+}
+
+function showSkill(name) {
+  const skill = window.__skills[name];
+  const panel = document.getElementById("panel");
+  document.querySelectorAll(".skill-chip").forEach(c => c.classList.toggle("active", c.dataset.skill === name));
+  if (!skill) {
+    panel.innerHTML = `<p class="placeholder">No SKILL.md found for <code>${escapeHtml(name)}</code>.</p>`;
+  } else {
+    const basisHtml = skill.basis_date
+      ? `<span class="basis-date">checked ${escapeHtml(skill.basis_date)}</span>`
+      : `<span class="basis-date missing">no dated Basis section</span>`;
+    const defaultHtml = skill.default
+      ? escapeHtml(skill.default)
+      : `<span class="no-skill">no single stated default — see the skill itself</span>`;
+    panel.innerHTML = `
+      <button class="close-btn" aria-label="Close">✕</button>
+      <h2>${escapeHtml(skill.name)}</h2>
+      <p class="desc">${escapeHtml(skill.description)}</p>
+      <div class="row">
+        <div class="row-label">Default</div>
+        <div class="row-value">${defaultHtml}</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Freshness</div>
+        <div class="row-value">${basisHtml}</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Source</div>
+        <div class="row-value"><a class="src-link" href="${REPO}${escapeAttr(skill.path)}" target="_blank" rel="noopener">${escapeHtml(skill.path)}</a></div>
+      </div>
+    `;
+    panel.querySelector(".close-btn").addEventListener("click", closePanel);
+  }
+  panel.classList.add("open");
+  document.getElementById("overlay").classList.add("open");
+}
+
+function closePanel() {
+  document.getElementById("panel").classList.remove("open");
+  document.getElementById("overlay").classList.remove("open");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+main();
+</script>
+</body>
+</html>

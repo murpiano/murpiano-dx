@@ -1,0 +1,862 @@
+{
+  "sections": [
+    {
+      "number": "1",
+      "name": "Identity",
+      "rows": [
+        {
+          "field": "Project kind",
+          "value": "app / framework / npm-package / library / landing page / personal-brand / internal tool",
+          "skills": [
+            "repo-readme"
+          ]
+        },
+        {
+          "field": "Interaction mode",
+          "value": "learning / co-pilot / autonomous — see `DELEGATION-MODEL.md` → \"Interaction mode\"",
+          "skills": [
+            "project-profile"
+          ]
+        },
+        {
+          "field": "One-line description",
+          "value": " ",
+          "skills": []
+        },
+        {
+          "field": "Team",
+          "value": "solo / team (size)",
+          "skills": []
+        },
+        {
+          "field": "Repository",
+          "value": " ",
+          "skills": [
+            "repo-init"
+          ]
+        },
+        {
+          "field": "Visibility",
+          "value": "private / public",
+          "skills": [
+            "repo-init"
+          ]
+        },
+        {
+          "field": "License",
+          "value": "MIT / Apache 2.0 / GPL-AGPL / none (private)",
+          "skills": [
+            "repo-readme"
+          ]
+        },
+        {
+          "field": "README & GitHub metadata",
+          "value": "written: yes/no — badges: CI/Release/License/none — GitHub description & topics set: yes/no",
+          "skills": [
+            "repo-readme"
+          ]
+        },
+        {
+          "field": "Project status",
+          "value": "prototype / active / maintenance / archived",
+          "skills": []
+        }
+      ]
+    },
+    {
+      "number": "2",
+      "name": "Application type & platforms",
+      "rows": [
+        {
+          "field": "Primary platform",
+          "value": "browser web app / Electron / Tauri / native desktop / native mobile / cross-platform mobile (React Native, Expo) / backend service / CLI / library",
+          "skills": [
+            "stack-selection"
+          ]
+        },
+        {
+          "field": "Secondary platforms",
+          "value": "— if single-platform",
+          "skills": [
+            "stack-selection"
+          ]
+        },
+        {
+          "field": "Target OS / browser support",
+          "value": "evergreen browsers (web) / latest 2 OS versions (native, mobile) — adjust if stated otherwise",
+          "skills": [
+            "stack-selection"
+          ]
+        }
+      ]
+    },
+    {
+      "number": "3",
+      "name": "Frontend",
+      "rows": [
+        {
+          "field": "Language",
+          "value": "JavaScript / TypeScript",
+          "skills": [
+            "stack-selection"
+          ]
+        },
+        {
+          "field": "UI framework",
+          "value": "React / Vue / Svelte / Angular / vanilla",
+          "skills": [
+            "frontend-stack-selection"
+          ]
+        },
+        {
+          "field": "Meta-framework",
+          "value": "Next.js / Nuxt / Remix / Astro / none",
+          "skills": [
+            "frontend-stack-selection"
+          ]
+        },
+        {
+          "field": "Module structure",
+          "value": "Feature-Sliced Design, layers+slices (framework default) / flat feature folders / Bulletproof React",
+          "skills": [
+            "frontend-component-structure"
+          ]
+        },
+        {
+          "field": "Bundler",
+          "value": "Vite / Webpack / Turbopack / esbuild / Parcel",
+          "skills": [
+            "frontend-stack-selection"
+          ]
+        },
+        {
+          "field": "Package manager",
+          "value": "npm / pnpm / yarn / bun",
+          "skills": [
+            "frontend-stack-selection"
+          ]
+        },
+        {
+          "field": "Routing / navigation",
+          "value": "library (name it) / client-state only, no router / none (single view)",
+          "skills": [
+            "frontend-routing"
+          ]
+        },
+        {
+          "field": "Auth / session handling (frontend)",
+          "value": "none — no accounts / login-redirect flow, protected routes, session storage (name the approach)",
+          "skills": [
+            "frontend-auth"
+          ]
+        },
+        {
+          "field": "State management",
+          "value": "Redux / Zustand / Context API / MobX / Recoil / none",
+          "skills": [
+            "frontend-stack-selection"
+          ]
+        },
+        {
+          "field": "Data fetching",
+          "value": "REST client / GraphQL client (Apollo, urql) / tRPC / server actions",
+          "skills": [
+            "frontend-stack-selection"
+          ]
+        },
+        {
+          "field": "Design system / shared components",
+          "value": "none — feature-local only / shared component library (name its location)",
+          "skills": [
+            "frontend-design-system"
+          ]
+        },
+        {
+          "field": "Styling approach",
+          "value": "CSS Modules / Tailwind / SCSS+BEM / CSS-in-JS (Emotion, styled-components) / vanilla-extract",
+          "skills": [
+            "frontend-styling-concept"
+          ]
+        },
+        {
+          "field": "Theming / dark mode",
+          "value": "none / light+dark / multi-brand",
+          "skills": [
+            "frontend-theming"
+          ]
+        },
+        {
+          "field": "Motion/animation approach",
+          "value": "CSS transitions only / library (name it) / none stated",
+          "skills": [
+            "frontend-motion"
+          ]
+        },
+        {
+          "field": "Forms & validation",
+          "value": "none built yet / client-only / client+server — library (name it) or hand-rolled",
+          "skills": [
+            "frontend-forms"
+          ]
+        },
+        {
+          "field": "Component dev/doc workshop",
+          "value": "Storybook / Ladle / none",
+          "skills": [
+            "frontend-component-workshop"
+          ]
+        },
+        {
+          "field": "Unit/component tests",
+          "value": "Vitest / Jest / none",
+          "skills": [
+            "frontend-testing"
+          ]
+        },
+        {
+          "field": "E2E tests",
+          "value": "Playwright / Cypress / none",
+          "skills": [
+            "frontend-testing"
+          ]
+        }
+      ]
+    },
+    {
+      "number": "4",
+      "name": "Backend",
+      "rows": [
+        {
+          "field": "Language",
+          "value": "Node.js / Python / Go / Java or Kotlin / Rust / C#/.NET / PHP / Ruby",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Framework",
+          "value": "Express / Fastify / NestJS / Django / FastAPI / Flask / Spring Boot / ASP.NET / Laravel / Rails",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "API style",
+          "value": "REST / GraphQL / gRPC / tRPC / WebSocket",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Realtime / live updates (ask explicitly — see project-profile/SKILL.md)",
+          "value": "none / SSE / Socket.IO / raw WebSocket",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Architecture pattern",
+          "value": "layered (MVC) / clean or hexagonal / DDD / CQRS / microservices / monolith",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Database",
+          "value": "PostgreSQL / MySQL / MongoDB / Redis / SQLite / other",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "ORM / query layer",
+          "value": "Prisma / TypeORM / Drizzle / SQLAlchemy / raw SQL",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Request validation (API boundary)",
+          "value": "Zod / JSON Schema / class-validator / Joi / Yup",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Auth",
+          "value": "session-based / JWT / OAuth2 / SSO",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Background jobs / queue",
+          "value": "none / cron / message queue (name it)",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Transactional email",
+          "value": "Resend / Postmark / SES / SendGrid / none",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "File / object storage",
+          "value": "Cloudflare R2 / S3 / Supabase Storage / none",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "API documentation",
+          "value": "OpenAPI/Swagger / none (types are the docs)",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Search (ask explicitly — see project-profile/SKILL.md)",
+          "value": "none / PostgreSQL full-text / Meilisearch / Algolia",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "AI/LLM integration (ask explicitly — see project-profile/SKILL.md)",
+          "value": "none / direct provider SDK / Vercel AI SDK / LangChain-LangGraph",
+          "skills": [
+            "backend-stack-selection"
+          ]
+        },
+        {
+          "field": "Unit tests (backend)",
+          "value": "Vitest / none",
+          "skills": [
+            "backend-testing"
+          ]
+        },
+        {
+          "field": "Integration/API tests (backend)",
+          "value": "`createCaller()` through the real router / Supertest / none",
+          "skills": [
+            "backend-testing"
+          ]
+        }
+      ]
+    },
+    {
+      "number": "5",
+      "name": "Infrastructure & delivery",
+      "rows": [
+        {
+          "field": "Containerization",
+          "value": "Docker / none",
+          "skills": [
+            "repo-containerization"
+          ]
+        },
+        {
+          "field": "Orchestration",
+          "value": "none / docker-compose / Kubernetes",
+          "skills": [
+            "repo-containerization"
+          ]
+        },
+        {
+          "field": "CI/CD provider",
+          "value": "GitHub Actions / GitLab CI / CircleCI / Jenkins / none",
+          "skills": [
+            "repo-ci"
+          ]
+        },
+        {
+          "field": "CI pipeline stages",
+          "value": "e.g. lint → test → build → deploy",
+          "skills": [
+            "repo-ci"
+          ]
+        },
+        {
+          "field": "Hosting / deploy target",
+          "value": "Vercel / Netlify / AWS / GCP / Azure / self-hosted / on-prem",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Database hosting",
+          "value": "Neon / Supabase / Railway / AWS RDS / self-hosted / Russian-jurisdiction cloud (name it)",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Environments",
+          "value": "dev / staging / production (adjust)",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Secrets management",
+          "value": "`.env` files / secrets manager (name it) / platform env vars",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Monitoring / logging",
+          "value": "Sentry / GlitchTip / Datadog / none",
+          "skills": [
+            "frontend-monitoring"
+          ]
+        },
+        {
+          "field": "Security headers / CSP",
+          "value": "Helmet defaults / nonce-based strict CSP",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Rate limiting / DDoS protection (edge)",
+          "value": "platform built-in / Cloudflare / none",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Incident response",
+          "value": "none / lightweight process (severity + postmortem)",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Uptime monitoring / status page",
+          "value": "Better Uptime / UptimeRobot / none",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Metrics & dashboards",
+          "value": "platform built-in / Prometheus+Grafana(+Loki) / Grafana Cloud / Datadog / none",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Release process",
+          "value": "semantic versioning / calendar-based / none — changelog: auto / manual",
+          "skills": [
+            "repo-release"
+          ]
+        },
+        {
+          "field": "App signing / publisher trust (desktop/mobile only)",
+          "value": "Windows Authenticode / macOS Developer ID + notarization / Android signing / not applicable (web)",
+          "skills": [
+            "repo-release"
+          ]
+        },
+        {
+          "field": "Dependency scanning (ask explicitly — see project-profile/SKILL.md)",
+          "value": "Dependabot / Renovate / none — CI audit gate: yes (`--audit-level=_`) / no",
+          "skills": [
+            "repo-dependency-security"
+          ]
+        }
+      ]
+    },
+    {
+      "number": "6",
+      "name": "Git workflow",
+      "rows": [
+        {
+          "field": "Issue / task tracking",
+          "value": "backlog file (solo) / GitHub Issues / Linear / Jira",
+          "skills": [
+            "repo-tracking"
+          ]
+        },
+        {
+          "field": "Branching model",
+          "value": "trunk-based / GitHub flow / Git flow",
+          "skills": [
+            "repo-commit"
+          ]
+        },
+        {
+          "field": "Commit convention",
+          "value": "Conventional Commits (enforced by Kysaro / commitlint) / freeform",
+          "skills": [
+            "repo-commit"
+          ]
+        },
+        {
+          "field": "PR requirements",
+          "value": "required reviewers: _ / none — required checks:",
+          "skills": [
+            "repo-commit"
+          ]
+        },
+        {
+          "field": "Merge strategy",
+          "value": "squash / merge commit / rebase",
+          "skills": [
+            "repo-commit"
+          ]
+        },
+        {
+          "field": "Linter(s)",
+          "value": "ESLint / Ruff / golangci-lint / ...",
+          "skills": [
+            "repo-lint-format"
+          ]
+        },
+        {
+          "field": "Formatter",
+          "value": "Prettier / Black / gofmt / ...",
+          "skills": [
+            "repo-lint-format"
+          ]
+        },
+        {
+          "field": "Type checking",
+          "value": "TypeScript strict / mypy / none",
+          "skills": [
+            "repo-lint-format"
+          ]
+        },
+        {
+          "field": "Pre-commit hooks",
+          "value": "Husky / pre-commit / none",
+          "skills": [
+            "repo-cleanup` (secret/agent-trace scan hook)",
+            "repo-lint-format` (lint/format hook)"
+          ]
+        }
+      ]
+    },
+    {
+      "number": "7",
+      "name": "Constraints & non-functional requirements",
+      "rows": [
+        {
+          "field": "Performance budget",
+          "value": " ",
+          "skills": [
+            "frontend-performance"
+          ]
+        },
+        {
+          "field": "Accessibility target",
+          "value": "WCAG 2.2 AA (framework default) / AAA / none stated",
+          "skills": [
+            "frontend-accessibility"
+          ]
+        },
+        {
+          "field": "i18n / l10n (ask explicitly — see project-profile/SKILL.md)",
+          "value": "yes — languages: _ / no",
+          "skills": [
+            "frontend-i18n"
+          ]
+        },
+        {
+          "field": "Primary market / user jurisdiction (ask explicitly — see project-profile/SKILL.md)",
+          "value": "Russia / EU / US / global, no specific jurisdiction / other (name it) — can be more than one",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Security / compliance (ask explicitly — see project-profile/SKILL.md)",
+          "value": "152-ФЗ / GDPR / CCPA-CPRA / HIPAA / SOC2 / none stated",
+          "skills": [
+            "repo-hosting"
+          ]
+        },
+        {
+          "field": "Frontend rendering (XSS)",
+          "value": "any raw-HTML rendering (`dangerouslySetInnerHTML`, user-derived URLs) audited / none in use",
+          "skills": [
+            "frontend-security"
+          ]
+        },
+        {
+          "field": "Error/loading/empty states",
+          "value": "has an app-root error boundary: yes / no — loading and empty states: pattern described",
+          "skills": [
+            "frontend-resilience"
+          ]
+        },
+        {
+          "field": "SEO / discoverability (ask explicitly — see project-profile/SKILL.md)",
+          "value": "public pages meant to be indexed/shared: yes — meta tags present: _ / no",
+          "skills": [
+            "frontend-seo"
+          ]
+        },
+        {
+          "field": "Analytics / product telemetry (ask explicitly — see project-profile/SKILL.md)",
+          "value": "yes — tool: _ / no",
+          "skills": [
+            "frontend-analytics"
+          ]
+        },
+        {
+          "field": "Feature flags / experimentation (ask explicitly — see project-profile/SKILL.md)",
+          "value": "yes — tool: _ / no",
+          "skills": [
+            "frontend-feature-flags"
+          ]
+        }
+      ]
+    }
+  ],
+  "skills": {
+    "backend-stack-selection": {
+      "name": "backend-stack-selection",
+      "description": "Use when a project needs a custom backend — deciding language, web framework, API style, architecture pattern, database, ORM, auth mechanism, and background-job approach. Each is a real, bounded 2026 option set with tradeoffs and a stated default, not an open question. Not for the frontend's own client-side auth pattern (frontend-auth) or whether a frontend needs a backend at all (stack-selection routes here once it does).",
+      "basis_date": "2026-11-13",
+      "default": "— the project's own frontend is already TypeScript, or the team's own fluency is in JS/TS |",
+      "path": "skills/backend-stack-selection/SKILL.md"
+    },
+    "backend-testing": {
+      "name": "backend-testing",
+      "description": "Use when deciding what to test and how in a backend project — unit tests for service logic vs. integration tests through the real router/validation chain. Not frontend component/e2e testing (frontend-testing) or deciding the stack itself (backend-stack-selection).",
+      "basis_date": "2026-11-13",
+      "default": "unit-test the service layer, integration-test through the router",
+      "path": "skills/backend-testing/SKILL.md"
+    },
+    "frontend-accessibility": {
+      "name": "frontend-accessibility",
+      "description": "Use when building or reviewing any frontend UI for accessibility — keyboard navigation, screen-reader semantics (aria-*, roles), focus management, color contrast, motion, alt text. Not about styling mechanics or component file structure (frontend-web-styles, frontend-component-structure). Applies to every interactive component, not just forms.",
+      "basis_date": "2026-11-07",
+      "default": "WCAG 2.2 AA",
+      "path": "skills/frontend-accessibility/SKILL.md"
+    },
+    "frontend-analytics": {
+      "name": "frontend-analytics",
+      "description": "Use when a project needs to measure usage, conversion, or retention — tool choice, the cookie-consent consequence of that choice, and event naming. Not for error/performance monitoring (frontend-monitoring) or feature-flag targeting data (frontend-feature-flags), even though some tools do all three.",
+      "basis_date": "2026-11-13",
+      "default": "a privacy-first, cookie-less tool over Google Analytics",
+      "path": "skills/frontend-analytics/SKILL.md"
+    },
+    "frontend-auth": {
+      "name": "frontend-auth",
+      "description": "Use when building or reviewing the client-side side of authentication — where the session lives, protected-route/redirect flow, and logout. Not the server-side auth mechanism itself (project-profile.md's Backend → Auth row covers session-based/JWT/OAuth2/SSO) and not the XSS boundary in general (frontend-security), though this skill leans on it directly.",
+      "basis_date": "2026-11-13",
+      "default": null,
+      "path": "skills/frontend-auth/SKILL.md"
+    },
+    "frontend-component-structure": {
+      "name": "frontend-component-structure",
+      "description": "Use when deciding how a frontend project's files are organized — Feature-Sliced Design's layers and slices (the framework default), each slice's public-API barrel (index.ts), which files are internal, component/file naming. Not about styling mechanics (CSS Modules, tokens — that's frontend-web-styles) or picking a platform (stack-selection). Applies whenever a new slice is created, an existing one is reorganized, or a project is scaffolded.",
+      "basis_date": "2026-11-14",
+      "default": "Feature-Sliced Design (FSD)",
+      "path": "skills/frontend-component-structure/SKILL.md"
+    },
+    "frontend-component-workshop": {
+      "name": "frontend-component-workshop",
+      "description": "Use when deciding whether a project needs an isolated component dev/documentation environment (Storybook or similar), setting one up, or adding visual regression testing to it. Not about which components are shared (frontend-design-system) or component file structure (frontend-component-structure).",
+      "basis_date": "2026-11-13",
+      "default": "Storybook",
+      "path": "skills/frontend-component-workshop/SKILL.md"
+    },
+    "frontend-design-system": {
+      "name": "frontend-design-system",
+      "description": "Use when deciding whether a component should move from feature-local to a shared design-system tier, where shared components live, or how to shape a shared component's variant API. Not about design tokens themselves (frontend-styling-concept) or Storybook/component-workshop tooling (frontend-component-workshop) — this is the promotion rule and the API shape for what's promoted.",
+      "basis_date": "2026-11-13",
+      "default": "— matches frontend-styling-concept's actual recorded default (CSS Modules), not a second, conflicting styling system |",
+      "path": "skills/frontend-design-system/SKILL.md"
+    },
+    "frontend-feature-flags": {
+      "name": "frontend-feature-flags",
+      "description": "Use when a project needs to ship behind a flag, run an A/B test, or have a kill switch for a feature — whether a tool is needed at all, and which one. Not for analytics in general (frontend-analytics), even though some tools combine both.",
+      "basis_date": "2026-11-13",
+      "default": "a hand-rolled flag, not a service, until the need outgrows it",
+      "path": "skills/frontend-feature-flags/SKILL.md"
+    },
+    "frontend-forms": {
+      "name": "frontend-forms",
+      "description": "Use when building or reviewing a form — validation library choice, client/server validation split, error display, and double-submit prevention. Not about a specific field's accessibility semantics beyond error association (frontend-accessibility covers labels/roles generally) or the auth login form specifically (frontend-auth).",
+      "basis_date": "2026-11-13",
+      "default": "React Hook Form + Zod",
+      "path": "skills/frontend-forms/SKILL.md"
+    },
+    "frontend-i18n": {
+      "name": "frontend-i18n",
+      "description": "Use when a project needs more than one UI language, or when deciding whether it does — translation library choice, string extraction, pluralization, locale-aware formatting. Not about RTL layout mechanics or translating backend/email content.",
+      "basis_date": "2026-11-11",
+      "default": "react-i18next",
+      "path": "skills/frontend-i18n/SKILL.md"
+    },
+    "frontend-monitoring": {
+      "name": "frontend-monitoring",
+      "description": "Use when a project ships to real users and needs client-side errors/performance reported somewhere, not just caught and hidden — tool setup, source maps, and PII scrubbing. Not the error boundary/fallback UI itself (frontend-resilience already covers that) — this is what happens to the error after it's caught.",
+      "basis_date": "2026-11-13",
+      "default": "Sentry, wired into the error boundary already in place",
+      "path": "skills/frontend-monitoring/SKILL.md"
+    },
+    "frontend-motion": {
+      "name": "frontend-motion",
+      "description": "Use when adding or reviewing UI animation/transitions — duration/easing tokens, picking CSS vs. an animation library, page-transition vs. component-transition mechanics. Not the prefers-reduced-motion opt-out itself (frontend-accessibility already covers it) or token naming in general (frontend-styling-concept).",
+      "basis_date": "2026-11-13",
+      "default": null,
+      "path": "skills/frontend-motion/SKILL.md"
+    },
+    "frontend-performance": {
+      "name": "frontend-performance",
+      "description": "Use when adding a dependency, a heavy visual feature (map, 3D, chart, animation-heavy view), or a new route — anything that can grow the bundle or slow first render. Not about CI build speed or backend latency.",
+      "basis_date": "2026-11-10",
+      "default": null,
+      "path": "skills/frontend-performance/SKILL.md"
+    },
+    "frontend-resilience": {
+      "name": "frontend-resilience",
+      "description": "Use when a component renders data that can be missing, slow to arrive, or capable of throwing during render — error boundaries, loading states, empty states. Not about network-request retry logic or backend error codes.",
+      "basis_date": "2026-11-10",
+      "default": null,
+      "path": "skills/frontend-resilience/SKILL.md"
+    },
+    "frontend-routing": {
+      "name": "frontend-routing",
+      "description": "Use when deciding whether a frontend needs a router library at all, picking one when it does, or handling the accessibility/performance side-effects of a route change (focus, title, scroll, code-splitting). Not for a meta-framework's own built-in router (Next.js, Remix, Astro already decide this) or for in-component focus management unrelated to navigation (frontend-accessibility).",
+      "basis_date": "2026-11-13",
+      "default": null,
+      "path": "skills/frontend-routing/SKILL.md"
+    },
+    "frontend-security": {
+      "name": "frontend-security",
+      "description": "Use when rendering any HTML that isn't written by hand into JSX — dangerouslySetInnerHTML, a markdown/rich-text renderer, a user-supplied URL used as href/src. Not about backend auth, secrets in commits (repo-cleanup), or CSP/headers at the infra layer.",
+      "basis_date": "2026-11-10",
+      "default": null,
+      "path": "skills/frontend-security/SKILL.md"
+    },
+    "frontend-seo": {
+      "name": "frontend-seo",
+      "description": "Use when a project has pages meant to be publicly indexed or shared (not just an authenticated app shell) — per-route meta tags, Open Graph, canonical URLs, structured data, and whether the rendering strategy even lets crawlers see them. Not for an app with no public, indexable pages.",
+      "basis_date": "2026-11-13",
+      "default": null,
+      "path": "skills/frontend-seo/SKILL.md"
+    },
+    "frontend-stack-selection": {
+      "name": "frontend-stack-selection",
+      "description": "Use when choosing the actual frontend technologies for a new project — UI framework, meta-framework, bundler, package manager, state management, data fetching. Each is a real, bounded set of 2026 options with tradeoffs, not an open-ended question; this skill gives the option matrix, a recommendation, and when to deviate. Not application-type/language (stack-selection, tier 0) or an already-running project's own existing choice (read its project-profile.md instead).",
+      "basis_date": "2026-11-13",
+      "default": null,
+      "path": "skills/frontend-stack-selection/SKILL.md"
+    },
+    "frontend-styling-concept": {
+      "name": "frontend-styling-concept",
+      "description": "Use when deciding or documenting the cross-platform styling architecture for a project — how design tokens flow between web, Electron/Tauri, React Native, or another native UI engine, or when starting a new frontend codebase's style layer from scratch. Not for day-to-day component styling inside an already-set-up web project — that is frontend-web-styles. Not for backend/API/database work.",
+      "basis_date": "2026-11-07",
+      "default": null,
+      "path": "skills/frontend-styling-concept/SKILL.md"
+    },
+    "frontend-testing": {
+      "name": "frontend-testing",
+      "description": "Use when deciding what to test and how in a frontend project — unit tests vs end-to-end, whether to render a component in isolation, test naming/describe-block style. Not about styling or module structure (frontend-web-styles, frontend-component-structure). Applies whenever writing a new test file or deciding a feature needs test coverage.",
+      "basis_date": "2026-11-13",
+      "default": "extract logic, test the function; cover behavior with e2e",
+      "path": "skills/frontend-testing/SKILL.md"
+    },
+    "frontend-theming": {
+      "name": "frontend-theming",
+      "description": "Use when a project needs a light/dark toggle or multiple brand themes — the switching mechanism, not the token names themselves. Not about naming tokens (frontend-styling-concept, which this skill assumes is already followed) or the prefers-reduced-motion opt-out (frontend-accessibility).",
+      "basis_date": "2026-11-13",
+      "default": "CSS light-dark() + color-scheme, not duplicated token sets",
+      "path": "skills/frontend-theming/SKILL.md"
+    },
+    "project-profile": {
+      "name": "project-profile",
+      "description": "Use when connecting an existing project, creating a brand-new one, or whenever the full picture of a project (stack, platforms, infra, workflow) is needed — maintain the one project-profile table. Not for day-to-day coding tasks on an already-profiled project; read the existing profile instead of re-deriving it.",
+      "basis_date": null,
+      "default": null,
+      "path": "skills/project-profile/SKILL.md"
+    },
+    "repo-ci": {
+      "name": "repo-ci",
+      "description": "Use when setting up or reviewing a project's general CI pipeline — provider choice, stage order, caching, and workflow-security basics. Not the release-triggering workflow specifically (repo-release, which is additive on top of this) or the pre-commit hook (repo-lint-format).",
+      "basis_date": "2026-11-13",
+      "default": "GitHub Actions",
+      "path": "skills/repo-ci/SKILL.md"
+    },
+    "repo-commit": {
+      "name": "repo-commit",
+      "description": "Follow murpiano-dx Git rules for task branches, Conventional Commits, project Git linter settings, pull requests, and merges.",
+      "basis_date": "2026-11-13",
+      "default": "— matches this framework's own GitHub-flow default (short-lived task branches, one coherent change per PR) |",
+      "path": "skills/repo-commit/SKILL.md"
+    },
+    "repo-containerization": {
+      "name": "repo-containerization",
+      "description": "Use when deciding whether a project needs Docker/docker-compose at all, or setting one up once it does. Not for a deploy target that doesn't need it (static hosting, a managed platform that builds from source directly).",
+      "basis_date": "2026-11-13",
+      "default": null,
+      "path": "skills/repo-containerization/SKILL.md"
+    },
+    "repo-dependency-security": {
+      "name": "repo-dependency-security",
+      "description": "Use when setting up or reviewing automated dependency-vulnerability scanning and update automation (npm audit, Dependabot, Renovate) for a project.",
+      "basis_date": "2026-11-12",
+      "default": null,
+      "path": "skills/repo-dependency-security/SKILL.md"
+    },
+    "repo-hosting": {
+      "name": "repo-hosting",
+      "description": "Use when deciding where a project is hosted, how many environments it needs, how secrets are managed, and whether a compliance framework applies. Each is a real option set with tradeoffs and a default — not a question to leave to the owner unprompted. Not CI/CD pipeline stages (repo-ci) or containerization itself (repo-containerization).",
+      "basis_date": "2026-11-13",
+      "default": "— a managed-platform deployment (this skill's own Hosting default) already gets this for free, nothing to configure |",
+      "path": "skills/repo-hosting/SKILL.md"
+    },
+    "repo-init": {
+      "name": "repo-init",
+      "description": "Initialize a project with murpiano-dx on request, offer a GitHub origin and Git linter, remember decisions, and resume setup.",
+      "basis_date": null,
+      "default": null,
+      "path": "skills/repo-init/SKILL.md"
+    },
+    "repo-lint-format": {
+      "name": "repo-lint-format",
+      "description": "Use when setting up or reviewing a project's linter, formatter, and pre-commit hook for them — tool choice per language and what runs locally (fast, staged-files-only) vs. in CI (the full, authoritative check). Not the commit-message/agent-trace hook (repo-cleanup) or the CI workflow structure itself (repo-ci).",
+      "basis_date": "2026-11-13",
+      "default": null,
+      "path": "skills/repo-lint-format/SKILL.md"
+    },
+    "repo-readme": {
+      "name": "repo-readme",
+      "description": "Use when writing, reviewing, or updating a repository README, GitHub description, website, topics, or badges.",
+      "basis_date": null,
+      "default": "— a project with nothing specific pushing toward a stronger license |",
+      "path": "skills/repo-readme/SKILL.md"
+    },
+    "repo-release": {
+      "name": "repo-release",
+      "description": "Use when managing releases, tests, CI, release notes, or release automation.",
+      "basis_date": "2026-11-14",
+      "default": "— any project with real external consumers (an npm package, a library, an API with a client), which this framework assumes by default |",
+      "path": "skills/repo-release/SKILL.md"
+    },
+    "repo-tracking": {
+      "name": "repo-tracking",
+      "description": "Use when deciding how a project tracks issues, bugs, and feature work — a dedicated tracker vs. a plain file, and how tightly it ties to commits/PRs. Not this framework's own BACKLOG.md pattern specifically (that's a worked example of the \"no team\" row below) or PR requirements themselves (repo-commit).",
+      "basis_date": "2026-11-13",
+      "default": null,
+      "path": "skills/repo-tracking/SKILL.md"
+    },
+    "stack-selection": {
+      "name": "stack-selection",
+      "description": "Use when starting a brand-new application from scratch, before any code exists — deciding the application type (web, Electron/Tauri desktop, native desktop, native/cross-platform mobile, backend service, ...) and its language/framework, then routing to the matching domain's skills. Not for adding a feature to a project whose stack is already chosen — read that domain's own skills instead (e.g. frontend-styling-concept for an existing frontend).",
+      "basis_date": null,
+      "default": null,
+      "path": "skills/stack-selection/SKILL.md"
+    }
+  }
+}
