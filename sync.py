@@ -161,27 +161,33 @@ def bootstrap_workspace_files(update_runtime=False, source_root=None):
 
 
 def update_skills_tree(source, target):
-    """Force-update skills/ content, except each skill's own templates/.
+    """Force-update skills/ content, except the specific personal-override
+    templates select_template() knows about.
 
     skills/ is the framework's shared knowledge base (SKILL.md, rules.md,
     scripts) - owners aren't meant to hand-edit it, overrides belong under
     rules/ (see global/agent-rules.md) - so a bugfix there must reach an
     already-provisioned workspace the same way a global/ change does, not
-    sit frozen at whatever version first installed it. The one established
-    exception is a skill's own templates/ subdirectory (e.g.
-    repo-readme/templates/README.md, repo-release/templates/release-notes.md):
-    select_template()'s own precedence rule depends on a personal copy there
-    staying exactly as the owner left it, so those paths stay additive-only
-    (new default templates arrive; an existing personal one is never touched).
+    sit frozen at whatever version first installed it. The exception is
+    narrow and explicit: exactly the paths in TEMPLATE_LOCATIONS (e.g.
+    repo-readme/templates/README.md, repo-release/templates/release-notes.md)
+    - select_template()'s own precedence rule depends on a personal copy
+    there staying exactly as the owner left it. This is deliberately not
+    "every path under any templates/ directory": project-profile/templates/
+    project-profile.md and decision.md, for example, are master references
+    every project's own profile is filled in from, not an override point -
+    they must force-update like any other skill file, same as a skill's own
+    templates/ that isn't in TEMPLATE_LOCATIONS (repo-lint-format,
+    frontend-web-styles, repo-readme/templates/LICENSE, ...).
     """
+    preserved = {relative.relative_to('skills') for relative in TEMPLATE_LOCATIONS.values()}
     for item in source.rglob('*'):
         relative = item.relative_to(source)
         destination = target / relative
         if item.is_dir():
             destination.mkdir(parents=True, exist_ok=True)
             continue
-        is_template = 'templates' in relative.parts[:-1]
-        if is_template and destination.exists():
+        if relative in preserved and destination.exists():
             continue
         destination.parent.mkdir(parents=True, exist_ok=True)
         if not destination.exists() or destination.read_bytes() != item.read_bytes():
