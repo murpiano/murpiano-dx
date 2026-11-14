@@ -102,9 +102,9 @@
     border-left: 1px solid var(--border);
     padding: 20px;
     position: sticky;
-    top: 0;
+    top: var(--header-h, 0px);
     align-self: flex-start;
-    max-height: 100vh;
+    max-height: calc(100vh - var(--header-h, 0px));
     overflow-y: auto;
   }
   #panel .placeholder { color: var(--text-dim); font-size: 0.85rem; }
@@ -211,6 +211,16 @@ async function main() {
     chip.addEventListener("click", () => showSkill(chip.dataset.skill));
   });
   document.getElementById("overlay").addEventListener("click", closePanel);
+  trackHeaderHeight();
+}
+
+function trackHeaderHeight() {
+  const header = document.querySelector("header");
+  const apply = () => {
+    document.documentElement.style.setProperty("--header-h", header.offsetHeight + "px");
+  };
+  apply();
+  new ResizeObserver(apply).observe(header);
 }
 
 function renderSections(sections) {
