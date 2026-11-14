@@ -1254,6 +1254,16 @@ fi
         self.assertIn('Second fix', result.stdout)
         self.assertEqual(self.git(self.project, 'tag').stdout.strip(), 'v1.0.0')
 
+    def test_release_body_keeps_sentences_shaped_like_trailers(self):
+        self.git(self.project, 'tag', 'v1.0.0')
+        self.git(self.project, 'commit', '--allow-empty', '-qm', 'fix: wire up cors',
+                 '-m', "credentials: true needs a named origin, not a wildcard.",
+                 '-m', 'Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>')
+        result = self.run_cmd(['bash', str(self.dx / 'skills/repo-release/release.sh'), '--dry-run'],
+                              self.project)
+        self.assertIn('credentials: true needs a named origin, not a wildcard.', result.stdout)
+        self.assertNotIn('Co-Authored-By', result.stdout)
+
     def test_personal_template_and_missing_file_fallback(self):
         personal = self.dx / 'templates'
         personal.mkdir()

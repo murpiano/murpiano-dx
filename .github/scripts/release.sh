@@ -32,9 +32,13 @@ breaking=() added=() fixed=()
 
 entry() {
   local subject=$1 body=$2 paragraph
-  # First paragraph of the body, without trailers, joined into one line.
-  paragraph=$(printf '%s\n' "$body" | sed '/^[A-Za-z-]*: /d; /^BREAKING CHANGE/d' |
-    awk 'NF {printf "%s%s", sep, $0; sep = " "; seen = 1; next} seen {exit}')
+  # All body paragraphs, without trailers, joined into one concrete summary.
+  # Only strips known trailer keys, never a generic "word: " line - a body
+  # sentence legitimately starting that way (e.g. "credentials: true...",
+  # "backend-project-setup: ...") must survive.
+  paragraph=$(printf '%s\n' "$body" | sed '/^Co-Authored-By:/Id; /^BREAKING CHANGE/d' |
+    sed 's/^[[:space:]]*[-*+][[:space:]]*//; s/^[[:space:]]*[0-9]\+[.)][[:space:]]*//' |
+    awk 'NF {printf "%s%s", sep, $0; sep = " "; seen = 1} END {if (seen) print ""}')
   if [ -n "$paragraph" ]; then
     printf -- '- %s\n  %s' "$subject" "$paragraph"
   else
@@ -97,6 +101,35 @@ trap 'rm -f "$notes"' EXIT
   remote=$(git remote get-url origin 2>/dev/null | sed -E 's#^git@github\.com:#https://github.com/#; s#\.git$##')
   [ -n "$remote" ] && printf 'Full diff: %s/compare/%s...%s\n' "$remote" "$last" "$tag"
 } >"$notes"
+
+# Keep generated notes concise and consistent: remove duplicate body points and
+# let the latest equivalent point win. Reject non-English generated content.
+python3 - "$notes" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+if re.search(r"[\u0400-\u04ff]", text):
+    raise SystemExit("Generated release notes must be strictly English; Cyrillic text found.")
+
+seen = {}
+out = []
+for line in text.splitlines():
+    if line.startswith("  "):
+        normalized = re.sub(r"[^a-z0-9]+", " ", line.lower()).strip()
+        words = normalized.split()
+        # The first four words identify the described point in normal commit
+        # bodies. A later point with the same key supersedes an earlier one.
+        key = " ".join(words[:4]) if len(words) >= 4 else normalized
+        if key in seen:
+            out[seen[key]] = line
+            continue
+        seen[key] = len(out)
+    out.append(line)
+path.write_text("\n".join(out) + "\n")
+PY
 
 # CI reads a committed project copy; it never needs access to personal notes.
 template="$(git rev-parse --show-toplevel)/.github/release-notes.md"

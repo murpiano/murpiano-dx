@@ -124,7 +124,9 @@ Or, if the CLI is already on this machine: `murpiano-dx restore [url]`. Then
 
 ```bash
 python3 -B -m unittest discover -s tests -v
-bash -n install.sh sync.sh murpiano-dx skills/repo-release/release.sh
+bash -n murpiano-dx install.sh sync.sh skills/repo-release/release.sh \
+        skills/repo-cleanup/scan-traces.sh skills/repo-cleanup/pre-commit-hook.sh \
+        skills/repo-cleanup/commit-msg-hook.sh skills/repo-cleanup/patterns.sh
 ```
 
 ## Where things live
