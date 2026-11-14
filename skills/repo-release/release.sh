@@ -33,7 +33,10 @@ breaking=() added=() fixed=()
 entry() {
   local subject=$1 body=$2 paragraph
   # All body paragraphs, without trailers, joined into one concrete summary.
-  paragraph=$(printf '%s\n' "$body" | sed '/^[A-Za-z-]*: /d; /^BREAKING CHANGE/d' |
+  # Only strips known trailer keys, never a generic "word: " line - a body
+  # sentence legitimately starting that way (e.g. "credentials: true...",
+  # "backend-project-setup: ...") must survive.
+  paragraph=$(printf '%s\n' "$body" | sed '/^Co-Authored-By:/Id; /^BREAKING CHANGE/d' |
     sed 's/^[[:space:]]*[-*+][[:space:]]*//; s/^[[:space:]]*[0-9]\+[.)][[:space:]]*//' |
     awk 'NF {printf "%s%s", sep, $0; sep = " "; seen = 1} END {if (seen) print ""}')
   if [ -n "$paragraph" ]; then
