@@ -141,6 +141,7 @@ mechanism a custom backend implements.
 | Uptime monitoring / status page | Better Uptime / UptimeRobot / none | `repo-hosting` |
 | Metrics & dashboards | platform built-in / Prometheus+Grafana(+Loki) / Grafana Cloud / Datadog / none | `repo-hosting` |
 | Release process | semantic versioning / calendar-based / none — changelog: auto / manual | `repo-release` |
+| App signing / publisher trust (desktop/mobile only) | Windows Authenticode / macOS Developer ID + notarization / Android signing / not applicable (web) | `repo-release` |
 | Dependency scanning (ask explicitly — see project-profile/SKILL.md) | Dependabot / Renovate / none — CI audit gate: yes (`--audit-level=_`) / no | `repo-dependency-security` |
 
 ## 6. Git workflow

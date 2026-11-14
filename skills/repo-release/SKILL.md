@@ -5,7 +5,8 @@ description: Use when managing releases, tests, CI, release notes, or release au
 
 # Releases
 
-Governs `project-profile.md` fields: Infrastructure & delivery → Release process.
+Governs `project-profile.md` fields: Infrastructure & delivery → Release process,
+App signing / publisher trust (desktop/mobile only).
 
 Releases follow successful CI on `main`. The agent manages them only when requested.
 Commit work belongs to `repo-commit`; README authoring belongs to `repo-readme`.
@@ -74,6 +75,15 @@ and public repositories have the Release badge. Pause/resume is verified with
 
 ## Basis (checked 2026-11-14)
 
+- Windows Authenticode code-signing certificates issued on or after
+  2026-03-01 are capped at 460 days validity under the CA/Browser Forum's
+  Code Signing Baseline Requirements (down from the older 1-3 year norm) —
+  [Code Signing Certificates Drop to 460 Days in 2026](https://www.appviewx.com/blogs/460-day-code-signing-certificate-2026/).
+  Whether an EV certificate still grants an instant SmartScreen reputation
+  bypass is actively disputed across 2026 sources (older guidance says yes,
+  newer posts say no) — stated as genuinely unresolved rather than picking
+  a side without a primary Microsoft source, e.g.
+  [Windows EV certificate — ngrok](https://ngrok.com/blog/windows-ev-certificate).
 - Generated release notes are the commit subject only, one bullet per
   commit, never commit-body prose — checked directly against the
   actual specs, not memory, after the owner challenged whether this

@@ -41,6 +41,31 @@ run when CI fails. Public repositories may show the Release badge.
 Verify tests, CI, README, metadata, and tags before publishing. For an experimental
 framework the first release is `v0.1.0` unless the user specifies another version.
 
+## App signing / publisher trust (desktop/mobile only)
+
+Not an e-signature/legal-document question — this is about the built app itself
+being trusted by the OS and the user, independent of what the app does. Ask only
+when the project ships a desktop or mobile binary; not applicable for a web/SaaS
+app with no installable artifact.
+
+| Platform | Option | Pick it when |
+|---|---|---|
+| **Windows** | Authenticode (OV or EV) code-signing certificate on the `.exe`/`.msi` | Any Windows installer — unsigned binaries trigger an "Unknown publisher" SmartScreen warning. Certificates issued from 2026-03-01 are capped at 460 days validity (CA/Browser Forum baseline requirement); plan renewal around that, not the old 1-3 year assumption. EV no longer reliably grants an instant SmartScreen reputation bump by itself — treat it as a nice-to-have, not a guaranteed bypass |
+| **macOS** | Apple Developer ID certificate + notarization | Any macOS app distributed outside the Mac App Store — without it, Gatekeeper blocks the app with a hard warning the user has to bypass manually. Requires an active Apple Developer Program membership |
+| **Android** | APK/AAB signing (self-signed key, or Google Play App Signing when distributed through Play) | Required by the platform regardless of trust goals — every APK must be signed to install at all; Play Store's own reputation (Play Protect) carries most of the user-facing trust signal, no paid certificate needed |
+| **None** | **Default for a web/SaaS app** — nothing to sign when there's no installable binary |
+
+**Default: sign for the platform(s) actually shipped** — this isn't optional
+polish once a desktop/mobile build exists; an unsigned Windows/macOS build reads
+as broken or malicious to most users, which directly undercuts the "made with
+care" impression a product should give. Treat it as part of the release
+checklist for that platform, not a later nice-to-have.
+
+**Release checksums.** Publish a SHA-256 checksum (or signature) file alongside
+each GitHub Release's downloadable artifacts regardless of platform — lets a
+user verify what they downloaded wasn't tampered with in transit, cheap to add
+to the existing release workflow.
+
 ## npm package
 
 The npm package contains runtime files only. Keep `package.json` `files` as an
