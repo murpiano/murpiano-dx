@@ -16,9 +16,12 @@ footer, and links; fill placeholders with verified project facts. Follow explici
 conditional instructions, including kind-based renames and drops. Existing README
 structure does not override the template. Only an explicit user instruction
 permits a departure. Preserve any existing agent entry-point notice as the first
-line. Keep the footer's four links exactly as written, inside `<sub>` and
-separated by ` · `, with the license link last. Do not omit the license link
-unless the project is `personal-brand` and genuinely has no `LICENSE` file.
+line. Keep the footer exactly as written in the selected template — the
+distribution template's footer is three identity/contact links inside `<sub>`,
+separated by ` · `; the License badge lives in the top badge row instead, so
+the footer never repeats a license link. A personal workspace override may
+replace the footer with something else entirely (e.g. an authorship badge) —
+preserve that shape, don't fall back to the distribution one.
 Keep unrelated development traces out of public product documentation.
 
 ## Identity
@@ -42,7 +45,9 @@ them; pick a small, relevant mix of what it does (e.g. `clipboard-manager`,
 `travel`) and what it's built with (language, framework, notable library,
 platform/OS if relevant), only topics a user would actually search by. The CI
 badge requires a working `.github/workflows/ci.yml`. The Release badge requires
-a public repository and at least one published release. Remove stale badges.
+a public repository and at least one published release. The License badge
+requires a `LICENSE` file; it belongs in the top badge row, never the footer.
+Remove stale badges.
 
 ## Review
 

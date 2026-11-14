@@ -84,7 +84,7 @@ def required_kinds(comment):
 
 
 def rename_choices(comment):
-    return re.findall(r'rename to "(#{2,6} [^"]+)"', comment)
+    return re.findall(r'rename to\s+"(#{2,6} [^"]+)"', comment)
 
 
 def check(readme, template, kind=None):
@@ -107,8 +107,10 @@ def check(readme, template, kind=None):
 
     source = without_comments(template)
     placeholders = set(re.findall(r'<[^<>\n]+>|\{\{[^{}\n]+\}\}', source))
-    placeholders = {p for p in placeholders if not re.fullmatch(r'</?[a-z][a-z0-9]*(?: /)?>', p)}
-    # Lowercase tokens such as <repo> are placeholders, whereas <sub> is HTML.
+    placeholders = {p for p in placeholders
+                    if not re.fullmatch(r'</?[a-z][a-z0-9]*(\s+[a-z-]+="[^"]*")*\s*/?>', p)}
+    # Lowercase tokens such as <repo> are placeholders, whereas <sub> and an
+    # attributed tag like <img src="..." height="48"> are real HTML.
     placeholders.update(p for p in ('<repo>', '<url>', '<dir>', '<path>', '<owner>', '<anchor>')
                         if p in source)
     for placeholder in sorted(placeholders):

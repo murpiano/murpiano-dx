@@ -15,8 +15,8 @@
   }
   :root {
     color-scheme: light;
-    --motion-float: 4s;
-    --ease-float: cubic-bezier(.45, 0, .55, 1);
+    --motion-float: 6s;
+    --ease-float: cubic-bezier(.42, 0, .58, 1);
   }
   * { box-sizing: border-box; }
   html, body { width: 100%; min-width: 320px; min-height: 100%; margin: 0; background: #fff; }
@@ -26,33 +26,42 @@
     width: min(100vw, 1724px);
     aspect-ratio: 1724 / 912;
     overflow: hidden;
-    background: #fff url("./logo.png") center / 100% 100% no-repeat;
+    background: #fff url("./logo-background.png") center / 100% 100% no-repeat;
     isolation: isolate;
+  }
+  .core-breathe {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
   }
   .core-glow {
     position: absolute;
-    z-index: 2;
-    left: 38.4%;
-    top: 28.2%;
-    width: 23.2%;
+    left: 35%;
+    top: 21.8%;
+    width: 30%;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(124, 220, 255, .08) 50%, rgba(73, 204, 255, .3) 64%, rgba(73, 204, 255, 0) 76%);
-    filter: blur(3px);
-    animation: glow-pulse var(--motion-float) var(--ease-float) infinite;
+    background: radial-gradient(circle, rgba(73, 204, 255, .5) 42%, rgba(73, 204, 255, .32) 59%, rgba(73, 204, 255, 0) 78%);
+    opacity: .95;
+    filter: blur(13px);
+    transform: scale(.86);
+    animation: glow-breathe var(--motion-float) var(--ease-float) infinite;
+    will-change: transform, opacity, filter;
   }
   .core-art {
     position: absolute;
-    z-index: 3;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: fill;
-    transform-origin: 50% 50.4%;
-    -webkit-mask-image: radial-gradient(circle at 50% 50.4%, #000 0 10.5%, rgba(0, 0, 0, .96) 11.8%, rgba(0, 0, 0, .45) 13.2%, transparent 15%);
-    mask-image: radial-gradient(circle at 50% 50.4%, #000 0 10.5%, rgba(0, 0, 0, .96) 11.8%, rgba(0, 0, 0, .45) 13.2%, transparent 15%);
-    animation: core-breathe var(--motion-float) var(--ease-float) infinite;
-    will-change: transform, filter;
+    left: 33.76%;
+    top: 19.74%;
+    width: 32.48%;
+    height: auto;
+    transform-origin: center;
+    will-change: transform;
+  }
+  .core-inner {
+    animation: core-lead var(--motion-float) var(--ease-float) infinite;
+  }
+  .core-ring {
+    animation: core-follow var(--motion-float) var(--ease-float) infinite;
   }
   .label {
     position: absolute;
@@ -77,23 +86,30 @@
   }
   .label.left { left: 10.15%; width: 18.45%; }
   .label.right { left: 77.75%; width: 18.2%; }
-  @keyframes core-breathe {
-    0%, 100% { transform: scale(.975); filter: drop-shadow(0 6px 10px rgba(48, 181, 230, .08)); }
-    50% { transform: scale(1.035); filter: drop-shadow(0 13px 19px rgba(48, 181, 230, .31)); }
+  @keyframes core-lead {
+    0%, 100% { transform: scale(1); }
+    45% { transform: scale(1.12); }
   }
-  @keyframes glow-pulse {
-    0%, 100% { transform: scale(.92); opacity: .48; }
-    50% { transform: scale(1.1); opacity: 1; }
+  @keyframes core-follow {
+    0%, 8%, 100% { transform: scale(1); }
+    55% { transform: scale(1.16); }
+  }
+  @keyframes glow-breathe {
+    0%, 8%, 100% { transform: scale(.86); }
+    55% { transform: scale(1.32); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .core-art, .core-glow { animation: none; }
+    .core-glow, .core-inner, .core-ring { animation: none; }
   }
 </style>
 </head>
 <body>
 <main class="diagram" aria-label="murpiano Developer Experience framework capability map">
-  <div class="core-glow" aria-hidden="true"></div>
-  <img class="core-art" src="./logo.png" alt="">
+  <div class="core-breathe" aria-hidden="true">
+    <div class="core-glow"></div>
+    <img class="core-art core-inner" src="./logo-core.png" alt="">
+    <img class="core-art core-ring" src="./logo-ring.png" alt="">
+  </div>
   <div class="label left" style="--y:.052632">Context, Memory<br>&amp; Sync</div>
   <div class="label left" style="--y:.208333">Rules &amp; Agent<br>Setup</div>
   <div class="label left" style="--y:.364035">Project Data<br>&amp; Migration</div>

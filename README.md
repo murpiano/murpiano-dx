@@ -171,4 +171,4 @@ Mostly used by setup and the agent, but every command runs standalone:
 
 ---
 
-<sub>[Bogdan Trotsenko](https://github.com/murpiano) · [murpiano](https://github.com/murpiano) · [Telegram](https://t.me/murpiano) · [MIT](LICENSE)</sub>
+<a href="https://github.com/murpiano"><img src="resources/murpiano-signature.png" alt="Authored by murpiano" height="75"></a>

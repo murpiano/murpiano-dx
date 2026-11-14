@@ -21,9 +21,10 @@
 <What it is, in one sentence.> <What it is built on, in one short sentence.>
 
 <!-- Only badges that already show a real status: CI if .github/workflows/ci.yml exists,
-     Release if releases are on. Neither: drop this block. -->
+     Release if releases are on, License if a LICENSE file exists. Drop any that don't apply. -->
 [![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/<owner>/<repo>?color=informational)](https://github.com/<owner>/<repo>/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
 
 <!-- Link only to headings you actually kept below. -->
 [<Anchor>](#<anchor>) · [<Anchor>](#<anchor>)
@@ -121,4 +122,5 @@ Base URL: `<url>`
 
 ---
 
-<sub>[<Your name or handle>](<your-profile-url>) · [<Your org, if any>](<your-org-url>) · [<Contact>](<contact-url>) · [<License>](LICENSE)</sub>
+<!-- License already shown as a badge above — don't repeat it here. -->
+<sub>[<Your name or handle>](<your-profile-url>) · [<Your org, if any>](<your-org-url>) · [<Contact>](<contact-url>)</sub>

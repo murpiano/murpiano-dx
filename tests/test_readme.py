@@ -55,24 +55,26 @@ class ReadmeContract(unittest.TestCase):
         self.assertEqual(CHECKER.check('## CLI\n', template), [])
         self.assertTrue(CHECKER.check('## Configuration\n', template))
 
-    def test_showcase_footer_requires_sub_separators_and_local_license(self):
+    def test_showcase_footer_requires_sub_separators_and_no_footer_license(self):
+        # License is a top-row badge now (see test_bundled_distribution_template
+        # also carries a License badge above the footer) — the distribution
+        # footer itself holds no license link to duplicate it.
         footer = ('<sub>[<Your name or handle>](<your-profile-url>) · '
                   '[<Your org, if any>](<your-org-url>) · '
-                  '[<Contact>](<contact-url>) · '
-                  '[<License>](LICENSE)</sub>')
+                  '[<Contact>](<contact-url>)</sub>')
         bundled = (ROOT / 'skills/repo-readme/templates/README.md').read_text()
         self.assertEqual(bundled.strip().splitlines()[-1], footer)
+        self.assertIn('[![License: MIT]', bundled)
         template = '## Rough edges\n\n---\n\n' + footer + '\n'
         filled = template.replace('<Your name or handle>', 'Jane').replace(
             '<your-profile-url>', 'https://example.com/jane').replace(
             '<Your org, if any>', 'Acme').replace('<your-org-url>', 'https://example.com').replace(
-            '<Contact>', 'Contact').replace('<contact-url>', 'https://example.com/contact').replace(
-            '<License>', 'MIT')
+            '<Contact>', 'Contact').replace('<contact-url>', 'https://example.com/contact')
         self.assertEqual(CHECKER.check(filled, template), [])
         filled_footer = filled.strip().splitlines()[-1]
-        for wrong in (filled_footer.replace(' · [MIT](LICENSE)', ''), filled_footer.replace(' · ', ' '),
-                      filled_footer.removeprefix('<sub>').removesuffix('</sub>'),
-                      filled_footer.replace('(LICENSE)', '(https://example.com/LICENSE)')):
+        for wrong in (filled_footer.replace(' · [Contact](https://example.com/contact)', ''),
+                      filled_footer.replace(' · ', ' '),
+                      filled_footer.removeprefix('<sub>').removesuffix('</sub>')):
             self.assertTrue(CHECKER.check(filled.replace(filled_footer, wrong), template))
 
     def test_bundled_distribution_template_has_no_real_identity(self):
@@ -96,6 +98,26 @@ class ReadmeContract(unittest.TestCase):
         self.assertEqual(CHECKER.check(renamed, template, kind='npm-package'), [])
         unrelated_heading = '## Something else\n\n## Rough edges\n\n---\n\n<sub>text</sub>\n'
         self.assertTrue(CHECKER.check(unrelated_heading, template, kind='app'))
+
+    def test_rename_choice_matches_across_a_wrapped_comment_line(self):
+        # The distribution template itself wraps "rename to" and the quoted
+        # heading across two comment lines; a regex requiring them on one
+        # line would silently accept no renames at all here.
+        template = ('## API\n<!-- kind: framework. CLI tool: rename to\n'
+                    '     "## CLI" and show the help output. -->\n\n'
+                    '## Rough edges\n\n---\n\n<sub>text</sub>\n')
+        renamed = '## CLI\n\n## Rough edges\n\n---\n\n<sub>text</sub>\n'
+        self.assertEqual(CHECKER.check(renamed, template, kind='framework'), [])
+
+    def test_attributed_html_tag_in_footer_is_not_an_unfilled_placeholder(self):
+        # An <img ...> or <a href="..."> footer (the authorship-signature
+        # badge) must not be flagged as a leftover "<...>" placeholder just
+        # because it carries attributes, unlike a bare tag such as <sub>.
+        footer = ('<a href="https://github.com/murpiano">'
+                  '<img src="resources/murpiano-signature.png" alt="Authored by murpiano" height="48">'
+                  '</a>')
+        template = '## Rough edges\n\n---\n\n' + footer + '\n'
+        self.assertEqual(CHECKER.check(template, template), [])
 
     def test_framework_keeps_agent_notice_as_first_line(self):
         first = (ROOT / 'README.md').read_text().splitlines()[0]

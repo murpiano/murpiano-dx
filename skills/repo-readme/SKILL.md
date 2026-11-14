@@ -46,7 +46,9 @@ reflexively.
 
 Keep the description short and specific. Use a small set of relevant topics and
 set the website only when it is real and maintained. Add a CI badge only when the
-workflow exists and a Release badge only for a public repository with releases.
+workflow exists, a Release badge only for a public repository with releases, and
+a License badge only when `LICENSE` exists — the License badge lives in the top
+badge row; never repeat a license link in the footer once it's there.
 
 Read the user's `rules/readme.md`. Resolve each requested template with
 `bash <murpiano-dx>/sync.sh template --kind readme` or `--kind description`,
@@ -93,11 +95,15 @@ The selected template is mandatory, not inspiration. Preserve its fixed section
 names and order, static text, footer, and links. Replace placeholders with facts
 verified in the repository. The existing README never overrides the template.
 Apply conditional instructions in the template, such as using CLI instead of API,
-or dropping a section for the chosen kind. Keep the footer exactly as written:
-all four links inside `<sub>`, separated by ` · `, with the license link pointing
-to `LICENSE`. Do not omit the license link, except for a `personal-brand` page
-that genuinely has no `LICENSE` file — confirm that with the user before dropping it.
-Depart from the contract only when the user explicitly requests the exception.
+or dropping a section for the chosen kind. Keep the footer exactly as written —
+whatever links or badge the selected template's own footer actually has; the
+distribution template's footer is three identity/contact links inside `<sub>`,
+separated by ` · `, with no license link (the License badge, top row, already
+covers that — don't duplicate it below). A personal workspace template may
+replace the footer with something else entirely (e.g. an authorship-signature
+badge instead of text links) — preserve whatever that override actually
+contains, don't fall back to the distribution shape. Depart from the contract
+only when the user explicitly requests the exception.
 If the selected template differs from the user's stated template, resolve the
 discrepancy before editing; do not silently substitute another template.
 
