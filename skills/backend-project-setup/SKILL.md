@@ -178,6 +178,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   NODE_ENV: z.enum(['development', 'production', 'test']),
+  FRONTEND_ORIGIN: z.string().url(),
 });
 export const env = envSchema.parse(process.env);
 ```
@@ -192,14 +193,20 @@ request bodies.
 import Fastify from 'fastify';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import cors from '@fastify/cors';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import { appRouter } from './trpc/router';
 import { createContext } from './trpc/context';
+import { env } from './env';
 
 const app = Fastify({ logger: true }); // Pino — Fastify's built-in
                                         // structured logger, not a
                                         // separate dependency
 app.register(helmet);                  // standard security headers
+app.register(cors, {
+  origin: env.FRONTEND_ORIGIN,         // the frontend's actual origin —
+  credentials: true,                   // never '*' once credentials is true
+});
 app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
 app.register(fastifyTRPCPlugin, {
   prefix: '/trpc',
@@ -207,6 +214,18 @@ app.register(fastifyTRPCPlugin, {
 });
 app.listen({ port: 3000 });
 ```
+
+`FRONTEND_ORIGIN` joins `env.ts`'s schema above
+(`z.string().url()`, e.g. `http://localhost:5173` in dev, the real
+deployed frontend URL in production) — a frontend and backend almost
+never share an origin even same-repo (different dev-server ports,
+separate deploy targets), and Step 6's cookie-based session needs
+`credentials: true` plus a named origin to work at all; the browser
+rejects a cross-origin cookie request against a wildcard `origin: '*'`
+outright. **This is the piece most often half-done**: `@fastify/cors`
+gets installed (it's in the command above) but never actually
+registered, or registered with no origin restriction — both leave the
+API either unreachable from the frontend or open to any origin.
 
 `logger: true` turns on Pino, which Fastify already ships with — no
 separate logging library to add. This is the backend's structured-log
