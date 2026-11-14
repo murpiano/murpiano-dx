@@ -37,7 +37,7 @@ implements so the chain stays visible.
 
 ```
 pnpm init
-pnpm add fastify @fastify/cookie @trpc/server zod
+pnpm add fastify @trpc/server zod better-auth
 pnpm add -D typescript tsx @types/node
 ```
 
@@ -61,8 +61,11 @@ src/
     schema.prisma
     client.ts                 # one shared Prisma client instance
   trpc/
+    trpc.ts                   # tRPC init — router()/publicProcedure/protectedProcedure
     router.ts                 # merges every feature router
     context.ts                # per-request context (session, db client)
+  auth.ts                     # Better Auth instance
+  env.ts                      # validated process.env (Step 4)
   server.ts                   # Fastify instance, plugin registration
 ```
 
@@ -124,6 +127,18 @@ don't scaffold placeholder models. Then:
 ```
 npx prisma migrate dev --name init
 ```
+
+```ts
+// src/db/client.ts — the one shared instance every feature imports
+import { PrismaClient } from '@prisma/client';
+
+export const prisma = new PrismaClient();
+```
+
+Import `prisma` from here everywhere a feature needs the database —
+never call `new PrismaClient()` a second time; each instance opens its
+own connection pool, and a second one is a real, easy-to-miss resource
+leak, not just a style preference.
 
 Every schema change from here on is a new named migration, never a
 hand-edited database — this is what makes the migration history itself
@@ -187,6 +202,39 @@ Fail at boot, not three requests into production, if a required env var
 is missing or malformed — the same runtime-validation reasoning as the
 Request-validation row above, applied to configuration instead of
 request bodies.
+
+```ts
+// src/trpc/router.ts — every feature's router merges in here (Step 5
+// adds one `<feature>: <feature>Router` entry per feature; empty until
+// the first one exists)
+import { router } from './trpc';
+
+export const appRouter = router({});
+export type AppRouter = typeof appRouter;
+```
+
+```ts
+// src/trpc/context.ts — per-request context, built once per request
+import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
+
+export async function createContext({ req }: CreateFastifyContextOptions) {
+  return { req, session: null as null | { userId: string } };
+  // Step 6 replaces the `session: null` placeholder with a real lookup
+  // once auth exists — every procedure already reads `ctx.session`.
+}
+export type Context = Awaited<ReturnType<typeof createContext>>;
+```
+
+```ts
+// src/trpc/trpc.ts — tRPC's own init, imported by router.ts above and
+// by every feature's <feature>.router.ts
+import { initTRPC } from '@trpc/server';
+import type { Context } from './context';
+
+const t = initTRPC.context<Context>().create();
+export const router = t.router;
+export const publicProcedure = t.procedure;
+```
 
 ```ts
 // src/server.ts
@@ -274,12 +322,86 @@ test and why.
 
 Wire Better Auth with a session-based (cookie) strategy — matching
 `frontend-auth`'s already-chosen client-side cookie pattern, so both
-ends agree on the mechanism without either side improvising. Confirm
-which routes require a session (most of them) vs. which are public
+ends agree on the mechanism without either side improvising. Better Auth
+manages its own cookies through its Fastify route handler below — no
+separate `@fastify/cookie` plugin needed, and none was installed in
+Step 1.
+
+```ts
+// src/auth.ts
+import { betterAuth } from 'better-auth';
+import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { prisma } from './db/client';
+import { env } from './env';
+
+export const auth = betterAuth({
+  database: prismaAdapter(prisma, { provider: 'postgresql' }),
+  // Cross-origin requests are blocked by default even with Step 4's
+  // CORS plugin registered — Better Auth checks this separately.
+  trustedOrigins: [env.FRONTEND_ORIGIN],
+});
+```
+
+```ts
+// src/server.ts — add alongside the Step 4 registrations
+import { fromNodeHeaders } from 'better-auth/node';
+import { auth } from './auth';
+
+app.route({
+  method: ['GET', 'POST'],
+  url: '/api/auth/*',
+  async handler(request, reply) {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    const req = new Request(url, {
+      method: request.method,
+      headers: fromNodeHeaders(request.headers),
+      ...(request.body ? { body: JSON.stringify(request.body) } : {}),
+    });
+    const response = await auth.handler(req);
+    reply.status(response.status);
+    response.headers.forEach((value, key) => reply.header(key, value));
+    return reply.send(response.body ? await response.text() : null);
+  },
+});
+```
+
+Confirm which routes require a session (most of them) vs. which are public
 (login, signup, health check) before writing the first protected
-procedure — a tRPC middleware checking `ctx.session` is the standard
-shape, applied once in `trpc/context.ts`, not re-checked ad hoc per
-router.
+procedure. Replace Step 4's `session: null` placeholder in
+`trpc/context.ts` with a real lookup, resolved once per request, not
+per procedure:
+
+```ts
+// src/trpc/context.ts — replaces Step 4's placeholder body
+import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
+import { fromNodeHeaders } from 'better-auth/node';
+import { auth } from '../auth';
+
+export async function createContext({ req }: CreateFastifyContextOptions) {
+  const session = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  });
+  return { req, session };
+}
+export type Context = Awaited<ReturnType<typeof createContext>>;
+```
+
+```ts
+// src/trpc/trpc.ts — add the protected-procedure helper alongside
+// Step 4's publicProcedure
+import { TRPCError } from '@trpc/server';
+
+export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.session) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+  return next({ ctx: { ...ctx, session: ctx.session } });
+});
+```
+
+Every feature's router (Step 5) imports `protectedProcedure` instead of
+`publicProcedure` for anything that isn't explicitly public — checked
+once in this one place, not re-implemented per router.
 
 **Login, signup, and password-reset need their own, stricter rate
 limit — Step 4's app-wide `@fastify/rate-limit` is not enough on its
