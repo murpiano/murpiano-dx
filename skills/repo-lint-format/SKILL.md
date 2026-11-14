@@ -27,6 +27,70 @@ scans the *commit message* for agent traces, not the code.
   the language ships its own formatter and the community treats
   deviation from it as the actual anti-pattern.
 
+## The actual parameters, not just the tool name
+
+Naming "ESLint + Prettier" settles nothing by itself — these are the
+real, specific values this framework defaults to for each one, same
+option-with-a-default treatment as everything else.
+
+### Prettier: no `.prettierrc`, ship its own defaults as-is
+
+**Default: don't create a config file at all.** Prettier's own shipped
+defaults *are* the framework default — `semi: true`, `singleQuote:
+false`, `trailingComma: "all"`, `printWidth: 80`, `tabWidth: 2`,
+`arrowParens: "always"`, `bracketSpacing: true`, `endOfLine: "lf"`.
+Prettier's own stated design goal is ending style arguments by having
+as few knobs as possible; adding a `.prettierrc` to re-litigate them
+one-by-one defeats that goal for most projects.
+
+**Real, named alternative**: `singleQuote: true` is the one override
+teams actually reach for often enough to be worth naming explicitly —
+state it as a deliberate team preference in a `.prettierrc`, not a
+silent drift from the default.
+
+### ESLint: `typescript-eslint`'s `recommended-type-checked`, not bare `recommended`
+
+**Default stack**, wired in `eslint.config.js` (see
+[templates/eslint.config.js](templates/eslint.config.js)):
+
+1. `typescript-eslint`'s **`recommended-type-checked`** config —
+   `recommended` alone skips every rule that needs real type
+   information (the rules that catch genuine bugs, not just style);
+   type-checked linting is already the cost of using TypeScript at
+   all, so there's no real reason to opt out of the rules that use it.
+2. `eslint-plugin-react-hooks`'s recommended config, **only when the
+   project has a React frontend** — `rules-of-hooks` and
+   `exhaustive-deps` catch real runtime bugs (stale closures, hooks
+   called conditionally), not style preferences; skip this step
+   entirely for a backend-only TypeScript project.
+3. `eslint-config-prettier` **last** in the config array, so it can
+   turn off every ESLint rule that would otherwise fight Prettier over
+   formatting — order matters, a later config overrides an earlier one.
+
+**Real, named alternative**: `strict-type-checked` once a nontrivial
+share of the team is genuinely proficient in TypeScript and wants the
+stricter, more opinionated rule set — `typescript-eslint`'s own docs
+recommend against it as a default for everyone.
+
+### Ruff: keep its own default rule selection, don't narrow it
+
+**Default: no `[tool.ruff.lint] select` override** — Ruff's own
+default already enables the `F` (Pyflakes), `E`/`W` (pycodestyle), `B`
+(flake8-bugbear, real bug patterns), `UP` (pyupgrade), and `RUF`
+categories, deliberately excluding stylistic rules that would fight its
+own formatter. Set `line-length = 88` (Black-compatible, Ruff's own
+default) explicitly in `pyproject.toml` so it survives a reset, but
+don't hand-pick a narrower rule set than Ruff already ships.
+
+**Real, named alternative**: add `I` (import sorting, isort-equivalent)
+to `select` explicitly — it's genuinely useful but not on by default,
+so a project that wants it states that choice rather than assuming it.
+
+### Go: `gofmt` has no parameters by design
+
+Nothing to configure — this is the point of `gofmt`, not a gap in this
+skill.
+
 ## Type checking: strict by default
 
 For a TypeScript project — this framework's own default over plain
@@ -79,3 +143,31 @@ itself — `repo-commit`.
   repos specifically because pre-commit speed matters for developer
   experience and CI is the check that can't be bypassed — same sources
   as above.
+- Prettier's own default values (`semi: true`, `singleQuote: false`,
+  `trailingComma: "all"`, `printWidth: 80`, `tabWidth: 2`, `arrowParens:
+  "always"`, `bracketSpacing: true`, `endOfLine: "lf"`), confirmed
+  against the current options page, not a secondhand summary:
+  [Prettier Options](https://prettier.io/docs/options).
+- `typescript-eslint` recommends `recommended-type-checked` as the
+  typed-linting baseline, `strict-type-checked` only once "a nontrivial
+  percentage of the project's developers are highly proficient in
+  TypeScript": [typescript-eslint — Shared Configs](https://typescript-eslint.io/users/configs),
+  flat-config `projectService` wiring verified against the current
+  typed-linting guide:
+  [Linting with Type Information](https://typescript-eslint.io/getting-started/typed-linting).
+- Ruff's own default rule selection already includes `F`, `E`/`W`,
+  `B`, `UP`, and `RUF` (excluding stylistic rules that would fight its
+  formatter) — confirmed against the current rules page, not assumed
+  from an older Ruff version's narrower default:
+  [Ruff rules — default rules](https://docs.astral.sh/ruff/rules/).
+  `line-length = 88` is Ruff's own default, matching Black:
+  [Ruff configuration](https://docs.astral.sh/ruff/configuration/).
+- `eslint-plugin-react-hooks`'s flat-config `configs.flat.recommended`
+  export and `eslint-config-prettier/flat`'s "last in the array" usage
+  verified against each project's own README, then the exact template
+  in `templates/eslint.config.js` was installed and run against a real
+  `rules-of-hooks` violation (caught correctly) and a clean file (no
+  false positive) before being written down here — not assumed to
+  work from the docs alone:
+  [eslint-plugin-react-hooks](https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks),
+  [eslint-config-prettier](https://github.com/prettier/eslint-config-prettier).
