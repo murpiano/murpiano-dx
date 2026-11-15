@@ -94,8 +94,8 @@ it live only in a conversation; remove it once it's actually done
     it "the best all-rounder" was already in the Basis but Statsig
     itself was missing from the actual options.
 
-- **Gaps found by diffing against a real external ТЗ excerpt the owner
-  found.** Most of it matched this framework's existing defaults (Next.js,
+- **Gaps found by diffing against a real external requirements-spec excerpt
+  the owner found.** Most of it matched this framework's existing defaults (Next.js,
   TanStack Query, Zustand, RHF+Zod, NestJS, PostgreSQL, Prisma/TypeORM,
   BullMQ, pnpm, ESLint/Prettier/Husky, Docker-for-self-hosted, trunk-based
   Git, CI-on-every-PR) — confirming the defaults are sound, not a gap.
@@ -124,7 +124,7 @@ it live only in a conversation; remove it once it's actually done
     triggering on a third-party client — REST's own lack of
     type-sharing is reason enough even for a same-repo TS client.
   - **GlitchTip** named in `frontend-monitoring` as the self-hosted,
-    Sentry-SDK-compatible option for the 152-ФЗ-localization case where
+    Sentry-SDK-compatible option for the 152-FZ-localization case where
     error reports could carry personal data.
   - **Metrics & dashboards** (`repo-hosting`, new row), a third layer
     distinct from Sentry (in-request errors) and uptime monitoring (is
@@ -287,7 +287,7 @@ it live only in a conversation; remove it once it's actually done
   browser-side heavy-compute task).
 - **Primary market / user jurisdiction split out as its own row, asked
   before Security/compliance, in `repo-hosting`.** The owner caught that
-  152-ФЗ/GDPR/CCPA/HIPAA were lumped into one row with no explicit step
+  152-FZ/GDPR/CCPA/HIPAA were lumped into one row with no explicit step
   establishing *which* user base the product actually has — compliance
   obligations come from where the users are, not where the owner is
   working, and more than one regime can apply to the same product at
@@ -307,7 +307,7 @@ it live only in a conversation; remove it once it's actually done
   Every table-walking skill (`stack-selection`, the two `*-stack-selection`
   skills, both `*-project-setup` skills, `repo-init`) reads this before
   walking the table.
-- **152-ФЗ added as a named option alongside GDPR/SOC2/HIPAA in
+- **152-FZ added as a named option alongside GDPR/SOC2/HIPAA in
   `repo-hosting`'s Security/compliance row**, with the real obligations
   spelled out (privacy policy, consent, cookie banner, data localization,
   Roskomnadzor notification, data-subject requests, special-category PD,
@@ -317,7 +317,7 @@ it live only in a conversation; remove it once it's actually done
   hosting rows (a Russian-jurisdiction provider — Yandex Cloud, Selectel,
   VK Cloud — once it applies). Flagged in `repo-hosting`'s own `Basis`
   as needing a *tighter* freshness window than this skill's other rows —
-  152-ФЗ is actively changing in 2026 (a cross-border-transfer tightening
+  152-FZ is actively changing in 2026 (a cross-border-transfer tightening
   bill passed its third Duma reading 2026-07-08) — re-run
   `knowledge-refresh` on this row specifically before relying on it for
   a real project, not just trusting the usual ~month window.
@@ -327,7 +327,7 @@ it live only in a conversation; remove it once it's actually done
   runs" are genuinely separate decisions. Default Neon for a solo/small
   project (scale-to-zero, per-PR branching pairs with the Environments
   default), Railway's managed Postgres if the app itself is on Railway,
-  a Russian-jurisdiction provider once 152-ФЗ localization applies.
+  a Russian-jurisdiction provider once 152-FZ localization applies.
 - **Cross-linked `repo-init` and `stack-selection`** — found while doing
   the completeness pass that neither skill mentioned the other at all,
   so a from-scratch project (no repo, no stack decided) had no stated
@@ -482,8 +482,8 @@ it live only in a conversation; remove it once it's actually done
   process failure worth fixing structurally, not just answering better
   next time. First attempt at the fix was wrong too: wrote a second,
   separate `FRONTEND-CHECKLIST.md` table — the owner caught it
-  immediately ("у нас же уже есть таблица... это два источника
-  истины?"). `project-profile.md` is already that one table; the real
+  immediately ("we already have one table for this... now there are two
+  sources of truth?"). `project-profile.md` is already that one table; the real
   fix was adding the missing concerns there as new rows with empty
   "Governed by" (same pattern as the no-backend-skill-yet note in
   section 4), not inventing a parallel document. Found via general
@@ -531,7 +531,7 @@ it live only in a conversation; remove it once it's actually done
   counterpart to `frontend-resilience`'s error boundary, which catches
   an error but never says where it goes). The owner explicitly chose
   to finish writing the framework's own knowledge before adopting it
-  into any project ("сначала фреймворк, потом проекты") — these stay
+  into any project ("the framework first, then the projects") — these stay
   marked "ask explicitly" in the profile template (still correctly
   *conditional per project*, per `project-profile/SKILL.md`'s own
   caution against marking every blank row that way), but now have a
@@ -563,8 +563,8 @@ it live only in a conversation; remove it once it's actually done
   project's adoption never skips a row again, but doesn't retroactively
   guarantee this framework's own template had no pre-existing gaps.
 - **Full row-by-row audit of `project-profile.md`** (owner's own
-  request: "проверь, что у нас все пункты... не будут случайно
-  пропущены"), checking not just "is there a value" but "does a skill
+  request: "check that none of our rows... end up accidentally
+  skipped"), checking not just "is there a value" but "does a skill
   that exists actually get linked, and does `framework-lint` itself
   catch it if not." Found four real bugs — a skill existed, genuinely
   covered a row, but was never wired to it, so `framework-lint` was

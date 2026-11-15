@@ -3,84 +3,90 @@ name: repo-cleanup
 description: Use when a repository is about to be pushed or published, or when its files, commit history, authors, branches, pull requests or releases may show that AI agents or assistants were used (CLAUDE.md, AGENTS.md, Co-Authored-By trailers, emoji commits, bot identities), or when it may contain committed secrets (.env files, keys, tokens).
 ---
 
-# Очистка от следов агентов
+# Remove agent traces
 
 Governs `project-profile.md` fields: Git workflow → Pre-commit hooks.
 
 (This skill owns only the secret/agent-trace scan hook; a project's own
 lint/format pre-commit hooks are a separate concern.)
 
-Найти и убрать следы агентной разработки из всего, что видит посетитель репозитория.
-Даты коммитов, содержимое файлов и структура merge-коммитов сохраняются.
+Find and remove traces of agent-assisted development from everything a
+repository visitor can see. Commit dates, file contents, and merge-commit
+structure are preserved.
 
-Заодно найти секреты, попавшие в репозиторий.
+Also find any secrets that made it into the repository.
 
-Что считается следом и секретом: [policy.md](policy.md). Сканер репозитория:
-[scan-traces.sh](scan-traces.sh), только читает, ничего не меняет. Сканер
-произвольного текста (PR-описание, текст релиза — то, что идёт в GitHub API
-напрямую через `gh`, минуя любой git-хук): [check-text.sh](check-text.sh).
-`repo-commit` и `repo-release` обязаны прогонять через него черновик PR/релиза
-перед отправкой — хуки коммитов этот текст не видят в принципе.
+What counts as a trace or a secret: [policy.md](policy.md). Repository
+scanner: [scan-traces.sh](scan-traces.sh), read-only, changes nothing. Scanner
+for free-form text (PR description, release notes — anything that goes to the
+GitHub API directly via `gh`, bypassing any git hook):
+[check-text.sh](check-text.sh). `repo-commit` and `repo-release` must run a
+PR/release draft through it before sending — commit hooks never see this text
+at all.
 
-## Шаги
+## Steps
 
-1. Просканировать локальное состояние и то, что видно на GitHub:
+1. Scan local state and what's visible on GitHub:
 
    ```bash
    bash scan-traces.sh <repo>
    bash scan-traces.sh <repo> --published
    ```
 
-2. Разобрать каждую находку: след или ложное срабатывание (например, CSS `cursor`). Если
-   неясно, спросить автора. Найденный секрет сразу показать автору по разделу 8
-   `policy.md`, значение не выводить.
-3. Рабочее дерево: убрать файлы агентов из индекса (`git rm --cached -r <path>`), убрать
-   упоминания из текста, закоммитить в ветке `chore/remove-agent-traces` и влить в `main`
-   по разделу «Merge» `repo-commit/rules.md`.
-4. История, только после подтверждения:
-   1. Ветка-копия `backup/original-history` на текущем HEAD.
-   2. Новые сообщения в файлы, названные по старому хешу. Проверить линтером. Kysaro
-      запускать вне репозитория kysaro, чтобы работал пресет по умолчанию.
-   3. `git filter-branch` сохраняет даты автора и коммиттера:
-      - сообщения: `--msg-filter`, который печатает файл по `$GIT_COMMIT` или исходное
-        сообщение;
-      - автор: `--env-filter` с `GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`,
-        `GIT_COMMITTER_EMAIL`;
-      - файлы: `--index-filter 'git rm -r --cached --ignore-unmatch <paths>'`.
-   4. Удалить `.git/refs/original`.
-   5. Сверить: `git diff --stat backup/original-history HEAD` показывает только задуманное,
-      число коммитов и merge-коммитов то же, сканер чистый.
-   6. Задать автора в репозитории: `git config user.name` и `git config user.email`.
-5. Публикация, только после подтверждения:
-   `git push --force-with-lease=main:<старый-sha-на-remote> origin main`. Удалить удалённые
-   ветки со старой историей.
-6. GitHub, только после подтверждения:
+2. Review each finding: trace or false positive (e.g. CSS `cursor`). If
+   unclear, ask the owner. Show a found secret to the owner immediately per
+   section 8 of `policy.md`, without printing the value.
+3. Working tree: remove agent files from the index (`git rm --cached -r
+   <path>`), remove mentions from text, commit on a `chore/remove-agent-traces`
+   branch and merge into `main` per the "Merge" section of
+   `repo-commit/rules.md`.
+4. History, only after confirmation:
+   1. Backup branch `backup/original-history` at the current HEAD.
+   2. New messages in files named by the old hash. Check with the linter. Run
+      Kysaro outside the kysaro repo itself, so the default preset applies.
+   3. `git filter-branch` preserves author and committer dates:
+      - messages: `--msg-filter` that prints the file keyed by `$GIT_COMMIT`,
+        or the original message;
+      - author: `--env-filter` with `GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`,
+        `GIT_COMMITTER_NAME`, `GIT_COMMITTER_EMAIL`;
+      - files: `--index-filter 'git rm -r --cached --ignore-unmatch <paths>'`.
+   4. Remove `.git/refs/original`.
+   5. Verify: `git diff --stat backup/original-history HEAD` shows only the
+      intended changes, the commit and merge-commit counts match, the scanner
+      is clean.
+   6. Set the repository's author: `git config user.name` and `git config
+      user.email`.
+5. Publish, only after confirmation:
+   `git push --force-with-lease=main:<old-sha-on-remote> origin main`. Delete
+   any remote branches carrying the old history.
+6. GitHub, only after confirmation:
    - PR: `gh api -X PATCH repos/OWNER/REPO/pulls/N -f title=... -f body=...`
-     (`gh pr edit` может падать на устаревших полях Projects);
-   - релизы: `gh release edit <tag> --notes-file <file>`;
-   - комментарии ботов: удалять только те, что подтвердил автор.
-7. Повторить `scan-traces.sh <repo> --published`. Сообщить автору всё, что осталось, и
-   раздел 7 `policy.md`.
-8. Проверить профилактику из раздела 6 `policy.md`. Глобальные настройки менять только
-   после подтверждения.
+     (`gh pr edit` can fail on stale Projects fields);
+   - releases: `gh release edit <tag> --notes-file <file>`;
+   - bot comments: delete only the ones the owner confirmed.
+7. Repeat `scan-traces.sh <repo> --published`. Report to the owner whatever
+   remains, and section 7 of `policy.md`.
+8. Check the prevention measures in section 6 of `policy.md`. Change global
+   settings only after confirmation.
 
-## Спросить автора
+## Ask the owner
 
-- Любое переписывание истории и любой push, особенно force.
-- Удаление веток, тегов, комментариев на GitHub. Правка PR и релизов.
-- Упоминание, которое может быть частью продукта.
-- Найденный секрет: отозван ли он и надо ли чистить историю.
-- Переписывать ли старые сообщения, в которых нет следов, но есть нарушения конвенции.
+- Any history rewrite and any push, especially force.
+- Deleting branches, tags, comments on GitHub. Editing PRs and releases.
+- A mention that might be part of the product itself.
+- A found secret: whether it's been revoked and whether history needs
+  cleaning.
+- Whether to rewrite old messages that have no traces but break convention.
 
-## Нельзя
+## Never
 
-- `--force` без lease.
-- Переписывать историю без ветки-копии.
-- Менять что-то за пределами зоны из `policy.md`.
-- Выводить значение найденного секрета.
+- `--force` without a lease.
+- Rewrite history without a backup branch.
+- Change anything outside the scope defined in `policy.md`.
+- Print the value of a found secret.
 
-## Готово, когда
+## Done when
 
-- `scan-traces.sh <repo> --published` показывает только принятые автором находки.
-- Каждое переписывание подтверждено и сверено с `backup/original-history`.
-- Автору сообщено, что осталось и почему.
+- `scan-traces.sh <repo> --published` shows only findings the owner accepted.
+- Every rewrite is confirmed and checked against `backup/original-history`.
+- The owner has been told what remains and why.

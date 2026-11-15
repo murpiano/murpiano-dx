@@ -159,7 +159,7 @@ loss.** Neon, Supabase, and RDS (`repo-hosting`'s Database hosting row)
 all provide automated daily backups plus point-in-time recovery
 out of the box — confirm it's actually enabled, don't assume a managed
 database backs itself up by default on every plan tier. A self-hosted
-Postgres (the 152-ФЗ-driven case in `repo-hosting`) needs this stated
+Postgres (the 152-FZ-driven case in `repo-hosting`) needs this stated
 explicitly: a scheduled `pg_dump` plus an off-site copy (not stored on
 the same server/VM it backs up) and a periodically *tested* restore —
 an untested backup is a hope, not a backup.

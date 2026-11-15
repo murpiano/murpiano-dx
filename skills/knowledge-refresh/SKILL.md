@@ -45,7 +45,7 @@ recorded `Basis`, or the user names one directly.
 ## Mode 2 — full sweep
 
 Triggered by an explicit request to refresh the framework's knowledge
-base as a whole (e.g. "раз в месяц по всей базе"). Not run on a timer or
+base as a whole (e.g. "once a month, across the whole base"). Not run on a timer or
 automatically — the user asks for it.
 
 1. Run `python3 skills/knowledge-refresh/scripts/find_basis.py

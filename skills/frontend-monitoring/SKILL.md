@@ -28,7 +28,7 @@ it catches.
 
 **GlitchTip is a named, self-hosted, Sentry-SDK-compatible alternative**
 — same client SDK and API shape, self-hosted instead of Sentry's SaaS.
-Reach for it specifically when `repo-hosting`'s 152-ФЗ data-localization
+Reach for it specifically when `repo-hosting`'s 152-FZ data-localization
 row applies and error reports could carry personal data (a user ID,
 an email in a stack trace) that shouldn't leave Russian-jurisdiction
 infrastructure — not a general-purpose swap, a named option for that
