@@ -1,0 +1,74 @@
+name: agent-trace-check
+
+# Server-side backstop for skills/repo-cleanup's local pre-commit/commit-msg
+# scan. Those hooks only run if installed on the machine that makes the
+# commit, and can be skipped with --no-verify, a fresh clone, or any tool
+# (e.g. Husky) that regenerates its own hook dispatcher. This workflow is
+# committed to the repo itself, so it runs on GitHub's side regardless of
+# local state -- wire it as a REQUIRED status check in branch protection
+# so a PR containing a match literally cannot be merged. See
+# skills/repo-cleanup/policy.md for the full rule.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan commit messages, diff, and new files for agent traces
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -uo pipefail
+          export LC_ALL=C.UTF-8
+          TEXT='claude|anthropic|copilot|chatgpt|openai|gpt-[0-9]|gemini|codex|cursor ?ai|co-authored-by|generated (with|by)|ai[- ]generated|as an ai|language model|\bllm\b|🤖'
+          FILES='(^|/)(CLAUDE(\.local)?\.md|AGENTS\.md|GEMINI\.md|\.claude|\.agents|\.codex|\.cursor|\.cursorrules|\.cursorignore|\.windsurf|\.windsurfrules|\.clinerules|\.roo|\.roomodes|\.continue|\.aider[^/]*|\.kiro|\.junie|\.specstory|\.serena|\.superpowers|\.mcp\.json|\.github/copilot-instructions\.md|\.github/instructions|\.github/prompts|memory-bank|docs/superpowers)(/|$)'
+
+          base="$BASE_SHA"
+          head="$HEAD_SHA"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$base" 2>/dev/null; then
+            base=$(git rev-list --max-parents=0 "$head" | tail -1)
+          fi
+
+          failed=0
+
+          messages=$(git log --format='%H %B' "$base..$head" | grep -inE "$TEXT" || true)
+          if [ -n "$messages" ]; then
+            echo "::error::Agent-trace mention(s) in a commit message between $base and $head:"
+            printf '%s\n' "$messages"
+            failed=1
+          fi
+
+          diff_hits=$(git diff "$base" "$head" -- . ':!package-lock.json' ':!yarn.lock' \
+            ':!pnpm-lock.yaml' ':!bun.lockb' | grep -inE "$TEXT" || true)
+          if [ -n "$diff_hits" ]; then
+            echo "::error::Agent-trace mention(s) in the diff:"
+            printf '%s\n' "$diff_hits" | head -40
+            failed=1
+          fi
+
+          new_files=$(git diff --name-only --diff-filter=A "$base" "$head" | grep -inE "$FILES" || true)
+          if [ -n "$new_files" ]; then
+            echo "::error::Agent instruction file(s) committed to the published tree:"
+            printf '%s\n' "$new_files"
+            failed=1
+          fi
+
+          if [ "$failed" = "1" ]; then
+            echo "Fix the text/files above, then push again. Full rule: murpiano-dx's" \
+                 "skills/repo-cleanup/policy.md."
+            exit 1
+          fi

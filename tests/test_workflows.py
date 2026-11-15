@@ -1097,6 +1097,61 @@ fi
         self.sync()
         self.assertEqual(hook.read_bytes(), first)
 
+    def husky(self):
+        """A Husky-managed project: core.hooksPath -> .husky/_, with the
+        regenerated dispatcher dir and the real, tracked hook scripts one
+        level up -- the exact shape `npx husky init` produces."""
+        self.git(self.project, 'config', 'core.hooksPath', '.husky/_')
+        dispatcher = self.project / '.husky/_'
+        dispatcher.mkdir(parents=True)
+        for name in ('pre-commit', 'commit-msg'):
+            stub = dispatcher / name
+            stub.write_text('#!/usr/bin/env sh\n. "$(dirname "$0")/h"\n')
+            stub.chmod(0o755)
+        (self.project / '.husky/pre-commit').write_text('pnpm exec lint-staged\n')
+        (self.project / '.husky/commit-msg').write_text('pnpm exec commitlint --edit "$1"\n')
+
+    def test_husky_hooks_get_the_tracked_scan_not_the_regenerated_dispatcher(self):
+        self.husky()
+        self.sync()
+        precommit = (self.project / '.husky/pre-commit').read_text()
+        self.assertIn('pnpm exec lint-staged', precommit)
+        self.assertIn('# murpiano-dx: agent-trace pre-commit scan (skills/repo-cleanup)',
+                      precommit)
+        self.assertIn('skills/repo-cleanup/pre-commit-hook.sh', precommit)
+        commitmsg = (self.project / '.husky/commit-msg').read_text()
+        self.assertIn('pnpm exec commitlint', commitmsg)
+        self.assertIn('# murpiano-dx: agent-trace commit-msg scan (skills/repo-cleanup)',
+                      commitmsg)
+        self.assertIn('skills/repo-cleanup/commit-msg-hook.sh', commitmsg)
+        # The regenerated dispatcher itself must stay untouched -- a real
+        # `husky` reinstall would wipe anything written there.
+        dispatcher_text = (self.project / '.husky/_/pre-commit').read_text()
+        self.assertNotIn('murpiano-dx', dispatcher_text)
+
+    def test_ci_agent_trace_gap_is_reported_only_when_ci_exists_and_check_is_missing(self):
+        self.sync('init')
+        no_ci = self.sync('start')
+        self.assertNotIn('CI agent-trace check', no_ci.stdout)
+        workflows = self.project / '.github/workflows'
+        workflows.mkdir(parents=True)
+        (workflows / 'ci.yml').write_text('name: ci\non: push\njobs: {}\n')
+        missing = self.sync('start')
+        self.assertIn('CI agent-trace check: missing', missing.stdout)
+        (workflows / 'agent-trace-check.yml').write_text(
+            (self.dx / 'skills/repo-cleanup/templates/agent-trace-check.yml').read_text())
+        wired = self.sync('start')
+        self.assertNotIn('CI agent-trace check', wired.stdout)
+
+    def test_husky_hook_wrap_is_idempotent(self):
+        self.husky()
+        self.sync()
+        precommit_first = (self.project / '.husky/pre-commit').read_bytes()
+        commitmsg_first = (self.project / '.husky/commit-msg').read_bytes()
+        self.sync()
+        self.assertEqual((self.project / '.husky/pre-commit').read_bytes(), precommit_first)
+        self.assertEqual((self.project / '.husky/commit-msg').read_bytes(), commitmsg_first)
+
     def test_store_lock_failure_is_reported_accurately(self):
         (self.dx / 'projects/.sync.lock').mkdir()
         result = self.sync(check=False)
@@ -1191,7 +1246,10 @@ fi
         self.assertEqual(json.loads(state.read_text())['kysaro'], 'enabled')
         ready = self.sync('start')
         self.assertIn('kysaro: configured', ready.stdout)
-        self.assertEqual(len(ready.stdout.splitlines()), 2)
+        # Third line: the project has CI (kysaro.yml) but not the agent-trace
+        # backstop workflow, which is a real, separate gap -- not noise.
+        self.assertEqual(len(ready.stdout.splitlines()), 3)
+        self.assertIn('CI agent-trace check: missing', ready.stdout)
         (self.project / 'node_modules/.bin/kysaro').unlink()
         broken = self.sync('start')
         self.assertIn('restore: local kysaro', broken.stdout)

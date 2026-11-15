@@ -494,15 +494,51 @@ def exclude_agent_files(project):
 
 
 PRECOMMIT_MARKER = '# murpiano-dx: agent-trace pre-commit scan (skills/repo-cleanup)'
+COMMITMSG_MARKER = '# murpiano-dx: agent-trace commit-msg scan (skills/repo-cleanup)'
+
+
+def hook_target(project, name):
+    """Return (path, is_husky) for the file murpiano-dx must actually edit.
+
+    git_path(project, 'hooks') already honors core.hooksPath, so for a Husky
+    project it correctly resolves to .husky/_ -- but that directory is
+    Husky's own regenerated dispatcher (gitignored, rebuilt by `husky` on
+    every install), not a real hook script: writing there is either ignored
+    or silently wiped on the next `npm install`/`pnpm install`, with no
+    error. Husky's actual, git-tracked hook script -- the one every clone
+    and teammate gets automatically -- lives one level up, at
+    .husky/<name>, as a plain command list `_/h` sources. kysaro_gaps()
+    already knows this distinction when reading; this makes the installers
+    know it when writing.
+    """
+    hooks = git_path(project, 'hooks')
+    if hooks.name == '_' and hooks.parent.name == '.husky':
+        return hooks.parent / name, True
+    return hooks / name, False
 
 
 def install_precommit_hook(project, key):
     """Install the agent-trace pre-commit scanner for a tracked project.
 
     Idempotent: skipped if already installed, left alone if the project has
-    its own unrelated pre-commit hook.
+    its own unrelated pre-commit hook. For Husky, appends to the tracked
+    .husky/pre-commit instead of the regenerated dispatcher (see
+    hook_target) -- the project's own hook commands still run first.
     """
-    path = git_path(project, 'hooks') / 'pre-commit'
+    path, is_husky = hook_target(project, 'pre-commit')
+    scan_line = f'bash "{ACTIVE_ROOT}/skills/repo-cleanup/pre-commit-hook.sh" || exit 1\n'
+    if is_husky:
+        text = path.read_text() if path.is_file() else ''
+        if PRECOMMIT_MARKER in text:
+            return
+        path.parent.mkdir(parents=True, exist_ok=True)
+        sep = '\n' if text.strip() else ''
+        path.write_text(text.rstrip('\n') + sep + '\n' + PRECOMMIT_MARKER + '\n' + scan_line)
+        path.chmod(0o755)
+        print(f'{key}: agent-trace scan appended to the tracked .husky/pre-commit '
+              f'(skills/repo-cleanup/policy.md); the project\'s own hook commands still run '
+              f'first; a false positive commits with --no-verify.')
+        return
     if path.exists() or path.is_symlink():
         if path.is_file() and PRECOMMIT_MARKER in path.read_text():
             return
@@ -510,17 +546,11 @@ def install_precommit_hook(project, key):
               f'bash {ACTIVE_ROOT}/skills/repo-cleanup/pre-commit-hook.sh')
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        '#!/usr/bin/env bash\n' + PRECOMMIT_MARKER + '\n'
-        f'exec bash "{ACTIVE_ROOT}/skills/repo-cleanup/pre-commit-hook.sh"\n'
-    )
+    path.write_text('#!/usr/bin/env bash\n' + PRECOMMIT_MARKER + '\n' + f'exec {scan_line}')
     path.chmod(0o755)
     print(f'{key}: pre-commit hook installed. Every commit is scanned for agent traces and '
           f'secrets before it is made (skills/repo-cleanup/policy.md); a false positive '
           f'commits with --no-verify.')
-
-
-COMMITMSG_MARKER = '# murpiano-dx: agent-trace commit-msg scan (skills/repo-cleanup)'
 
 
 def install_commitmsg_hook(project, key):
@@ -529,14 +559,29 @@ def install_commitmsg_hook(project, key):
     pre-commit-hook.sh cannot see the commit message (git finalizes it only
     after pre-commit runs); this is the one check that belongs on commit-msg
     instead. Only ever wraps an ALREADY-present hook -- kysaro's own (see
-    skills/repo-init/kysaro.md) or a custom one -- never creates one from a
-    blank project, so install order relative to kysaro's own setup never
-    matters: whichever sets up commit-msg first, this wraps it on the next
-    connect. Idempotent: skipped if already wrapped. Also skipped if the
-    existing hook is not executable -- that is a setup gap to report
-    (kysaro_gaps), not one to silently fix by making it active.
+    skills/repo-init/kysaro.md), a custom one, or Husky's tracked
+    .husky/commit-msg (see hook_target) -- never creates one from a blank
+    project, so install order relative to kysaro's own setup never matters:
+    whichever sets up commit-msg first, this wraps it on the next connect.
+    Idempotent: skipped if already wrapped. Also skipped if the existing
+    hook is not executable -- that is a setup gap to report (kysaro_gaps),
+    not one to silently fix by making it active.
     """
-    path = git_path(project, 'hooks') / 'commit-msg'
+    path, is_husky = hook_target(project, 'commit-msg')
+    scan_line = f'bash "{ACTIVE_ROOT}/skills/repo-cleanup/commit-msg-hook.sh" "$1" || exit 1\n'
+    if is_husky:
+        if not path.is_file():
+            return
+        text = path.read_text()
+        if COMMITMSG_MARKER in text:
+            return
+        sep = '\n' if text.strip() else ''
+        path.write_text(text.rstrip('\n') + sep + '\n' + COMMITMSG_MARKER + '\n' + scan_line)
+        path.chmod(0o755)
+        print(f'{key}: agent-trace scan appended to the tracked .husky/commit-msg '
+              f'(skills/repo-cleanup/policy.md); the project\'s own commit-msg check still '
+              f'runs first.')
+        return
     if not path.is_file() or path.is_symlink() or not os.access(path, os.X_OK):
         return
     text = path.read_text()
@@ -549,7 +594,7 @@ def install_commitmsg_hook(project, key):
     path.write_text(
         '#!/usr/bin/env bash\n' + COMMITMSG_MARKER + '\n'
         f'"{original}" "$1" || exit 1\n'
-        f'exec bash "{ACTIVE_ROOT}/skills/repo-cleanup/commit-msg-hook.sh" "$1"\n'
+        f'exec {scan_line}'
     )
     path.chmod(0o755)
     print(f'{key}: commit-msg hook wrapped with an agent-trace scan of the message text '
@@ -635,6 +680,24 @@ def kysaro_gaps(project):
     return gaps
 
 
+def agent_trace_ci_gap(project):
+    """None if the project has no GitHub Actions CI at all (not this check's
+    business), or if skills/repo-cleanup/templates/agent-trace-check.yml is
+    already wired in; otherwise the gap to report. Local hooks alone are not
+    a 100% barrier -- missing on a fresh clone, skippable with --no-verify,
+    silently defeated by a tool (Husky) that regenerates its own dispatcher.
+    This workflow is committed to the project itself and runs server-side
+    regardless of local state; it only protects when required in branch
+    protection, which this cannot check or set from here (see policy.md, 6)."""
+    workflows = project / '.github/workflows'
+    if not workflows.is_dir():
+        return None
+    wired = any(
+        p.suffix in ('.yml', '.yaml') and 'agent-trace-check' in p.read_text()
+        for p in workflows.iterdir() if p.is_file())
+    return None if wired else 'CI agent-trace check'
+
+
 def load_workflow(key):
     path = STORE / key / 'workflow.json'
     if not path.exists():
@@ -669,6 +732,13 @@ def report(project, key, state, initializing=False):
     print(f'Context: {STORE / key}. Task rules: {ACTIVE_ROOT}/skills/')
     if any(not (project / name).exists() for name in PATHS):
         print('Instructions or notes are not connected in this copy; restore them through init on request.')
+    ci_gap = agent_trace_ci_gap(project)
+    if ci_gap:
+        print(f'{ci_gap}: missing. Local hooks are not a 100% barrier (fresh clone, '
+              f'--no-verify, a tool that regenerates its own hooks). Add '
+              f'skills/repo-cleanup/templates/agent-trace-check.yml to .github/workflows/ '
+              f'and make it a required status check in branch protection -- see '
+              f'skills/repo-cleanup/policy.md, section 6.')
     if initializing and state['kysaro'] == 'pending':
         print('Offer kysaro installation: local dependency, commit-msg, settings, and CI. '
               'Continue with: skills/repo-init/SKILL.md.')

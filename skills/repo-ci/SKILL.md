@@ -62,6 +62,21 @@ exactly what's committed (`npm ci`, not `npm install`).
   production deploy secret to a workflow that also runs on arbitrary
   PR branches.
 
+## Agent-trace backstop
+
+Add `repo-cleanup`'s
+[agent-trace-check.yml](../repo-cleanup/templates/agent-trace-check.yml)
+to `.github/workflows/` for every project that gets CI set up here, and
+make it a **required status check in branch protection** — not just
+present, actually required, or a PR with a match can still be merged
+manually past a red check. This is the one check in the pipeline that
+exists specifically because the local pre-commit/commit-msg hooks
+(`repo-cleanup`) are not a 100% barrier: they can be missing on a fresh
+clone, skipped with `--no-verify`, or silently wiped by a tool like
+Husky that regenerates its own hook dispatcher (see
+`repo-cleanup/policy.md`, section 6). A workflow committed to the repo
+and enforced server-side has none of those escape paths.
+
 ## What this skill does not cover
 
 The release-cutting workflow itself (version tags, release notes,
