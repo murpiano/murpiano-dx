@@ -1100,7 +1100,15 @@ fi
     def husky(self):
         """A Husky-managed project: core.hooksPath -> .husky/_, with the
         regenerated dispatcher dir and the real, tracked hook scripts one
-        level up -- the exact shape `npx husky init` produces."""
+        level up -- the exact shape `npx husky init` produces. Commits the
+        tracked files before pointing core.hooksPath at the dispatcher --
+        otherwise this very commit would run through the (still
+        incomplete) stub hook and fail."""
+        (self.project / '.husky').mkdir()
+        (self.project / '.husky/pre-commit').write_text('pnpm exec lint-staged\n')
+        (self.project / '.husky/commit-msg').write_text('pnpm exec commitlint --edit "$1"\n')
+        self.git(self.project, 'add', '.husky')
+        self.git(self.project, 'commit', '-qm', 'chore: add husky hooks')
         self.git(self.project, 'config', 'core.hooksPath', '.husky/_')
         dispatcher = self.project / '.husky/_'
         dispatcher.mkdir(parents=True)
@@ -1108,8 +1116,6 @@ fi
             stub = dispatcher / name
             stub.write_text('#!/usr/bin/env sh\n. "$(dirname "$0")/h"\n')
             stub.chmod(0o755)
-        (self.project / '.husky/pre-commit').write_text('pnpm exec lint-staged\n')
-        (self.project / '.husky/commit-msg').write_text('pnpm exec commitlint --edit "$1"\n')
 
     def test_husky_hooks_get_the_tracked_scan_not_the_regenerated_dispatcher(self):
         self.husky()
@@ -1151,6 +1157,19 @@ fi
         self.sync()
         self.assertEqual((self.project / '.husky/pre-commit').read_bytes(), precommit_first)
         self.assertEqual((self.project / '.husky/commit-msg').read_bytes(), commitmsg_first)
+
+    def test_husky_hook_edit_is_hidden_from_git_status_and_add(self):
+        self.husky()
+        self.sync()
+        status = self.git(self.project, 'status', '--porcelain').stdout
+        self.assertNotIn('.husky/pre-commit', status)
+        self.assertNotIn('.husky/commit-msg', status)
+        self.git(self.project, 'add', '-A')
+        staged = self.git(self.project, 'diff', '--cached', '--name-only').stdout
+        self.assertNotIn('.husky/pre-commit', staged)
+        self.assertNotIn('.husky/commit-msg', staged)
+        listing = self.git(self.project, 'ls-files', '-v', '.husky/pre-commit', '.husky/commit-msg').stdout
+        self.assertEqual(listing.count('S '), 2)
 
     def test_store_lock_failure_is_reported_accurately(self):
         (self.dx / 'projects/.sync.lock').mkdir()

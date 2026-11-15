@@ -517,6 +517,24 @@ def hook_target(project, name):
     return hooks / name, False
 
 
+def mark_skip_worktree(project, path):
+    """Hide a local-only edit to an otherwise-tracked file from git entirely.
+
+    The Husky branch appends a line embedding this machine's own
+    ACTIVE_ROOT (an absolute local path) into a file the whole team shares
+    through git (.husky/pre-commit, .husky/commit-msg). Left as an ordinary
+    modification, `git add -A`/`git commit -a` would happily stage it, and
+    a push would ship a hook line that only works on this one machine --
+    breaking the hook for every teammate who pulls it. --skip-worktree
+    keeps the real, working file on disk but makes git stop seeing it as
+    changed at all, so it can never end up in a commit by accident.
+    Idempotent; a no-op if the file isn't tracked yet.
+    """
+    relative = path.relative_to(project)
+    if git(project, 'ls-files', '--error-unmatch', str(relative), check=False):
+        git(project, 'update-index', '--skip-worktree', str(relative), check=False)
+
+
 def install_precommit_hook(project, key):
     """Install the agent-trace pre-commit scanner for a tracked project.
 
@@ -535,9 +553,11 @@ def install_precommit_hook(project, key):
         sep = '\n' if text.strip() else ''
         path.write_text(text.rstrip('\n') + sep + '\n' + PRECOMMIT_MARKER + '\n' + scan_line)
         path.chmod(0o755)
+        mark_skip_worktree(project, path)
         print(f'{key}: agent-trace scan appended to the tracked .husky/pre-commit '
               f'(skills/repo-cleanup/policy.md); the project\'s own hook commands still run '
-              f'first; a false positive commits with --no-verify.')
+              f'first; a false positive commits with --no-verify. Marked --skip-worktree so '
+              f'this machine-local addition never gets staged into a shared commit.')
         return
     if path.exists() or path.is_symlink():
         if path.is_file() and PRECOMMIT_MARKER in path.read_text():
@@ -578,9 +598,11 @@ def install_commitmsg_hook(project, key):
         sep = '\n' if text.strip() else ''
         path.write_text(text.rstrip('\n') + sep + '\n' + COMMITMSG_MARKER + '\n' + scan_line)
         path.chmod(0o755)
+        mark_skip_worktree(project, path)
         print(f'{key}: agent-trace scan appended to the tracked .husky/commit-msg '
               f'(skills/repo-cleanup/policy.md); the project\'s own commit-msg check still '
-              f'runs first.')
+              f'runs first. Marked --skip-worktree so this machine-local addition never gets '
+              f'staged into a shared commit.')
         return
     if not path.is_file() or path.is_symlink() or not os.access(path, os.X_OK):
         return
