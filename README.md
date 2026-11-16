@@ -18,6 +18,8 @@ coding agent, or without one.**
 [![Release](https://img.shields.io/github/v/release/murpiano/murpiano-dx?color=informational)](https://github.com/murpiano/murpiano-dx/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
 
+[Open the live connected schema](https://murpiano.github.io/murpiano-dx/)
+
 [What you can do](#what-you-can-do) · [How it works](#how-it-works) · [Run locally](#run-locally) · [CLI](#cli)
 
 ## What you can do
