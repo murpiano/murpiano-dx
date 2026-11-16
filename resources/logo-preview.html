@@ -15,8 +15,6 @@
   }
   :root {
     color-scheme: light;
-    --motion-float: 6s;
-    --ease-float: cubic-bezier(.42, 0, .58, 1);
   }
   * { box-sizing: border-box; }
   html, body { width: 100%; min-width: 320px; min-height: 100%; margin: 0; background: #fff; }
@@ -41,12 +39,10 @@
     width: 30%;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(73, 204, 255, .5) 42%, rgba(73, 204, 255, .32) 59%, rgba(73, 204, 255, 0) 78%);
-    opacity: .95;
+    background: radial-gradient(circle, rgba(73, 204, 255, .45) 42%, rgba(73, 204, 255, .3) 59%, rgba(73, 204, 255, 0) 78%);
     filter: blur(13px);
-    transform: scale(1.08);
-    animation: glow-follow var(--motion-float) var(--ease-float) infinite;
-    will-change: transform, opacity, filter;
+    opacity: .95;
+    transform: scale(.95);
   }
   .core-art {
     position: absolute;
@@ -55,13 +51,6 @@
     width: 32.48%;
     height: auto;
     transform-origin: center;
-    will-change: transform;
-  }
-  .core-inner {
-    animation: core-lead var(--motion-float) var(--ease-float) infinite;
-  }
-  .core-ring {
-    animation: core-follow var(--motion-float) var(--ease-float) infinite;
   }
   .label {
     position: absolute;
@@ -86,21 +75,6 @@
   }
   .label.left { left: 10.15%; width: 18.45%; }
   .label.right { left: 77.75%; width: 18.2%; }
-  @keyframes core-lead {
-    0%, 100% { transform: scale(1); }
-    45% { transform: scale(1.12); }
-  }
-  @keyframes core-follow {
-    0%, 8%, 100% { transform: scale(1); }
-    55% { transform: scale(1.16); }
-  }
-  @keyframes glow-follow {
-    0%, 8%, 100% { transform: scale(1.08); }
-    55% { transform: scale(1.2528); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .core-glow, .core-inner, .core-ring { animation: none; }
-  }
 </style>
 </head>
 <body>
@@ -108,7 +82,6 @@
   <div class="core-breathe" aria-hidden="true">
     <div class="core-glow"></div>
     <img class="core-art core-inner" src="./logo-core.png" alt="">
-    <img class="core-art core-ring" src="./logo-ring.png" alt="">
   </div>
   <div class="label left" style="--y:.052632">Context, Memory<br>&amp; Sync</div>
   <div class="label left" style="--y:.208333">Rules &amp; Agent<br>Setup</div>
