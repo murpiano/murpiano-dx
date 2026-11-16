@@ -44,8 +44,8 @@
     background: radial-gradient(circle, rgba(73, 204, 255, .5) 42%, rgba(73, 204, 255, .32) 59%, rgba(73, 204, 255, 0) 78%);
     opacity: .95;
     filter: blur(13px);
-    transform: scale(.86);
-    animation: glow-breathe var(--motion-float) var(--ease-float) infinite;
+    transform: scale(1.08);
+    animation: glow-follow var(--motion-float) var(--ease-float) infinite;
     will-change: transform, opacity, filter;
   }
   .core-art {
@@ -94,9 +94,9 @@
     0%, 8%, 100% { transform: scale(1); }
     55% { transform: scale(1.16); }
   }
-  @keyframes glow-breathe {
-    0%, 8%, 100% { transform: scale(.86); }
-    55% { transform: scale(1.32); }
+  @keyframes glow-follow {
+    0%, 8%, 100% { transform: scale(1.08); }
+    55% { transform: scale(1.2528); }
   }
   @media (prefers-reduced-motion: reduce) {
     .core-glow, .core-inner, .core-ring { animation: none; }
